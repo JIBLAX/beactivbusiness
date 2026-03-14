@@ -15,7 +15,7 @@ interface AppState {
   setAuthenticated: (v: boolean) => void;
   setCurrentPage: (p: AppPage) => void;
   setProspects: (p: Prospect[]) => void;
-  setActivResetClients: (c: ActivResetClient[]) => void;
+  setActivResetClients: (c: ActivResetClient[] | ((prev: ActivResetClient[]) => ActivResetClient[])) => void;
   setFinanceEntries: (e: FinanceEntry[]) => void;
   setExpenses: (e: Expense[]) => void;
   setPortageEnabled: (v: boolean) => void;
