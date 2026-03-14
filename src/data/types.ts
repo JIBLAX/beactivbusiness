@@ -1,0 +1,144 @@
+export interface Prospect {
+  id: string;
+  sex: "F" | "H";
+  name: string;
+  contact: string;
+  source: string;
+  statut: string;
+  date: string;
+  type: string;
+  presence: string;
+  heure: string;
+  objectif: string;
+  objection: string;
+  closing: string;
+  offre: string;
+  notes: string;
+  profile: string;
+  prixReel?: number;
+  noteBilan?: number;
+  noteProfil?: number;
+  bilanValidated?: boolean;
+}
+
+export type AppPage = "prospects" | "clients" | "activreset" | "finances" | "stats";
+
+export interface ActivResetClient {
+  id: string;
+  name: string;
+  phone: string;
+  offre: string;
+  startDate: string;
+  currentPhase: number;
+  phases: PhaseStatus[];
+  objectifAtteint?: boolean | null;
+  cycle: number;
+  notes: string;
+}
+
+export interface PhaseStatus {
+  id: string;
+  label: string;
+  shortLabel: string;
+  done: boolean;
+  startDate: string | null;
+  days: number;
+}
+
+export const AR_PHASES = [
+  { id: "contrat", label: "CONTRAT & PAIEMENT", shortLabel: "Contrat", days: 0 },
+  { id: "onboarding", label: "ONBOARDING", shortLabel: "Onboarding", days: 3 },
+  { id: "diagnostique", label: "DIAGNOSTIQUE", shortLabel: "Diagnostique", days: 7 },
+  { id: "phase1", label: "PHASE 1 — FONDATION (S1-S2)", shortLabel: "Fondation", days: 14 },
+  { id: "phase2", label: "PHASE 2 — OPTIMISATION (S3-S8)", shortLabel: "Optimisation", days: 42 },
+  { id: "phase3", label: "PHASE 3 — MAINTIEN (S9-S10)", shortLabel: "Maintien", days: 14 },
+  { id: "phase4", label: "PHASE 4 — LIBERTÉ (S11)", shortLabel: "Liberté", days: 7 },
+  { id: "phase5", label: "PHASE 5 — RETOUR & FIN (S12)", shortLabel: "Retour & Fin", days: 7 },
+  { id: "certified", label: "CERTIFIED ACTIV", shortLabel: "Certified", days: 0 },
+];
+
+export const AR_PHASES_CYCLE2 = [
+  { id: "rediag", label: "PHASE 6 — RE-DIAGNOSTIQUE (S13)", shortLabel: "Re-Diagnostique", days: 7 },
+  { id: "reoptim", label: "PHASE 7 — RÉ-OPTIMISATION", shortLabel: "Ré-Optimisation", days: 42 },
+  { id: "remaintien", label: "PHASE 8 — RE-MAINTIEN", shortLabel: "Re-Maintien", days: 14 },
+  { id: "refin", label: "PHASE 9 — RETOUR & FIN", shortLabel: "Retour & Fin 2", days: 7 },
+  { id: "certified2", label: "CERTIFIED 2", shortLabel: "Certified 2", days: 0 },
+];
+
+export interface FinanceEntry {
+  id: string;
+  month: string; // YYYY-MM
+  type: "micro" | "portage" | "nova";
+  label: string;
+  amount: number;
+  offre?: string;
+  clientName?: string;
+}
+
+export interface Expense {
+  id: string;
+  month: string;
+  category: ExpenseCategory;
+  label: string;
+  amount: number;
+  date: string;
+}
+
+export type ExpenseCategory =
+  | "LOCAUX & BUREAUX"
+  | "DÉPLACEMENTS & TRANSPORTS"
+  | "EXPÉRIENCE CLIENT"
+  | "MATÉRIELS PROS & ENTRETIEN"
+  | "BIEN-ÊTRE & SANTÉ"
+  | "FORMATION & DÉVELOPPEMENT"
+  | "COMMUNICATION & MARKETING"
+  | "ABONNEMENTS & OUTILS"
+  | "CHARGES SOCIALES & FISCALES";
+
+export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  "LOCAUX & BUREAUX",
+  "DÉPLACEMENTS & TRANSPORTS",
+  "EXPÉRIENCE CLIENT",
+  "MATÉRIELS PROS & ENTRETIEN",
+  "BIEN-ÊTRE & SANTÉ",
+  "FORMATION & DÉVELOPPEMENT",
+  "COMMUNICATION & MARKETING",
+  "ABONNEMENTS & OUTILS",
+  "CHARGES SOCIALES & FISCALES",
+];
+
+export interface MonthlyFinance {
+  month: string;
+  caMicro: number;
+  caPortage: number;
+  novaSap: number;
+  totalExpenses: number;
+  urssaf: number;
+  impots: number;
+  gestionPerso: number;
+  restePerso: number;
+  versementReel: number | null;
+}
+
+export const OFFRES = [
+  "ACTIV PROGRAM STANDARD",
+  "ACTIV PROGRAM STANDARD +",
+  "ACTIV PROGRAM ONLINE (3 FOIS)",
+  "ACTIV PROGRAM HYBRIDE (3 FOIS)",
+  "A LA CARTE",
+  "TIPS PAYANT",
+  "JM PASS",
+  "CARDIO MOUV",
+  "COACHING BRUT",
+];
+
+export const SOURCES = [
+  "FITNESS PARK",
+  "INSTAGRAM",
+  "BOUCHE A OREILLE",
+  "COURS COLLECTIFS",
+  "GOOGLE",
+  "AUTRE",
+];
+
+export const OBJECTIFS = ["FATLOSS", "SCULPT", "HEALTH", "STRONG", "AUTRE"];
