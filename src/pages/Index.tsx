@@ -1,13 +1,22 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { AppProvider, useApp } from "@/store/AppContext";
+import PinScreen from "@/components/auth/PinScreen";
+import AppLayout from "@/components/layout/AppLayout";
+
+function AppContent() {
+  const { isAuthenticated, setAuthenticated } = useApp();
+
+  if (!isAuthenticated) {
+    return <PinScreen onSuccess={() => setAuthenticated(true)} />;
+  }
+
+  return <AppLayout />;
+}
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 };
 
