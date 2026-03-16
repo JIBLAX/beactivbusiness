@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
+import ClientAutocomplete from "@/components/ui/ClientAutocomplete";
 import { EXPENSE_CATEGORIES, Expense, FinanceEntry, ExpenseCategory } from "@/data/types";
 
 const MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
