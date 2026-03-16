@@ -226,12 +226,11 @@ export default function ProspectsPage() {
             <div className="w-9 h-1 rounded-full mx-auto mt-3 mb-0" style={{ background: "hsl(var(--glass-border))" }} />
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
-              <h2 className="font-display text-xl font-bold text-foreground">{selected.name.split(" ")[0]}</h2>
+              <h2 className="font-display text-xl font-bold text-foreground">{selected.name}</h2>
               <button onClick={() => setSelectedId(null)} className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-sm text-muted-foreground"
                 style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>✕</button>
             </div>
             <div className="px-4 pb-2">
-              <h3 className="font-display text-lg font-bold text-foreground mb-1">{selected.name}</h3>
               <div className="flex gap-1.5 flex-wrap mb-1.5">
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${getSourceBadgeClass(selected.source)}`}>
                   {getSourceIcon(selected.source)} {selected.source}

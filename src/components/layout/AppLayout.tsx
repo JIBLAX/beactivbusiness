@@ -7,6 +7,7 @@ import ClientsPage from "@/pages/ClientsPage";
 import ActivResetPage from "@/pages/ActivResetPage";
 import FinancesPage from "@/pages/FinancesPage";
 import StatsPage from "@/pages/StatsPage";
+import OffresPage from "@/pages/OffresPage";
 
 export default function AppLayout() {
   const { currentPage, prospects } = useApp();
@@ -51,6 +52,7 @@ export default function AppLayout() {
           {currentPage === "prospects" && <ProspectsPage />}
           {currentPage === "clients" && <ClientsPage />}
           {currentPage === "activreset" && <ActivResetPage />}
+          {currentPage === "offres" && <OffresPage />}
           {currentPage === "finances" && <FinancesPage />}
           {currentPage === "stats" && <StatsPage />}
         </div>

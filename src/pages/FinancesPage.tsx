@@ -286,8 +286,7 @@ export default function FinancesPage() {
               </div>
               <div>
                 <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Client (optionnel)</label>
-                <input value={newEntry.clientName || ""} onChange={e => setNewEntry(p => ({ ...p, clientName: e.target.value }))} placeholder="Nom du client"
-                  className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                <ClientAutocomplete value={newEntry.clientName || ""} onChange={v => setNewEntry(p => ({ ...p, clientName: v }))} />
               </div>
               <button onClick={addEntry} className="w-full py-3 rounded-xl font-semibold text-sm text-foreground"
                 style={{ background: "linear-gradient(135deg, hsl(var(--bordeaux2)), hsl(var(--bordeaux)))" }}>
