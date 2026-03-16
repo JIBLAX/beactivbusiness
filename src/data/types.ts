@@ -21,7 +21,7 @@ export interface Prospect {
   bilanValidated?: boolean;
 }
 
-export type AppPage = "prospects" | "clients" | "activreset" | "finances" | "stats";
+export type AppPage = "prospects" | "clients" | "activreset" | "finances" | "stats" | "offres";
 
 export interface ActivResetClient {
   id: string;
