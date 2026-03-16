@@ -216,7 +216,7 @@ export default function ProspectsPage() {
 
       {/* Detail Sheet */}
       {selected && (
-        <div className="fixed inset-0 z-[200] flex items-end" onClick={() => setSelectedId(null)}
+        <div className="fixed inset-0 z-[200] flex items-end" onClick={() => { setSelectedId(null); setEditMode(false); }}
           style={{ background: "rgba(5,3,3,0.76)" }}>
           <div className="w-full max-h-[92dvh] rounded-t-[22px] overflow-y-auto pb-6"
             onClick={e => e.stopPropagation()}
@@ -225,94 +225,244 @@ export default function ProspectsPage() {
               borderTop: "1px solid hsl(var(--glass-border))",
               boxShadow: "0 -20px 60px rgba(0,0,0,0.6)",
             }}>
-            {/* Handle */}
             <div className="w-9 h-1 rounded-full mx-auto mt-3 mb-0" style={{ background: "hsl(var(--glass-border))" }} />
-            {/* Header */}
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
               <h2 className="font-display text-xl font-bold text-foreground">{selected.name}</h2>
-              <button onClick={() => setSelectedId(null)} className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-sm text-muted-foreground"
-                style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>✕</button>
-            </div>
-            <div className="px-4 pb-2">
-              <div className="flex gap-1.5 flex-wrap mb-1.5">
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${getSourceBadgeClass(selected.source)}`}>
-                  {getSourceIcon(selected.source)} {selected.source}
-                </span>
-                {selected.presence === "OUI" && <span className="badge-present inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold">PRÉSENT</span>}
-                {selected.closing === "OUI" && <span className="badge-closed inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold">✓ CLOSÉ</span>}
-              </div>
-              {selected.contact && selected.contact !== "-" && (
-                <a href={`tel:${selected.contact.replace(/-/g, "")}`} className="text-[15px] font-semibold text-beige-2 flex items-center gap-1.5">
-                  {selected.contact} 📞
-                </a>
-              )}
-            </div>
-
-            {/* Info Grid */}
-            <div className="grid grid-cols-2 gap-2 px-3.5 pb-2.5">
-              <div className="rounded-xl p-2.5" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-                <div className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-0.5">DATE & HEURE</div>
-                <div className="text-sm font-medium text-foreground">{selected.date} {selected.heure}</div>
-              </div>
-              <div className="rounded-xl p-2.5" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-                <div className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-0.5">TYPE</div>
-                <div className="text-sm font-medium text-foreground">
-                  {selected.type === "VISIO" ? "🖥 Visio" : selected.type === "APPEL" ? "📞 Appel" : "🤝 Physique"}
-                </div>
-              </div>
-              {selected.objectif && (
-                <div className="rounded-xl p-2.5" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-                  <div className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-0.5">OBJECTIF</div>
-                  <div className="inline-flex px-2 py-0.5 rounded-lg text-xs font-semibold text-foreground"
-                    style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>
-                    {selected.objectif}
-                  </div>
-                </div>
-              )}
-              {selected.offre && selected.offre !== "-" && (
-                <div className="col-span-2 rounded-xl p-2.5" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-                  <div className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-0.5">OFFRE</div>
-                  <div className="font-display text-sm text-bordeaux-2 font-bold">{selected.offre}</div>
-                </div>
-              )}
-            </div>
-
-            {/* Bilan Section */}
-            <div className="mx-3.5 mb-3 rounded-xl p-3"
-              style={{ background: "hsl(348 63% 30% / 0.07)", border: "1px solid hsl(348 63% 30% / 0.2)" }}>
-              <div className="text-[9px] uppercase tracking-[2px] text-bordeaux-2 font-bold mb-2">
-                {selected.bilanValidated ? "✓ BILAN VALIDÉ" : "BILAN"}
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                <div className="rounded-lg p-2" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-                  <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">PRÉSENCE</div>
-                  <div className="text-sm text-foreground">{selected.presence === "OUI" ? "✓ PRÉSENT" : selected.presence === "NON" ? "✗ ABSENT" : "—"}</div>
-                </div>
-                <div className="rounded-lg p-2" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-                  <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">CLOSING</div>
-                  <div className={`text-sm ${selected.closing === "OUI" ? "text-success" : "text-muted-foreground"}`}>
-                    {selected.closing === "OUI" ? "✓ CLOSÉ" : selected.closing}
-                  </div>
-                </div>
-                <div className="rounded-lg p-2" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-                  <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">OBJECTION</div>
-                  <div className={`text-sm ${selected.objection === "AUCUNE" ? "text-success" : selected.objection === "BUDGET" ? "text-destructive" : "text-warning"}`}>
-                    {selected.objection === "AUCUNE" ? "✓ Aucune" : selected.objection || "—"}
-                  </div>
-                </div>
-                <div className="rounded-lg p-2" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-                  <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">OFFRE</div>
-                  <div className="text-sm text-bordeaux-2 font-medium">{selected.offre && selected.offre !== "-" ? selected.offre : "—"}</div>
-                </div>
+              <div className="flex gap-1.5">
+                {!editMode && (
+                  <button onClick={() => { setEditMode(true); setEditData({ ...selected }); }}
+                    className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-sm"
+                    style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--beige2))" }}>✎</button>
+                )}
+                <button onClick={() => { setSelectedId(null); setEditMode(false); }} className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-sm text-muted-foreground"
+                  style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>✕</button>
               </div>
             </div>
 
-            {/* Notes */}
-            {selected.notes && (
-              <div className="mx-3.5 mb-3 rounded-xl p-3" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-                <div className="text-[9px] uppercase tracking-[2px] text-muted-foreground mb-1">NOTES</div>
-                <div className="text-sm text-foreground italic">{selected.notes}</div>
+            {editMode ? (
+              <div className="px-4 pt-2 space-y-3">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Sexe</label>
+                    <select value={editData.sex || "F"} onChange={e => setEditData(p => ({ ...p, sex: e.target.value as "F" | "H" }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      <option value="F">Femme</option>
+                      <option value="H">Homme</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Source</label>
+                    <select value={editData.source} onChange={e => setEditData(p => ({ ...p, source: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Nom</label>
+                  <input value={editData.name || ""} onChange={e => setEditData(p => ({ ...p, name: e.target.value }))}
+                    className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                </div>
+                <div>
+                  <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Téléphone</label>
+                  <input value={editData.contact || ""} onChange={e => setEditData(p => ({ ...p, contact: e.target.value }))}
+                    className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Date RDV</label>
+                    <input value={editData.date || ""} onChange={e => setEditData(p => ({ ...p, date: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Heure</label>
+                    <input value={editData.heure || ""} onChange={e => setEditData(p => ({ ...p, heure: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Statut</label>
+                    <select value={editData.statut} onChange={e => setEditData(p => ({ ...p, statut: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      <option value="CONTACT">Contact</option>
+                      <option value="RDV">RDV</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Type</label>
+                    <select value={editData.type} onChange={e => setEditData(p => ({ ...p, type: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      <option value="PHYSIQUE">Physique</option>
+                      <option value="VISIO">Visio</option>
+                      <option value="APPEL">Appel</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Présence</label>
+                    <select value={editData.presence} onChange={e => setEditData(p => ({ ...p, presence: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      <option value="">—</option>
+                      <option value="OUI">Oui</option>
+                      <option value="NON">Non</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Objectif</label>
+                    <select value={editData.objectif} onChange={e => setEditData(p => ({ ...p, objectif: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      <option value="">—</option>
+                      {OBJECTIFS.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Objection</label>
+                    <select value={editData.objection} onChange={e => setEditData(p => ({ ...p, objection: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      <option value="">—</option>
+                      <option value="AUCUNE">Aucune</option>
+                      <option value="BUDGET">Budget</option>
+                      <option value="REFLEXION">Réflexion</option>
+                      <option value="TEMPS">Temps</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Closing</label>
+                    <select value={editData.closing} onChange={e => setEditData(p => ({ ...p, closing: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      <option value="NON">Non</option>
+                      <option value="OUI">Oui</option>
+                      <option value="R">R</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Offre</label>
+                  <select value={editData.offre} onChange={e => setEditData(p => ({ ...p, offre: e.target.value }))}
+                    className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                    <option value="-">—</option>
+                    {activeOffres.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Prix réel €</label>
+                  <input type="number" value={editData.prixReel || ""} onChange={e => setEditData(p => ({ ...p, prixReel: Number(e.target.value) }))}
+                    className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                </div>
+                <div>
+                  <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Notes</label>
+                  <textarea value={editData.notes || ""} onChange={e => setEditData(p => ({ ...p, notes: e.target.value }))}
+                    className="w-full rounded-xl p-2.5 text-sm outline-none resize-none min-h-[80px]" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => {
+                    setProspects(prospects.map(p => p.id === selected.id ? { ...p, ...editData } as Prospect : p));
+                    setEditMode(false);
+                  }} className="flex-1 py-3 rounded-xl font-semibold text-sm text-foreground"
+                    style={{ background: "linear-gradient(135deg, hsl(var(--bordeaux2)), hsl(var(--bordeaux)))" }}>
+                    Sauvegarder
+                  </button>
+                  <button onClick={() => setEditMode(false)} className="px-5 py-3 rounded-xl text-sm text-muted-foreground"
+                    style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                    Annuler
+                  </button>
+                </div>
+                <button onClick={() => {
+                  if (confirm("Supprimer ce prospect ?")) {
+                    setProspects(prospects.filter(p => p.id !== selected.id));
+                    setSelectedId(null);
+                    setEditMode(false);
+                  }
+                }} className="w-full py-2.5 rounded-xl text-sm text-destructive font-medium"
+                  style={{ background: "hsl(0 50% 43% / 0.08)", border: "1px solid hsl(0 50% 43% / 0.2)" }}>
+                  🗑 Supprimer le prospect
+                </button>
               </div>
+            ) : (
+              <>
+                <div className="px-4 pb-2">
+                  <div className="flex gap-1.5 flex-wrap mb-1.5">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${getSourceBadgeClass(selected.source)}`}>
+                      {getSourceIcon(selected.source)} {selected.source}
+                    </span>
+                    {selected.presence === "OUI" && <span className="badge-present inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold">PRÉSENT</span>}
+                    {selected.closing === "OUI" && <span className="badge-closed inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold">✓ CLOSÉ</span>}
+                  </div>
+                  {selected.contact && selected.contact !== "-" && (
+                    <a href={`tel:${selected.contact.replace(/-/g, "")}`} className="text-[15px] font-semibold text-beige-2 flex items-center gap-1.5">
+                      {selected.contact} 📞
+                    </a>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 px-3.5 pb-2.5">
+                  <div className="rounded-xl p-2.5" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                    <div className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-0.5">DATE & HEURE</div>
+                    <div className="text-sm font-medium text-foreground">{selected.date} {selected.heure}</div>
+                  </div>
+                  <div className="rounded-xl p-2.5" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                    <div className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-0.5">TYPE</div>
+                    <div className="text-sm font-medium text-foreground">
+                      {selected.type === "VISIO" ? "🖥 Visio" : selected.type === "APPEL" ? "📞 Appel" : "🤝 Physique"}
+                    </div>
+                  </div>
+                  {selected.objectif && (
+                    <div className="rounded-xl p-2.5" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                      <div className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-0.5">OBJECTIF</div>
+                      <div className="inline-flex px-2 py-0.5 rounded-lg text-xs font-semibold text-foreground"
+                        style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>
+                        {selected.objectif}
+                      </div>
+                    </div>
+                  )}
+                  {selected.offre && selected.offre !== "-" && (
+                    <div className="col-span-2 rounded-xl p-2.5" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                      <div className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-0.5">OFFRE</div>
+                      <div className="font-display text-sm text-bordeaux-2 font-bold">{selected.offre}</div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mx-3.5 mb-3 rounded-xl p-3"
+                  style={{ background: "hsl(348 63% 30% / 0.07)", border: "1px solid hsl(348 63% 30% / 0.2)" }}>
+                  <div className="text-[9px] uppercase tracking-[2px] text-bordeaux-2 font-bold mb-2">
+                    {selected.bilanValidated ? "✓ BILAN VALIDÉ" : "BILAN"}
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="rounded-lg p-2" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">PRÉSENCE</div>
+                      <div className="text-sm text-foreground">{selected.presence === "OUI" ? "✓ PRÉSENT" : selected.presence === "NON" ? "✗ ABSENT" : "—"}</div>
+                    </div>
+                    <div className="rounded-lg p-2" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">CLOSING</div>
+                      <div className={`text-sm ${selected.closing === "OUI" ? "text-success" : "text-muted-foreground"}`}>
+                        {selected.closing === "OUI" ? "✓ CLOSÉ" : selected.closing}
+                      </div>
+                    </div>
+                    <div className="rounded-lg p-2" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">OBJECTION</div>
+                      <div className={`text-sm ${selected.objection === "AUCUNE" ? "text-success" : selected.objection === "BUDGET" ? "text-destructive" : "text-warning"}`}>
+                        {selected.objection === "AUCUNE" ? "✓ Aucune" : selected.objection || "—"}
+                      </div>
+                    </div>
+                    <div className="rounded-lg p-2" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-0.5">OFFRE</div>
+                      <div className="text-sm text-bordeaux-2 font-medium">{selected.offre && selected.offre !== "-" ? selected.offre : "—"}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {selected.notes && (
+                  <div className="mx-3.5 mb-3 rounded-xl p-3" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                    <div className="text-[9px] uppercase tracking-[2px] text-muted-foreground mb-1">NOTES</div>
+                    <div className="text-sm text-foreground italic">{selected.notes}</div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
