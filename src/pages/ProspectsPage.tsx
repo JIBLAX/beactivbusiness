@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import { Prospect, SOURCES, OBJECTIFS, OFFRES } from "@/data/types";
+import { useApp as useAppForOffres } from "@/store/AppContext";
 
 function getSourceBadgeClass(source: string) {
   if (source.includes("FITNESS")) return "badge-source-fp";
