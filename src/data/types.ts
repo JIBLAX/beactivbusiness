@@ -142,3 +142,23 @@ export const SOURCES = [
 ];
 
 export const OBJECTIFS = ["FATLOSS", "SCULPT", "HEALTH", "STRONG", "AUTRE"];
+
+export interface Offre {
+  id: string;
+  name: string;
+  price: number;
+  active: boolean;
+  priceHistory: { price: number; date: string }[];
+}
+
+export const INITIAL_OFFRES: Offre[] = [
+  { id: "o1", name: "ACTIV PROGRAM STANDARD", price: 450, active: true, priceHistory: [{ price: 450, date: "2025-01-01" }] },
+  { id: "o2", name: "ACTIV PROGRAM STANDARD +", price: 600, active: true, priceHistory: [{ price: 600, date: "2025-01-01" }] },
+  { id: "o3", name: "ACTIV PROGRAM ONLINE (3 FOIS)", price: 350, active: true, priceHistory: [{ price: 350, date: "2025-01-01" }] },
+  { id: "o4", name: "ACTIV PROGRAM HYBRIDE (3 FOIS)", price: 500, active: true, priceHistory: [{ price: 500, date: "2025-01-01" }] },
+  { id: "o5", name: "A LA CARTE", price: 50, active: true, priceHistory: [{ price: 50, date: "2025-01-01" }] },
+  { id: "o6", name: "TIPS PAYANT", price: 20, active: true, priceHistory: [{ price: 20, date: "2025-01-01" }] },
+  { id: "o7", name: "JM PASS", price: 80, active: true, priceHistory: [{ price: 80, date: "2025-01-01" }] },
+  { id: "o8", name: "CARDIO MOUV", price: 30, active: true, priceHistory: [{ price: 30, date: "2025-01-01" }] },
+  { id: "o9", name: "COACHING BRUT", price: 40, active: true, priceHistory: [{ price: 40, date: "2025-01-01" }] },
+];
