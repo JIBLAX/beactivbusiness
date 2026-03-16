@@ -33,13 +33,16 @@ function getMonth(d: string): string {
 }
 
 export default function ProspectsPage() {
-  const { prospects, setProspects } = useApp();
+  const { prospects, setProspects, offres } = useApp();
   const [search, setSearch] = useState("");
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterClosing, setFilterClosing] = useState("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState<Partial<Prospect>>({});
   const [newProspect, setNewProspect] = useState<Partial<Prospect>>({ sex: "F", source: "FITNESS PARK", statut: "CONTACT", objectif: "FATLOSS" });
+  const activeOffres = offres.filter(o => o.active).map(o => o.name);
 
   const months = useMemo(() => {
     const m = new Set<string>();
