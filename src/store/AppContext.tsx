@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Prospect, ActivResetClient, FinanceEntry, Expense, MonthlyFinance, AppPage } from "@/data/types";
+import { Prospect, ActivResetClient, FinanceEntry, Expense, MonthlyFinance, AppPage, Offre, INITIAL_OFFRES } from "@/data/types";
 import { initialProspects } from "@/data/prospects";
 import { initialActivResetClients } from "@/data/activResetClients";
 
@@ -12,6 +12,7 @@ interface AppState {
   expenses: Expense[];
   portageEnabled: boolean;
   versementsPerso: Record<string, number | null>;
+  offres: Offre[];
   setAuthenticated: (v: boolean) => void;
   setCurrentPage: (p: AppPage) => void;
   setProspects: (p: Prospect[]) => void;
@@ -20,6 +21,7 @@ interface AppState {
   setExpenses: (e: Expense[]) => void;
   setPortageEnabled: (v: boolean) => void;
   setVersementsPerso: (v: Record<string, number | null>) => void;
+  setOffres: (o: Offre[]) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -42,6 +44,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [expenses, setExpenses] = useState<Expense[]>(() => loadFromStorage("ba_expenses", []));
   const [portageEnabled, setPortageEnabled] = useState(() => loadFromStorage("ba_portage", false));
   const [versementsPerso, setVersementsPerso] = useState<Record<string, number | null>>(() => loadFromStorage("ba_versements", {}));
+  const [offres, setOffres] = useState<Offre[]>(() => loadFromStorage("ba_offres", INITIAL_OFFRES));
 
   useEffect(() => { localStorage.setItem("ba_prospects", JSON.stringify(prospects)); }, [prospects]);
   useEffect(() => { localStorage.setItem("ba_ar_clients", JSON.stringify(activResetClients)); }, [activResetClients]);
@@ -49,11 +52,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { localStorage.setItem("ba_expenses", JSON.stringify(expenses)); }, [expenses]);
   useEffect(() => { localStorage.setItem("ba_portage", JSON.stringify(portageEnabled)); }, [portageEnabled]);
   useEffect(() => { localStorage.setItem("ba_versements", JSON.stringify(versementsPerso)); }, [versementsPerso]);
+  useEffect(() => { localStorage.setItem("ba_offres", JSON.stringify(offres)); }, [offres]);
 
   return (
     <AppContext.Provider value={{
-      isAuthenticated, currentPage, prospects, activResetClients, financeEntries, expenses, portageEnabled, versementsPerso,
-      setAuthenticated, setCurrentPage, setProspects, setActivResetClients, setFinanceEntries, setExpenses, setPortageEnabled, setVersementsPerso,
+      isAuthenticated, currentPage, prospects, activResetClients, financeEntries, expenses, portageEnabled, versementsPerso, offres,
+      setAuthenticated, setCurrentPage, setProspects, setActivResetClients, setFinanceEntries, setExpenses, setPortageEnabled, setVersementsPerso, setOffres,
     }}>
       {children}
     </AppContext.Provider>
