@@ -68,15 +68,16 @@ export const AR_PHASES_CYCLE2 = [
 export interface FinanceEntry {
   id: string;
   month: string; // YYYY-MM
-  type: "micro" | "portage" | "nova";
+  type: "micro" | "portage";
   label: string;
   amount: number;
   offre?: string;
   clientName?: string;
   paymentMode?: "especes" | "cb" | "virement" | "prelevement";
-  installmentGroup?: string; // links split payments together
-  installmentIndex?: number; // 1/3, 2/3, 3/3
+  installmentGroup?: string;
+  installmentIndex?: number;
   installmentTotal?: number;
+  sapHours?: number; // heures pour déclaration NOVA SAP
 }
 
 export const PAYMENT_MODES = [
