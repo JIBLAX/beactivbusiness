@@ -350,6 +350,40 @@ export default function ProspectsPage() {
                     {activeOffres.map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </div>
+
+                {/* Payment options shown when closing is OUI and offre is set */}
+                {editData.closing === "OUI" && editData.offre && editData.offre !== "-" && selected.closing !== "OUI" && (
+                  <div className="rounded-xl p-3 space-y-3" style={{ background: "hsl(148 33% 46% / 0.06)", border: "1px solid hsl(148 33% 46% / 0.2)" }}>
+                    <div className="text-[9px] uppercase tracking-[2px] text-success font-bold">💰 PAIEMENT — ENTRÉE AUTO</div>
+                    <div>
+                      <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Mode de paiement</label>
+                      <select value={editPaymentMode} onChange={e => setEditPaymentMode(e.target.value)}
+                        className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                        {PAYMENT_MODES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1.5 block">Paiement</label>
+                      <div className="flex gap-1.5">
+                        {[1, 2, 3].map(n => (
+                          <button key={n} type="button" onClick={() => setEditInstallments(n)}
+                            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${editInstallments === n ? "text-foreground" : "text-muted-foreground"}`}
+                            style={{
+                              background: editInstallments === n ? "linear-gradient(135deg, hsl(var(--bordeaux2) / 0.3), hsl(var(--bordeaux) / 0.15))" : "hsl(var(--surface3))",
+                              border: `1px solid ${editInstallments === n ? "hsl(var(--bordeaux2))" : "hsl(var(--glass-border))"}`,
+                            }}>
+                            {n === 1 ? "Comptant" : `${n}× fois`}
+                          </button>
+                        ))}
+                      </div>
+                      {editInstallments > 1 && (editData.prixReel || 0) > 0 && (
+                        <div className="text-[11px] text-muted-foreground mt-1.5">
+                          → {editInstallments} × {Math.round((editData.prixReel || 0) / editInstallments)}€
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Prix réel €</label>
                   <input type="number" value={editData.prixReel || ""} onChange={e => setEditData(p => ({ ...p, prixReel: Number(e.target.value) }))}
