@@ -3,7 +3,7 @@ import { useApp } from "@/store/AppContext";
 import { Offre } from "@/data/types";
 
 export default function OffresPage() {
-  const { offres, setOffres } = useApp();
+  const { offres, setOffres, prospects, setProspects, activResetClients, setActivResetClients, financeEntries, setFinanceEntries } = useApp();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState(0);
   const [editName, setEditName] = useState("");
@@ -20,18 +20,40 @@ export default function OffresPage() {
   const saveEdit = () => {
     if (!editingId) return;
     const today = new Date().toISOString().split("T")[0];
+    const oldOffre = offres.find(o => o.id === editingId);
+    if (!oldOffre) return;
+
+    const oldName = oldOffre.name;
+    const newOffreName = editName || oldOffre.name;
+    const nameChanged = oldName !== newOffreName;
+
+    // Update the offer
     setOffres(offres.map(o => {
       if (o.id !== editingId) return o;
       const priceChanged = o.price !== editPrice;
       return {
         ...o,
-        name: editName || o.name,
+        name: newOffreName,
         price: editPrice,
         priceHistory: priceChanged
           ? [...o.priceHistory, { price: editPrice, date: today }]
           : o.priceHistory,
       };
     }));
+
+    // Propagate name change to prospects, AR clients, and finance entries
+    if (nameChanged) {
+      setProspects(prospects.map(p =>
+        p.offre === oldName ? { ...p, offre: newOffreName } : p
+      ));
+      setActivResetClients(prev =>
+        prev.map(c => c.offre === oldName ? { ...c, offre: newOffreName } : c)
+      );
+      setFinanceEntries(financeEntries.map(e =>
+        e.offre === oldName ? { ...e, offre: newOffreName, label: e.label === oldName ? newOffreName : e.label.replace(oldName, newOffreName) } : e
+      ));
+    }
+
     setEditingId(null);
   };
 
@@ -62,7 +84,7 @@ export default function OffresPage() {
 
       <div className="glass-card rounded-xl p-3 relative overflow-hidden mb-3">
         <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">INFO</div>
-        <div className="text-[11px] text-muted-foreground">Les modifications de prix s'appliquent uniquement aux nouveaux clients.</div>
+        <div className="text-[11px] text-muted-foreground">Les modifications de prix s'appliquent aux nouveaux clients. Les changements de nom se propagent partout.</div>
       </div>
 
       <div className="flex flex-col gap-2 mb-4">
