@@ -33,7 +33,7 @@ function getMonth(d: string): string {
 }
 
 export default function ProspectsPage() {
-  const { prospects, setProspects, offres } = useApp();
+  const { prospects, setProspects, offres, financeEntries, setFinanceEntries } = useApp();
   const [search, setSearch] = useState("");
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterClosing, setFilterClosing] = useState("all");
@@ -41,6 +41,8 @@ export default function ProspectsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState<Partial<Prospect>>({});
+  const [editPaymentMode, setEditPaymentMode] = useState("cb");
+  const [editInstallments, setEditInstallments] = useState(1);
   const [newProspect, setNewProspect] = useState<Partial<Prospect>>({ sex: "F", source: "FITNESS PARK", statut: "CONTACT", objectif: "FATLOSS" });
   const activeOffres = offres.filter(o => o.active).map(o => o.name);
 
