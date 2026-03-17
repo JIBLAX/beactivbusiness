@@ -28,7 +28,7 @@ export default function AppLayout() {
         </div>
 
         <div className="flex-1">
-          <div className="text-sm font-semibold text-foreground">Coach</div>
+          <div className="text-sm font-semibold text-foreground">COACH JM</div>
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
