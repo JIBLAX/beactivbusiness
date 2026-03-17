@@ -36,12 +36,23 @@ function addMonths(month: string, offset: number): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
+function getQuarterMonths(year: number, quarter: number): string[] {
+  const startMonth = (quarter - 1) * 3 + 1;
+  return [0, 1, 2].map(i => `${year}-${String(startMonth + i).padStart(2, "0")}`);
+}
+
 export default function FinancesPage() {
   const { financeEntries, setFinanceEntries, expenses, setExpenses, portageEnabled, setPortageEnabled, versementsPerso, setVersementsPerso, offres } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "LOCAUX & BUREAUX", amount: 0 });
+  const [showSapTable, setShowSapTable] = useState(false);
+
+  // SAP table state
+  const currentYear = new Date().getFullYear();
+  const [sapYear, setSapYear] = useState(currentYear);
+  const [sapQuarter, setSapQuarter] = useState(Math.ceil((new Date().getMonth() + 1) / 3));
 
   // New entry state
   const [entrySource, setEntrySource] = useState<"offre" | "externe">("offre");
@@ -49,9 +60,10 @@ export default function FinancesPage() {
   const [entryExterneLabel, setEntryExterneLabel] = useState("");
   const [entryClientName, setEntryClientName] = useState("");
   const [entryAmount, setEntryAmount] = useState(0);
-  const [entryType, setEntryType] = useState<"micro" | "portage" | "nova">("micro");
+  const [entryType, setEntryType] = useState<"micro" | "portage">("micro");
   const [entryPaymentMode, setEntryPaymentMode] = useState<string>("cb");
   const [entryInstallments, setEntryInstallments] = useState(1);
+  const [entrySapHours, setEntrySapHours] = useState(0);
 
   const activeOffres = offres.filter(o => o.active);
 
@@ -60,8 +72,7 @@ export default function FinancesPage() {
 
   const caMicro = monthEntries.filter(e => e.type === "micro").reduce((s, e) => s + e.amount, 0);
   const caPortage = monthEntries.filter(e => e.type === "portage").reduce((s, e) => s + e.amount, 0);
-  const novaSap = monthEntries.filter(e => e.type === "nova").reduce((s, e) => s + e.amount, 0);
-  const totalEntrees = caMicro + caPortage + novaSap;
+  const totalEntrees = caMicro + caPortage;
   const totalDepenses = monthExpenses.reduce((s, e) => s + e.amount, 0);
 
   const urssaf = calcUrssaf(caMicro);
@@ -74,7 +85,18 @@ export default function FinancesPage() {
   const bureauExpenses = monthExpenses.filter(e => e.category === "LOCAUX & BUREAUX");
   const prorataAmount = bureauExpenses.reduce((s, e) => s + e.amount, 0) * PRORATA_BUREAU;
 
-  // When selecting an offer, auto-fill amount
+  // SAP quarterly data
+  const sapMonths = useMemo(() => getQuarterMonths(sapYear, sapQuarter), [sapYear, sapQuarter]);
+  const sapData = useMemo(() => {
+    return sapMonths.map(month => {
+      const entries = financeEntries.filter(e => e.month === month);
+      const uniqueClients = new Set(entries.filter(e => e.clientName).map(e => e.clientName));
+      const totalHours = entries.reduce((s, e) => s + (e.sapHours || 0), 0);
+      const totalCA = entries.reduce((s, e) => s + e.amount, 0);
+      return { month, nbClients: uniqueClients.size, hours: totalHours, ca: totalCA };
+    });
+  }, [sapMonths, financeEntries]);
+
   const handleOffreSelect = (offreName: string) => {
     setEntryOffre(offreName);
     const found = offres.find(o => o.name === offreName);
@@ -90,6 +112,7 @@ export default function FinancesPage() {
     setEntryType("micro");
     setEntryPaymentMode("cb");
     setEntryInstallments(1);
+    setEntrySapHours(0);
   };
 
   const addEntry = () => {
@@ -114,6 +137,7 @@ export default function FinancesPage() {
         installmentGroup: entryInstallments > 1 ? groupId : undefined,
         installmentIndex: entryInstallments > 1 ? i + 1 : undefined,
         installmentTotal: entryInstallments > 1 ? entryInstallments : undefined,
+        sapHours: entrySapHours > 0 ? (entryInstallments > 1 ? Math.round((entrySapHours / entryInstallments) * 10) / 10 : entrySapHours) : undefined,
       });
     }
 
@@ -150,6 +174,14 @@ export default function FinancesPage() {
   const paymentModeLabel = (mode?: string) => {
     const found = PAYMENT_MODES.find(p => p.value === mode);
     return found ? found.label : "";
+  };
+
+  const deleteEntry = (id: string) => {
+    setFinanceEntries(financeEntries.filter(e => e.id !== id));
+  };
+
+  const deleteExpense = (id: string) => {
+    setExpenses(expenses.filter(e => e.id !== id));
   };
 
   return (
@@ -193,7 +225,7 @@ export default function FinancesPage() {
       {/* Breakdown */}
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="glass-card rounded-xl p-3 relative overflow-hidden">
-          <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">MICRO</div>
+          <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">CA MICRO</div>
           <div className="text-xl font-bold text-success">{caMicro.toFixed(0)}€</div>
         </div>
         <div className="glass-card rounded-xl p-3 relative overflow-hidden">
@@ -206,10 +238,6 @@ export default function FinancesPage() {
             <div className="text-xl font-bold text-info">{caPortage.toFixed(0)}€</div>
           </div>
         )}
-        <div className="glass-card rounded-xl p-3 relative overflow-hidden">
-          <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">NOVA SAP</div>
-          <div className="text-xl font-bold text-beige-2">{novaSap.toFixed(0)}€</div>
-        </div>
         <div className="glass-card rounded-xl p-3 relative overflow-hidden">
           <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">DÉPENSES</div>
           <div className="text-xl font-bold text-destructive">-{totalDepenses.toFixed(0)}€</div>
@@ -258,6 +286,83 @@ export default function FinancesPage() {
         <div className="text-lg font-bold text-beige-2">{prorataAmount.toFixed(0)}€</div>
       </div>
 
+      {/* NOVA SAP Reporting */}
+      <div className="mb-4">
+        <button onClick={() => setShowSapTable(!showSapTable)}
+          className="w-full flex items-center justify-between glass-card rounded-xl p-3 relative overflow-hidden cursor-pointer">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📋</span>
+            <div>
+              <div className="text-sm font-semibold text-foreground">Déclaration NOVA SAP</div>
+              <div className="text-[11px] text-muted-foreground">Tableau trimestriel pour déclaration</div>
+            </div>
+          </div>
+          <span className={`text-muted-foreground text-xs transition-transform ${showSapTable ? "rotate-180" : ""}`}>▼</span>
+        </button>
+
+        {showSapTable && (
+          <div className="mt-2 rounded-xl p-3" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+            {/* Year & Quarter selector */}
+            <div className="flex gap-2 mb-3">
+              <select value={sapYear} onChange={e => setSapYear(Number(e.target.value))}
+                className="flex-1 rounded-lg p-2 text-sm outline-none"
+                style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                {[2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4].map(q => (
+                  <button key={q} onClick={() => setSapQuarter(q)}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${sapQuarter === q ? "text-foreground" : "text-muted-foreground"}`}
+                    style={{
+                      background: sapQuarter === q ? "linear-gradient(135deg, hsl(var(--bordeaux2) / 0.3), hsl(var(--bordeaux) / 0.15))" : "hsl(var(--glass))",
+                      border: `1px solid ${sapQuarter === q ? "hsl(var(--bordeaux2))" : "hsl(var(--glass-border))"}`,
+                    }}>
+                    T{q}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsl(var(--glass-border))" }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: "hsl(var(--glass))" }}>
+                    <th className="text-left p-2.5 text-[10px] uppercase tracking-[1.5px] text-muted-foreground font-semibold">Mois</th>
+                    <th className="text-center p-2.5 text-[10px] uppercase tracking-[1.5px] text-muted-foreground font-semibold">Clients</th>
+                    <th className="text-center p-2.5 text-[10px] uppercase tracking-[1.5px] text-muted-foreground font-semibold">Heures</th>
+                    <th className="text-right p-2.5 text-[10px] uppercase tracking-[1.5px] text-muted-foreground font-semibold">CA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sapData.map((row, i) => (
+                    <tr key={row.month} style={{ borderTop: i > 0 ? "1px solid hsl(var(--glass-border))" : undefined }}>
+                      <td className="p-2.5 font-medium text-foreground">{formatMonth(row.month)}</td>
+                      <td className="p-2.5 text-center text-foreground">{row.nbClients}</td>
+                      <td className="p-2.5 text-center text-foreground">{row.hours}h</td>
+                      <td className="p-2.5 text-right font-bold text-success">{row.ca.toFixed(0)}€</td>
+                    </tr>
+                  ))}
+                  {/* Total row */}
+                  <tr style={{ borderTop: "2px solid hsl(var(--bordeaux2) / 0.4)", background: "hsl(var(--bordeaux) / 0.05)" }}>
+                    <td className="p-2.5 font-bold text-foreground">TOTAL T{sapQuarter}</td>
+                    <td className="p-2.5 text-center font-bold text-foreground">
+                      {new Set(financeEntries.filter(e => sapMonths.includes(e.month) && e.clientName).map(e => e.clientName)).size}
+                    </td>
+                    <td className="p-2.5 text-center font-bold text-foreground">
+                      {sapData.reduce((s, r) => s + r.hours, 0)}h
+                    </td>
+                    <td className="p-2.5 text-right font-bold text-success">
+                      {sapData.reduce((s, r) => s + r.ca, 0).toFixed(0)}€
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Entrées */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
@@ -273,12 +378,16 @@ export default function FinancesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-foreground truncate">{e.label}</div>
                   <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
-                    <span>{e.type.toUpperCase()}</span>
+                    <span>{e.type === "portage" ? "PORTAGE" : "MICRO"}</span>
                     {e.clientName && <span>· {e.clientName}</span>}
+                    {e.sapHours && <span>· {e.sapHours}h</span>}
                     {e.paymentMode && <span className="px-1.5 py-0.5 rounded-full text-[9px]" style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>{paymentModeLabel(e.paymentMode)}</span>}
                   </div>
                 </div>
-                <div className="text-sm font-bold text-success ml-2">+{e.amount}€</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-bold text-success">+{e.amount}€</div>
+                  <button onClick={() => deleteEntry(e.id)} className="text-xs text-muted-foreground hover:text-destructive transition-colors">✕</button>
+                </div>
               </div>
             ))}
           </div>
@@ -301,7 +410,10 @@ export default function FinancesPage() {
                   <div className="text-sm font-medium text-foreground">{e.label}</div>
                   <div className="text-[10px] text-muted-foreground">{e.category}</div>
                 </div>
-                <div className="text-sm font-bold text-destructive">-{e.amount}€</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-bold text-destructive">-{e.amount}€</div>
+                  <button onClick={() => deleteExpense(e.id)} className="text-xs text-muted-foreground hover:text-destructive transition-colors">✕</button>
+                </div>
               </div>
             ))}
           </div>
@@ -321,7 +433,7 @@ export default function FinancesPage() {
                 style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>✕</button>
             </div>
             <div className="px-4 space-y-3">
-              {/* Source toggle: Offre client vs Externe */}
+              {/* Source toggle */}
               <div>
                 <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1.5 block">Source</label>
                 <div className="flex gap-1.5">
@@ -340,7 +452,6 @@ export default function FinancesPage() {
 
               {entrySource === "offre" ? (
                 <>
-                  {/* Offer dropdown */}
                   <div>
                     <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Offre *</label>
                     <select value={entryOffre} onChange={e => handleOffreSelect(e.target.value)}
@@ -352,38 +463,49 @@ export default function FinancesPage() {
                       ))}
                     </select>
                   </div>
-                  {/* Client autocomplete */}
                   <div>
                     <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Client</label>
                     <ClientAutocomplete value={entryClientName} onChange={v => setEntryClientName(v)} />
                   </div>
                 </>
               ) : (
-                <>
-                  {/* Manual label */}
-                  <div>
-                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Libellé *</label>
-                    <input value={entryExterneLabel} onChange={e => setEntryExterneLabel(e.target.value)} placeholder="Ex: URSSAF, Impôts, Remboursement..."
-                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
-                  </div>
-                </>
+                <div>
+                  <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Libellé *</label>
+                  <input value={entryExterneLabel} onChange={e => setEntryExterneLabel(e.target.value)} placeholder="Ex: URSSAF, Impôts, Remboursement..."
+                    className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                </div>
               )}
 
-              {/* Type */}
-              <div>
-                <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Type</label>
-                <select value={entryType} onChange={e => setEntryType(e.target.value as any)}
-                  className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
-                  <option value="micro">Micro-entreprise</option>
-                  {portageEnabled && <option value="portage">Portage JUMP</option>}
-                  <option value="nova">Nova SAP</option>
-                </select>
-              </div>
+              {/* Type (only if portage enabled) */}
+              {portageEnabled && (
+                <div>
+                  <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Type</label>
+                  <div className="flex gap-1.5">
+                    {([["micro", "Micro-entreprise"], ["portage", "Portage JUMP"]] as const).map(([val, lbl]) => (
+                      <button key={val} onClick={() => setEntryType(val)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${entryType === val ? "text-foreground" : "text-muted-foreground"}`}
+                        style={{
+                          background: entryType === val ? "linear-gradient(135deg, hsl(var(--bordeaux2) / 0.3), hsl(var(--bordeaux) / 0.15))" : "hsl(var(--surface3))",
+                          border: `1px solid ${entryType === val ? "hsl(var(--bordeaux2))" : "hsl(var(--glass-border))"}`,
+                        }}>
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Amount */}
               <div>
                 <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Montant total €</label>
                 <input type="number" value={entryAmount || ""} onChange={e => setEntryAmount(Number(e.target.value))} placeholder="0"
+                  className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+              </div>
+
+              {/* SAP Hours */}
+              <div>
+                <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Heures SAP (pour déclaration NOVA)</label>
+                <input type="number" value={entrySapHours || ""} onChange={e => setEntrySapHours(Number(e.target.value))} placeholder="0"
                   className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
               </div>
 
