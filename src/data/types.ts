@@ -73,7 +73,18 @@ export interface FinanceEntry {
   amount: number;
   offre?: string;
   clientName?: string;
+  paymentMode?: "especes" | "cb" | "virement" | "prelevement";
+  installmentGroup?: string; // links split payments together
+  installmentIndex?: number; // 1/3, 2/3, 3/3
+  installmentTotal?: number;
 }
+
+export const PAYMENT_MODES = [
+  { value: "especes", label: "Espèces" },
+  { value: "cb", label: "Carte Bancaire" },
+  { value: "virement", label: "Virement" },
+  { value: "prelevement", label: "Prélèvement Auto." },
+] as const;
 
 export interface Expense {
   id: string;
