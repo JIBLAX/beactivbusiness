@@ -396,8 +396,46 @@ export default function ProspectsPage() {
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => {
+                    const wasNotClosed = selected.closing !== "OUI";
+                    const nowClosed = editData.closing === "OUI";
+                    const hasOffre = editData.offre && editData.offre !== "-";
+                    const amount = editData.prixReel || 0;
+
+                    // Save prospect
                     setProspects(prospects.map(p => p.id === selected.id ? { ...p, ...editData } as Prospect : p));
+
+                    // Auto-create finance entries if newly closed with an offer
+                    if (wasNotClosed && nowClosed && hasOffre && amount > 0) {
+                      const now = new Date();
+                      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+                      const groupId = "grp" + Date.now();
+                      const installmentAmount = Math.round((amount / editInstallments) * 100) / 100;
+                      const newEntries: FinanceEntry[] = [];
+
+                      for (let i = 0; i < editInstallments; i++) {
+                        const [y, m] = currentMonth.split("-").map(Number);
+                        const d = new Date(y, m - 1 + i, 1);
+                        const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                        newEntries.push({
+                          id: "fe" + Date.now() + "_" + i,
+                          month,
+                          type: "micro",
+                          label: editInstallments > 1 ? `${editData.offre} (${i + 1}/${editInstallments})` : editData.offre!,
+                          amount: installmentAmount,
+                          offre: editData.offre,
+                          clientName: editData.name,
+                          paymentMode: editPaymentMode as any,
+                          installmentGroup: editInstallments > 1 ? groupId : undefined,
+                          installmentIndex: editInstallments > 1 ? i + 1 : undefined,
+                          installmentTotal: editInstallments > 1 ? editInstallments : undefined,
+                        });
+                      }
+                      setFinanceEntries([...financeEntries, ...newEntries]);
+                    }
+
                     setEditMode(false);
+                    setEditPaymentMode("cb");
+                    setEditInstallments(1);
                   }} className="flex-1 py-3 rounded-xl font-semibold text-sm text-foreground"
                     style={{ background: "linear-gradient(135deg, hsl(var(--bordeaux2)), hsl(var(--bordeaux)))" }}>
                     Sauvegarder
