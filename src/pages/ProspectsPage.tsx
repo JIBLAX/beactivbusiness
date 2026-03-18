@@ -398,6 +398,19 @@ export default function ProspectsPage() {
                   <input type="number" value={editData.prixReel || ""} onChange={e => setEditData(p => ({ ...p, prixReel: Number(e.target.value) }))}
                     className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
                 </div>
+                {/* SAP Toggle */}
+                <div className="flex items-center justify-between py-1 px-1 rounded-xl" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                  <div className="pl-2">
+                    <div className="text-xs font-medium text-foreground">SAP Domicile</div>
+                    <div className="text-[10px] text-muted-foreground">Comptabiliser dans NOVA SAP</div>
+                  </div>
+                  <label className="relative inline-block w-11 h-6 cursor-pointer mr-1">
+                    <input type="checkbox" checked={editData.sapEnabled || false} onChange={e => setEditData(p => ({ ...p, sapEnabled: e.target.checked }))} className="opacity-0 w-0 h-0" />
+                    <span className={`absolute inset-0 rounded-full transition-all ${editData.sapEnabled ? "bg-bordeaux/30 border-bordeaux-2" : "bg-surface-3 border-border"}`} style={{ border: "1px solid" }}>
+                      <span className={`absolute h-[18px] w-[18px] rounded-full bottom-[2px] transition-all ${editData.sapEnabled ? "left-[22px] bg-bordeaux-2" : "left-[2px] bg-muted-foreground"}`} />
+                    </span>
+                  </label>
+                </div>
                 <div>
                   <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Notes</label>
                   <textarea value={editData.notes || ""} onChange={e => setEditData(p => ({ ...p, notes: e.target.value }))}
