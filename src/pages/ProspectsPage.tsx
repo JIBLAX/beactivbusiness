@@ -100,6 +100,8 @@ export default function ProspectsPage() {
       noteBilan: 0,
       noteProfil: 0,
       bilanValidated: false,
+      age: newProspect.age || undefined,
+      sapEnabled: false,
     };
     setProspects([p, ...prospects]);
     setShowAdd(false);
