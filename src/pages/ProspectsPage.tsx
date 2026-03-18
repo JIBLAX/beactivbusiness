@@ -262,10 +262,17 @@ export default function ProspectsPage() {
                     </select>
                   </div>
                 </div>
-                <div>
-                  <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Nom</label>
-                  <input value={editData.name || ""} onChange={e => setEditData(p => ({ ...p, name: e.target.value }))}
-                    className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="col-span-2">
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Nom</label>
+                    <input value={editData.name || ""} onChange={e => setEditData(p => ({ ...p, name: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Âge</label>
+                    <input type="number" value={editData.age || ""} onChange={e => setEditData(p => ({ ...p, age: e.target.value ? Number(e.target.value) : undefined }))}
+                      placeholder="—" className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                  </div>
                 </div>
                 <div>
                   <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Téléphone</label>
