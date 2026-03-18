@@ -487,6 +487,8 @@ export default function ProspectsPage() {
                     </span>
                     {selected.presence === "OUI" && <span className="badge-present inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold">PRÉSENT</span>}
                     {selected.closing === "OUI" && <span className="badge-closed inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold">✓ CLOSÉ</span>}
+                    {selected.sapEnabled && <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-info" style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>🏠 SAP</span>}
+                    {selected.age && <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-muted-foreground" style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>{selected.age} ans</span>}
                   </div>
                   {selected.contact && selected.contact !== "-" && (
                     <a href={`tel:${selected.contact.replace(/-/g, "")}`} className="text-[15px] font-semibold text-beige-2 flex items-center gap-1.5">
