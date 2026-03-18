@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import ClientAutocomplete from "@/components/ui/ClientAutocomplete";
-import { EXPENSE_CATEGORIES, Expense, FinanceEntry, ExpenseCategory, PAYMENT_MODES } from "@/data/types";
+import { EXPENSE_CATEGORIES, Expense, FinanceEntry, ExpenseCategory, PAYMENT_MODES, CASH_DECLARATIONS } from "@/data/types";
 
 const MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
@@ -28,7 +28,7 @@ function calcGestionPerso(revenuDispo: number): number {
   return revenuDispo * 0.30;
 }
 
-const PRORATA_BUREAU = 13 / 43; // 30.23%
+const PRORATA_BUREAU = 13 / 43;
 
 function addMonths(month: string, offset: number): string {
   const [y, m] = month.split("-").map(Number);
@@ -42,19 +42,17 @@ function getQuarterMonths(year: number, quarter: number): string[] {
 }
 
 export default function FinancesPage() {
-  const { financeEntries, setFinanceEntries, expenses, setExpenses, portageEnabled, setPortageEnabled, versementsPerso, setVersementsPerso, offres } = useApp();
+  const { financeEntries, setFinanceEntries, expenses, setExpenses, portageEnabled, setPortageEnabled, versementsPerso, setVersementsPerso, offres, prospects } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "LOCAUX & BUREAUX", amount: 0 });
   const [showSapTable, setShowSapTable] = useState(false);
 
-  // SAP table state
   const currentYear = new Date().getFullYear();
   const [sapYear, setSapYear] = useState(currentYear);
   const [sapQuarter, setSapQuarter] = useState(Math.ceil((new Date().getMonth() + 1) / 3));
 
-  // New entry state
   const [entrySource, setEntrySource] = useState<"offre" | "externe">("offre");
   const [entryOffre, setEntryOffre] = useState("");
   const [entryExterneLabel, setEntryExterneLabel] = useState("");
@@ -64,19 +62,40 @@ export default function FinancesPage() {
   const [entryPaymentMode, setEntryPaymentMode] = useState<string>("cb");
   const [entryInstallments, setEntryInstallments] = useState(1);
   const [entrySapHours, setEntrySapHours] = useState(0);
+  const [entryCashDeclaration, setEntryCashDeclaration] = useState<string>("micro");
 
   const activeOffres = offres.filter(o => o.active);
+
+  // SAP-enabled clients
+  const sapClientNames = useMemo(() => {
+    return new Set(prospects.filter(p => p.sapEnabled).map(p => p.name));
+  }, [prospects]);
 
   const monthEntries = useMemo(() => financeEntries.filter(e => e.month === selectedMonth), [financeEntries, selectedMonth]);
   const monthExpenses = useMemo(() => expenses.filter(e => e.month === selectedMonth), [expenses, selectedMonth]);
 
-  const caMicro = monthEntries.filter(e => e.type === "micro").reduce((s, e) => s + e.amount, 0);
-  const caPortage = monthEntries.filter(e => e.type === "portage").reduce((s, e) => s + e.amount, 0);
-  const totalEntrees = caMicro + caPortage;
+  // Declared revenue calculations
+  const declaredMicro = monthEntries.filter(e => {
+    if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
+    return e.type === "micro";
+  }).reduce((s, e) => s + e.amount, 0);
+
+  const declaredPortage = monthEntries.filter(e => {
+    if (e.paymentMode === "especes") return e.cashDeclaration === "portage";
+    return e.type === "portage";
+  }).reduce((s, e) => s + e.amount, 0);
+
+  const nonDeclare = monthEntries.filter(e => e.paymentMode === "especes" && e.cashDeclaration === "non_declare").reduce((s, e) => s + e.amount, 0);
+
+  const totalBancaire = monthEntries.filter(e => e.paymentMode !== "especes").reduce((s, e) => s + e.amount, 0);
+  const totalEspeces = monthEntries.filter(e => e.paymentMode === "especes").reduce((s, e) => s + e.amount, 0);
+  const totalReel = monthEntries.reduce((s, e) => s + e.amount, 0);
+  const totalDeclare = declaredMicro + declaredPortage;
+
   const totalDepenses = monthExpenses.reduce((s, e) => s + e.amount, 0);
 
-  const urssaf = calcUrssaf(caMicro);
-  const revenuDispo = totalEntrees - urssaf - totalDepenses;
+  const urssaf = calcUrssaf(declaredMicro);
+  const revenuDispo = totalDeclare - urssaf - totalDepenses;
   const gestionPerso = calcGestionPerso(revenuDispo);
   const restePerso = revenuDispo - gestionPerso;
   const versementReel = versementsPerso[selectedMonth] ?? null;
@@ -85,17 +104,17 @@ export default function FinancesPage() {
   const bureauExpenses = monthExpenses.filter(e => e.category === "LOCAUX & BUREAUX");
   const prorataAmount = bureauExpenses.reduce((s, e) => s + e.amount, 0) * PRORATA_BUREAU;
 
-  // SAP quarterly data
+  // SAP quarterly data — only SAP-enabled clients
   const sapMonths = useMemo(() => getQuarterMonths(sapYear, sapQuarter), [sapYear, sapQuarter]);
   const sapData = useMemo(() => {
     return sapMonths.map(month => {
-      const entries = financeEntries.filter(e => e.month === month);
-      const uniqueClients = new Set(entries.filter(e => e.clientName).map(e => e.clientName));
+      const entries = financeEntries.filter(e => e.month === month && e.clientName && sapClientNames.has(e.clientName));
+      const uniqueClients = new Set(entries.map(e => e.clientName));
       const totalHours = entries.reduce((s, e) => s + (e.sapHours || 0), 0);
       const totalCA = entries.reduce((s, e) => s + e.amount, 0);
       return { month, nbClients: uniqueClients.size, hours: totalHours, ca: totalCA };
     });
-  }, [sapMonths, financeEntries]);
+  }, [sapMonths, financeEntries, sapClientNames]);
 
   const handleOffreSelect = (offreName: string) => {
     setEntryOffre(offreName);
@@ -113,6 +132,7 @@ export default function FinancesPage() {
     setEntryPaymentMode("cb");
     setEntryInstallments(1);
     setEntrySapHours(0);
+    setEntryCashDeclaration("micro");
   };
 
   const addEntry = () => {
@@ -138,6 +158,7 @@ export default function FinancesPage() {
         installmentIndex: entryInstallments > 1 ? i + 1 : undefined,
         installmentTotal: entryInstallments > 1 ? entryInstallments : undefined,
         sapHours: entrySapHours > 0 ? (entryInstallments > 1 ? Math.round((entrySapHours / entryInstallments) * 10) / 10 : entrySapHours) : undefined,
+        cashDeclaration: entryPaymentMode === "especes" ? entryCashDeclaration as any : undefined,
       });
     }
 
@@ -176,12 +197,17 @@ export default function FinancesPage() {
     return found ? found.label : "";
   };
 
-  const deleteEntry = (id: string) => {
-    setFinanceEntries(financeEntries.filter(e => e.id !== id));
+  const cashDeclLabel = (decl?: string) => {
+    if (!decl) return "";
+    const found = CASH_DECLARATIONS.find(c => c.value === decl);
+    return found ? found.label : "";
   };
 
-  const deleteExpense = (id: string) => {
-    setExpenses(expenses.filter(e => e.id !== id));
+  const deleteEntry = (id: string) => setFinanceEntries(financeEntries.filter(e => e.id !== id));
+  const deleteExpense = (id: string) => setExpenses(expenses.filter(e => e.id !== id));
+
+  const updateCashDeclaration = (id: string, decl: string) => {
+    setFinanceEntries(financeEntries.map(e => e.id === id ? { ...e, cashDeclaration: decl as any } : e));
   };
 
   return (
@@ -214,19 +240,33 @@ export default function FinancesPage() {
         </select>
       </div>
 
-      {/* Summary Card */}
+      {/* TOTAL RÉEL Hero */}
       <div className="rounded-2xl p-4 mb-3"
-        style={{ background: "linear-gradient(135deg, hsl(348 63% 30% / 0.18), hsl(348 63% 30% / 0.08))", border: "1px solid hsl(348 63% 30% / 0.3)" }}>
-        <div className="text-[10px] uppercase tracking-[2px] text-bordeaux-2 mb-1">{formatMonth(selectedMonth)}</div>
-        <div className="font-display text-4xl font-extrabold text-foreground leading-none">{totalEntrees.toFixed(0)}€</div>
-        <div className="text-[11px] text-muted-foreground mt-0.5">Total entrées</div>
+        style={{ background: "linear-gradient(135deg, hsl(348 63% 30% / 0.22), hsl(348 63% 30% / 0.08))", border: "1px solid hsl(348 63% 30% / 0.35)" }}>
+        <div className="text-[10px] uppercase tracking-[2px] text-bordeaux-2 mb-1">{formatMonth(selectedMonth)} — REVENUS</div>
+        <div className="font-display text-4xl font-extrabold text-foreground leading-none">{totalReel.toFixed(0)}€</div>
+        <div className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider">Total réel</div>
+        <div className="grid grid-cols-3 gap-2 mt-3">
+          <div className="rounded-xl p-2 text-center" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+            <div className="text-sm font-bold text-foreground">{totalBancaire.toFixed(0)}€</div>
+            <div className="text-[8px] text-muted-foreground uppercase tracking-wider">Bancaire</div>
+          </div>
+          <div className="rounded-xl p-2 text-center" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+            <div className="text-sm font-bold text-warning">{totalEspeces.toFixed(0)}€</div>
+            <div className="text-[8px] text-muted-foreground uppercase tracking-wider">Espèces</div>
+          </div>
+          <div className="rounded-xl p-2 text-center" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+            <div className="text-sm font-bold text-muted-foreground">{nonDeclare.toFixed(0)}€</div>
+            <div className="text-[8px] text-muted-foreground uppercase tracking-wider">Non déclaré</div>
+          </div>
+        </div>
       </div>
 
       {/* Breakdown */}
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="glass-card rounded-xl p-3 relative overflow-hidden">
-          <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">CA MICRO</div>
-          <div className="text-xl font-bold text-success">{caMicro.toFixed(0)}€</div>
+          <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">CA MICRO déclaré</div>
+          <div className="text-xl font-bold text-success">{declaredMicro.toFixed(0)}€</div>
         </div>
         <div className="glass-card rounded-xl p-3 relative overflow-hidden">
           <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">URSSAF 26.1%</div>
@@ -235,7 +275,7 @@ export default function FinancesPage() {
         {portageEnabled && (
           <div className="glass-card rounded-xl p-3 relative overflow-hidden">
             <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">PORTAGE</div>
-            <div className="text-xl font-bold text-info">{caPortage.toFixed(0)}€</div>
+            <div className="text-xl font-bold text-info">{declaredPortage.toFixed(0)}€</div>
           </div>
         )}
         <div className="glass-card rounded-xl p-3 relative overflow-hidden">
@@ -263,14 +303,9 @@ export default function FinancesPage() {
       <div className="glass-card rounded-xl p-3 relative overflow-hidden mb-3">
         <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">VERSEMENT PERSO RÉEL</div>
         <div className="flex items-center gap-3">
-          <input
-            type="number"
-            value={versementReel ?? ""}
-            onChange={e => setVersementsPerso({ ...versementsPerso, [selectedMonth]: e.target.value ? Number(e.target.value) : null })}
-            placeholder="Montant versé"
-            className="flex-1 rounded-lg p-2 text-sm outline-none"
-            style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}
-          />
+          <input type="number" value={versementReel ?? ""} onChange={e => setVersementsPerso({ ...versementsPerso, [selectedMonth]: e.target.value ? Number(e.target.value) : null })}
+            placeholder="Montant versé" className="flex-1 rounded-lg p-2 text-sm outline-none"
+            style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
           {versementPct !== null && (
             <div className={`text-sm font-bold ${versementPct >= 80 ? "text-success" : versementPct >= 50 ? "text-warning" : "text-destructive"}`}>
               {versementPct}%
@@ -294,7 +329,7 @@ export default function FinancesPage() {
             <span className="text-lg">📋</span>
             <div>
               <div className="text-sm font-semibold text-foreground">Déclaration NOVA SAP</div>
-              <div className="text-[11px] text-muted-foreground">Tableau trimestriel pour déclaration</div>
+              <div className="text-[11px] text-muted-foreground">Clients SAP activés uniquement</div>
             </div>
           </div>
           <span className={`text-muted-foreground text-xs transition-transform ${showSapTable ? "rotate-180" : ""}`}>▼</span>
@@ -302,7 +337,6 @@ export default function FinancesPage() {
 
         {showSapTable && (
           <div className="mt-2 rounded-xl p-3" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-            {/* Year & Quarter selector */}
             <div className="flex gap-2 mb-3">
               <select value={sapYear} onChange={e => setSapYear(Number(e.target.value))}
                 className="flex-1 rounded-lg p-2 text-sm outline-none"
@@ -323,7 +357,6 @@ export default function FinancesPage() {
               </div>
             </div>
 
-            {/* Table */}
             <div className="rounded-xl overflow-hidden" style={{ border: "1px solid hsl(var(--glass-border))" }}>
               <table className="w-full text-sm">
                 <thead>
@@ -343,11 +376,10 @@ export default function FinancesPage() {
                       <td className="p-2.5 text-right font-bold text-success">{row.ca.toFixed(0)}€</td>
                     </tr>
                   ))}
-                  {/* Total row */}
                   <tr style={{ borderTop: "2px solid hsl(var(--bordeaux2) / 0.4)", background: "hsl(var(--bordeaux) / 0.05)" }}>
                     <td className="p-2.5 font-bold text-foreground">TOTAL T{sapQuarter}</td>
                     <td className="p-2.5 text-center font-bold text-foreground">
-                      {new Set(financeEntries.filter(e => sapMonths.includes(e.month) && e.clientName).map(e => e.clientName)).size}
+                      {new Set(financeEntries.filter(e => sapMonths.includes(e.month) && e.clientName && sapClientNames.has(e.clientName)).map(e => e.clientName)).size}
                     </td>
                     <td className="p-2.5 text-center font-bold text-foreground">
                       {sapData.reduce((s, r) => s + r.hours, 0)}h
@@ -359,6 +391,12 @@ export default function FinancesPage() {
                 </tbody>
               </table>
             </div>
+
+            {sapClientNames.size === 0 && (
+              <div className="text-[11px] text-muted-foreground mt-2 text-center italic">
+                Aucun client SAP activé. Active le switch SAP dans les profils prospects.
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -382,10 +420,25 @@ export default function FinancesPage() {
                     {e.clientName && <span>· {e.clientName}</span>}
                     {e.sapHours && <span>· {e.sapHours}h</span>}
                     {e.paymentMode && <span className="px-1.5 py-0.5 rounded-full text-[9px]" style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>{paymentModeLabel(e.paymentMode)}</span>}
+                    {e.paymentMode === "especes" && e.cashDeclaration && (
+                      <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${
+                        e.cashDeclaration === "non_declare" ? "text-warning" : e.cashDeclaration === "micro" ? "text-success" : "text-info"
+                      }`} style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>
+                        {cashDeclLabel(e.cashDeclaration)}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="text-sm font-bold text-success">+{e.amount}€</div>
+                  {/* Cash declaration quick toggle for espèces */}
+                  {e.paymentMode === "especes" && (
+                    <select value={e.cashDeclaration || "non_declare"} onChange={ev => updateCashDeclaration(e.id, ev.target.value)}
+                      className="rounded-lg py-0.5 px-1 text-[10px] outline-none"
+                      style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      {CASH_DECLARATIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                    </select>
+                  )}
+                  <div className="text-sm font-bold text-success whitespace-nowrap">+{e.amount}€</div>
                   <button onClick={() => deleteEntry(e.id)} className="text-xs text-muted-foreground hover:text-destructive transition-colors">✕</button>
                 </div>
               </div>
@@ -517,6 +570,25 @@ export default function FinancesPage() {
                   {PAYMENT_MODES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                 </select>
               </div>
+
+              {/* Cash Declaration (only for espèces) */}
+              {entryPaymentMode === "especes" && (
+                <div>
+                  <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1.5 block">Déclaration espèces</label>
+                  <div className="flex gap-1.5">
+                    {CASH_DECLARATIONS.map(c => (
+                      <button key={c.value} onClick={() => setEntryCashDeclaration(c.value)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${entryCashDeclaration === c.value ? "text-foreground" : "text-muted-foreground"}`}
+                        style={{
+                          background: entryCashDeclaration === c.value ? "linear-gradient(135deg, hsl(var(--bordeaux2) / 0.3), hsl(var(--bordeaux) / 0.15))" : "hsl(var(--surface3))",
+                          border: `1px solid ${entryCashDeclaration === c.value ? "hsl(var(--bordeaux2))" : "hsl(var(--glass-border))"}`,
+                        }}>
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Installments */}
               <div>
