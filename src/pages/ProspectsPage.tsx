@@ -100,6 +100,8 @@ export default function ProspectsPage() {
       noteBilan: 0,
       noteProfil: 0,
       bilanValidated: false,
+      age: newProspect.age || undefined,
+      sapEnabled: false,
     };
     setProspects([p, ...prospects]);
     setShowAdd(false);
@@ -260,10 +262,17 @@ export default function ProspectsPage() {
                     </select>
                   </div>
                 </div>
-                <div>
-                  <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Nom</label>
-                  <input value={editData.name || ""} onChange={e => setEditData(p => ({ ...p, name: e.target.value }))}
-                    className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="col-span-2">
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Nom</label>
+                    <input value={editData.name || ""} onChange={e => setEditData(p => ({ ...p, name: e.target.value }))}
+                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Âge</label>
+                    <input type="number" value={editData.age || ""} onChange={e => setEditData(p => ({ ...p, age: e.target.value ? Number(e.target.value) : undefined }))}
+                      placeholder="—" className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                  </div>
                 </div>
                 <div>
                   <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Téléphone</label>
@@ -389,6 +398,19 @@ export default function ProspectsPage() {
                   <input type="number" value={editData.prixReel || ""} onChange={e => setEditData(p => ({ ...p, prixReel: Number(e.target.value) }))}
                     className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
                 </div>
+                {/* SAP Toggle */}
+                <div className="flex items-center justify-between py-1 px-1 rounded-xl" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
+                  <div className="pl-2">
+                    <div className="text-xs font-medium text-foreground">SAP Domicile</div>
+                    <div className="text-[10px] text-muted-foreground">Comptabiliser dans NOVA SAP</div>
+                  </div>
+                  <label className="relative inline-block w-11 h-6 cursor-pointer mr-1">
+                    <input type="checkbox" checked={editData.sapEnabled || false} onChange={e => setEditData(p => ({ ...p, sapEnabled: e.target.checked }))} className="opacity-0 w-0 h-0" />
+                    <span className={`absolute inset-0 rounded-full transition-all ${editData.sapEnabled ? "bg-bordeaux/30 border-bordeaux-2" : "bg-surface-3 border-border"}`} style={{ border: "1px solid" }}>
+                      <span className={`absolute h-[18px] w-[18px] rounded-full bottom-[2px] transition-all ${editData.sapEnabled ? "left-[22px] bg-bordeaux-2" : "left-[2px] bg-muted-foreground"}`} />
+                    </span>
+                  </label>
+                </div>
                 <div>
                   <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Notes</label>
                   <textarea value={editData.notes || ""} onChange={e => setEditData(p => ({ ...p, notes: e.target.value }))}
@@ -465,6 +487,8 @@ export default function ProspectsPage() {
                     </span>
                     {selected.presence === "OUI" && <span className="badge-present inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold">PRÉSENT</span>}
                     {selected.closing === "OUI" && <span className="badge-closed inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold">✓ CLOSÉ</span>}
+                    {selected.sapEnabled && <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-info" style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>🏠 SAP</span>}
+                    {selected.age && <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-muted-foreground" style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>{selected.age} ans</span>}
                   </div>
                   {selected.contact && selected.contact !== "-" && (
                     <a href={`tel:${selected.contact.replace(/-/g, "")}`} className="text-[15px] font-semibold text-beige-2 flex items-center gap-1.5">
