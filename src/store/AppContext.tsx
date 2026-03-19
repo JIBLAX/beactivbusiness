@@ -26,7 +26,7 @@ interface AppState {
   setPortageEnabled: (v: boolean) => void;
   setVersementsPerso: (v: Record<string, number | null>) => void;
   setOffres: (o: Offre[]) => void;
-  logout: () => Promise<void>;
+  
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -273,22 +273,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) syncToSupabase("offres", o, offreToRow, user.id);
   }, [user]);
 
-  const logout = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setProspectsState([]);
-    setActivResetClientsState([]);
-    setFinanceEntriesState([]);
-    setExpensesState([]);
-    setOffresState([]);
-  }, []);
 
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, currentPage, prospects, activResetClients,
       financeEntries, expenses, portageEnabled, versementsPerso, offres, loading,
       setCurrentPage, setProspects, setActivResetClients, setFinanceEntries,
-      setExpenses, setPortageEnabled, setVersementsPerso, setOffres, logout,
+      setExpenses, setPortageEnabled, setVersementsPerso, setOffres,
     }}>
       {children}
     </AppContext.Provider>
