@@ -132,10 +132,10 @@ async function syncToSupabase<T>(
   userId: string,
 ) {
   // Delete all then upsert (simple full-sync approach)
-  await supabase.from(table).delete().eq("user_id", userId);
+  await (supabase.from(table) as any).delete().eq("user_id", userId);
   if (items.length > 0) {
     const rows = items.map(i => toRow(i, userId));
-    await supabase.from(table).upsert(rows);
+    await (supabase.from(table) as any).upsert(rows);
   }
 }
 
