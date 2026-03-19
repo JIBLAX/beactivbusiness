@@ -1,6 +1,7 @@
 import { useApp } from "@/store/AppContext";
 import beactivLogo from "@/assets/beactiv-logo.png";
 import { AppPage } from "@/data/types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HamburgerMenuProps {
   open: boolean;
@@ -17,15 +18,15 @@ const menuItems: { id: AppPage; icon: string; label: string; sub: string }[] = [
 ];
 
 export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
-  const { currentPage, setCurrentPage, logout, user } = useApp();
+  const { currentPage, setCurrentPage } = useApp();
 
   const navigate = (page: AppPage) => {
     setCurrentPage(page);
     onClose();
   };
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLock = async () => {
+    await supabase.auth.signOut();
     onClose();
   };
 
@@ -51,9 +52,6 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
               <div className="text-[10px] text-muted-foreground tracking-[1.5px] uppercase">BUSINESS</div>
             </div>
           </div>
-          {user && (
-            <div className="text-[10px] text-muted-foreground truncate">{user.email}</div>
-          )}
         </div>
 
         <nav className="flex-1 py-3 overflow-y-auto">
@@ -76,9 +74,9 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
         </nav>
 
         <div className="p-5 border-t border-border">
-          <button onClick={handleLogout}
+          <button onClick={handleLock}
             className="flex items-center gap-2.5 text-muted-foreground text-sm cursor-pointer py-2 hover:text-destructive transition-colors">
-            🚪 Déconnexion
+            🔒 Verrouiller
           </button>
         </div>
       </div>

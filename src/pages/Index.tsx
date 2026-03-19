@@ -1,5 +1,5 @@
 import { AppProvider, useApp } from "@/store/AppContext";
-import AuthScreen from "@/components/auth/AuthScreen";
+import PinScreen from "@/components/auth/PinScreen";
 import AppLayout from "@/components/layout/AppLayout";
 
 function AppContent() {
@@ -15,7 +15,7 @@ function AppContent() {
   }
 
   if (!isAuthenticated) {
-    return <AuthScreen />;
+    return <PinScreen onSuccess={() => {}} />;
   }
 
   return <AppLayout />;

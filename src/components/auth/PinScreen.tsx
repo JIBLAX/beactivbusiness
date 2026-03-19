@@ -1,7 +1,11 @@
 import { useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import beactivLogo from "@/assets/beactiv-logo.png";
 
 const PIN_CODE = "131313";
+const AUTO_EMAIL = "coachjm@beactiv.app";
+const AUTO_PASS = "BeActiv2026!SecurePin";
+
 const PIN_LETTERS: Record<string, string> = {
   "2": "ABC", "3": "DEF", "4": "GHI", "5": "JKL",
   "6": "MNO", "7": "PQRS", "8": "TUV", "9": "WXYZ",
@@ -15,9 +19,28 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const autoLogin = async () => {
+    setLoading(true);
+    // Try login first, if fails create account
+    const { error: loginErr } = await supabase.auth.signInWithPassword({ email: AUTO_EMAIL, password: AUTO_PASS });
+    if (loginErr) {
+      const { error: signupErr } = await supabase.auth.signUp({ email: AUTO_EMAIL, password: AUTO_PASS });
+      if (signupErr) {
+        console.error("Auto-login failed:", signupErr);
+        setLoading(false);
+        return;
+      }
+      // After signup with auto-confirm, sign in
+      await supabase.auth.signInWithPassword({ email: AUTO_EMAIL, password: AUTO_PASS });
+    }
+    setLoading(false);
+    onSuccess();
+  };
 
   const handleDigit = useCallback((d: string) => {
-    if (pin.length >= 6) return;
+    if (pin.length >= 6 || loading) return;
     const newPin = pin + d;
     setPin(newPin);
     setError(false);
@@ -25,14 +48,14 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
 
     if (newPin.length === 6) {
       if (newPin === PIN_CODE) {
-        setTimeout(onSuccess, 200);
+        autoLogin();
       } else {
         setError(true);
         setErrorMsg("Code incorrect");
         setTimeout(() => { setPin(""); setError(false); }, 600);
       }
     }
-  }, [pin, onSuccess]);
+  }, [pin, loading]);
 
   const handleDelete = useCallback(() => {
     setPin(p => p.slice(0, -1));
@@ -48,13 +71,11 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
           linear-gradient(180deg, hsl(0 6% 4% / 0.7) 0%, hsl(0 6% 4% / 0.95) 100%)`,
         backdropFilter: "blur(40px)",
       }}>
-      {/* Logo */}
       <div className="w-[90px] h-[90px] rounded-full overflow-hidden border-2 mb-4 animate-glow"
         style={{ borderColor: "hsl(348 63% 30% / 0.5)", boxShadow: "0 0 40px hsl(348 63% 30% / 0.5), 0 0 80px hsl(348 63% 30% / 0.2)" }}>
         <img src={beactivLogo} alt="Be Activ" className="w-full h-full object-contain" style={{ background: "#0d0909" }} />
       </div>
 
-      {/* Title */}
       <h1 className="font-display text-2xl font-extrabold text-foreground mb-8 tracking-tight">
         Be Activ <span className="font-sans font-normal text-sm text-muted-foreground tracking-[3px] uppercase ml-1.5 align-middle">BUSINESS</span>
       </h1>
@@ -69,10 +90,13 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
         ))}
       </div>
 
-      {/* Error */}
       <div className="h-5 text-xs text-destructive text-center mb-2.5 tracking-wide">
         {errorMsg}
       </div>
+
+      {loading && (
+        <div className="text-xs text-muted-foreground mb-2 animate-pulse">Connexion en cours...</div>
+      )}
 
       {/* Keypad */}
       <div className="grid grid-cols-3 gap-3 mt-3">
@@ -103,7 +127,6 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
         })}
       </div>
 
-      {/* Footer */}
       <div className="mt-6 text-[10px] text-muted-foreground tracking-[1.5px] uppercase">
         MADE BY <span className="text-bordeaux-2 font-semibold">COACH JM</span> · <span className="text-bordeaux-2 font-semibold">JBLX STUDIO</span>
       </div>
