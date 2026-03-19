@@ -17,29 +17,31 @@ const menuItems: { id: AppPage; icon: string; label: string; sub: string }[] = [
 ];
 
 export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
-  const { currentPage, setCurrentPage, setAuthenticated } = useApp();
+  const { currentPage, setCurrentPage, logout, user } = useApp();
 
   const navigate = (page: AppPage) => {
     setCurrentPage(page);
     onClose();
   };
 
+  const handleLogout = async () => {
+    await logout();
+    onClose();
+  };
+
   return (
     <>
-      {/* Overlay */}
       <div
         className={`fixed inset-0 z-[300] transition-all duration-250 ${open ? "bg-black/70 pointer-events-auto" : "bg-transparent pointer-events-none"}`}
         onClick={onClose}
       />
 
-      {/* Panel */}
       <div className={`fixed top-0 right-0 bottom-0 w-[260px] z-[301] flex flex-col transition-transform duration-300
         ${open ? "translate-x-0" : "translate-x-full"}`}
         style={{
           background: "hsl(var(--surface1))",
           borderLeft: "1px solid hsl(var(--glass-border))",
         }}>
-        {/* Header */}
         <div className="p-5 pb-5 border-b border-border">
           <div className="flex items-center gap-2.5 mb-3">
             <img src={beactivLogo} alt="Be Activ" className="w-9 h-9 rounded-full object-contain border-2"
@@ -49,9 +51,11 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
               <div className="text-[10px] text-muted-foreground tracking-[1.5px] uppercase">BUSINESS</div>
             </div>
           </div>
+          {user && (
+            <div className="text-[10px] text-muted-foreground truncate">{user.email}</div>
+          )}
         </div>
 
-        {/* Nav items */}
         <nav className="flex-1 py-3 overflow-y-auto">
           {menuItems.map(item => (
             <button key={item.id} onClick={() => navigate(item.id)}
@@ -71,11 +75,10 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
           ))}
         </nav>
 
-        {/* Footer */}
         <div className="p-5 border-t border-border">
-          <button onClick={() => { setAuthenticated(false); onClose(); }}
+          <button onClick={handleLogout}
             className="flex items-center gap-2.5 text-muted-foreground text-sm cursor-pointer py-2 hover:text-destructive transition-colors">
-            🔒 Verrouiller
+            🚪 Déconnexion
           </button>
         </div>
       </div>
