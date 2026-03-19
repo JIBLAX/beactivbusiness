@@ -288,7 +288,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       user, isAuthenticated: !!user, currentPage, prospects, activResetClients,
       financeEntries, expenses, portageEnabled, versementsPerso, offres, loading,
       setCurrentPage, setProspects, setActivResetClients, setFinanceEntries,
-      setExpenses, setPortageEnabled, setVersementsPerso, setOffres, logout,
+      setExpenses, setPortageEnabled, setVersementsPerso, setOffres,
     }}>
       {children}
     </AppContext.Provider>
