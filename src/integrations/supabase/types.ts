@@ -14,7 +14,303 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      activ_reset_clients: {
+        Row: {
+          created_at: string
+          current_phase: number | null
+          cycle: number | null
+          id: string
+          name: string
+          notes: string | null
+          objectif_atteint: boolean | null
+          offre: string | null
+          phases: Json
+          phone: string | null
+          start_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_phase?: number | null
+          cycle?: number | null
+          id: string
+          name: string
+          notes?: string | null
+          objectif_atteint?: boolean | null
+          offre?: string | null
+          phases?: Json
+          phone?: string | null
+          start_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_phase?: number | null
+          cycle?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          objectif_atteint?: boolean | null
+          offre?: string | null
+          phases?: Json
+          phone?: string | null
+          start_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      app_settings: {
+        Row: {
+          created_at: string
+          id: string
+          portage_enabled: boolean | null
+          updated_at: string
+          user_id: string
+          versements_perso: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          portage_enabled?: boolean | null
+          updated_at?: string
+          user_id: string
+          versements_perso?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          portage_enabled?: boolean | null
+          updated_at?: string
+          user_id?: string
+          versements_perso?: Json | null
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          id: string
+          label: string
+          month: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          created_at?: string
+          date: string
+          id: string
+          label: string
+          month: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          id?: string
+          label?: string
+          month?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_entries: {
+        Row: {
+          amount: number
+          cash_declaration: string | null
+          client_name: string | null
+          created_at: string
+          id: string
+          installment_group: string | null
+          installment_index: number | null
+          installment_total: number | null
+          label: string
+          month: string
+          offre: string | null
+          payment_mode: string | null
+          sap_hours: number | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          cash_declaration?: string | null
+          client_name?: string | null
+          created_at?: string
+          id: string
+          installment_group?: string | null
+          installment_index?: number | null
+          installment_total?: number | null
+          label: string
+          month: string
+          offre?: string | null
+          payment_mode?: string | null
+          sap_hours?: number | null
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          cash_declaration?: string | null
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          installment_group?: string | null
+          installment_index?: number | null
+          installment_total?: number | null
+          label?: string
+          month?: string
+          offre?: string | null
+          payment_mode?: string | null
+          sap_hours?: number | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      offres: {
+        Row: {
+          active: boolean
+          created_at: string
+          duration: Json | null
+          id: string
+          is_ala_carte: boolean | null
+          min_quantity: number | null
+          name: string
+          price: number
+          price_history: Json
+          unit_price: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          duration?: Json | null
+          id: string
+          is_ala_carte?: boolean | null
+          min_quantity?: number | null
+          name: string
+          price?: number
+          price_history?: Json
+          unit_price?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          duration?: Json | null
+          id?: string
+          is_ala_carte?: boolean | null
+          min_quantity?: number | null
+          name?: string
+          price?: number
+          price_history?: Json
+          unit_price?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prospects: {
+        Row: {
+          age: number | null
+          bilan_validated: boolean | null
+          closing: string | null
+          contact: string | null
+          created_at: string
+          date: string | null
+          heure: string | null
+          id: string
+          name: string
+          note_bilan: number | null
+          note_profil: number | null
+          notes: string | null
+          objectif: string | null
+          objection: string | null
+          offre: string | null
+          presence: string | null
+          prix_reel: number | null
+          profile: string | null
+          sap_enabled: boolean | null
+          sex: string
+          source: string | null
+          statut: string | null
+          type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age?: number | null
+          bilan_validated?: boolean | null
+          closing?: string | null
+          contact?: string | null
+          created_at?: string
+          date?: string | null
+          heure?: string | null
+          id: string
+          name: string
+          note_bilan?: number | null
+          note_profil?: number | null
+          notes?: string | null
+          objectif?: string | null
+          objection?: string | null
+          offre?: string | null
+          presence?: string | null
+          prix_reel?: number | null
+          profile?: string | null
+          sap_enabled?: boolean | null
+          sex?: string
+          source?: string | null
+          statut?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: number | null
+          bilan_validated?: boolean | null
+          closing?: string | null
+          contact?: string | null
+          created_at?: string
+          date?: string | null
+          heure?: string | null
+          id?: string
+          name?: string
+          note_bilan?: number | null
+          note_profil?: number | null
+          notes?: string | null
+          objectif?: string | null
+          objection?: string | null
+          offre?: string | null
+          presence?: string | null
+          prix_reel?: number | null
+          profile?: string | null
+          sap_enabled?: boolean | null
+          sex?: string
+          source?: string | null
+          statut?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
