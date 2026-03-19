@@ -26,7 +26,7 @@ interface AppState {
   setPortageEnabled: (v: boolean) => void;
   setVersementsPerso: (v: Record<string, number | null>) => void;
   setOffres: (o: Offre[]) => void;
-  logout: () => Promise<void>;
+  
 }
 
 const AppContext = createContext<AppState | null>(null);
