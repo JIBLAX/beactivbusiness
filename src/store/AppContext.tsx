@@ -273,15 +273,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) syncToSupabase("offres", o, offreToRow, user.id);
   }, [user]);
 
-  const logout = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setProspectsState([]);
-    setActivResetClientsState([]);
-    setFinanceEntriesState([]);
-    setExpensesState([]);
-    setOffresState([]);
-  }, []);
 
   return (
     <AppContext.Provider value={{
