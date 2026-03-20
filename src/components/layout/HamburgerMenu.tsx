@@ -9,12 +9,10 @@ interface HamburgerMenuProps {
 }
 
 const menuItems: { id: AppPage; icon: string; label: string; sub: string }[] = [
-  { id: "prospects", icon: "👥", label: "Prospects", sub: "CRM & Pipeline" },
-  { id: "clients", icon: "🏆", label: "Clients", sub: "Base clients" },
-  { id: "activreset", icon: "🎯", label: "Activ Reset", sub: "Suivi parcours" },
-  { id: "offres", icon: "🏷", label: "Offres", sub: "Tarifs & abonnements" },
   { id: "finances", icon: "💰", label: "Finances", sub: "Entrées & Dépenses" },
+  { id: "offres", icon: "🏷", label: "Offres", sub: "Tarifs & abonnements" },
   { id: "stats", icon: "📊", label: "Statistiques", sub: "KPI & Rapports" },
+  { id: "clients", icon: "🏆", label: "Clients", sub: "Suivi clients" },
 ];
 
 export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
