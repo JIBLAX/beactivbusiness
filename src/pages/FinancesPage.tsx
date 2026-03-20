@@ -288,16 +288,86 @@ export default function FinancesPage() {
         </div>
       </div>
 
-      {/* Gestion Perso */}
+      {/* Bénéfice Net */}
       <div className="glass-card rounded-xl p-3 relative overflow-hidden mb-3">
-        <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">GESTION PERSO</div>
-        <div className="flex items-center justify-between">
-          <div className="text-lg font-bold text-warning">{gestionPerso.toFixed(0)}€</div>
-          <div className="text-[11px] text-muted-foreground">
-            {revenuDispo < 500 ? "0%" : revenuDispo < 1000 ? "10%" : revenuDispo < 1500 ? "15%" : revenuDispo < 2000 ? "20%" : revenuDispo < 2500 ? "25%" : "30%"}
-          </div>
-        </div>
+        <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">BÉNÉFICE NET</div>
+        <div className={`text-xl font-bold ${revenuDispo >= 0 ? "text-success" : "text-destructive"}`}>{revenuDispo.toFixed(0)}€</div>
+        <div className="text-[10px] text-muted-foreground mt-0.5">CA déclaré – URSSAF – Dépenses</div>
       </div>
+
+      {/* Gestion Perso Détaillée */}
+      {(() => {
+        const fondsPro = gestionPerso * 0.15;
+        const plaisirs = gestionPerso * 0.45;
+        const cadeaux = plaisirs / 3;
+        const voyages = plaisirs / 3;
+        const cash = plaisirs / 3;
+        const epargne = gestionPerso * 0.15;
+        const investPlus = gestionPerso * 0.15;
+        const fondUrgence = revenuDispo < 0 ? 0 : gestionPerso * 0.10;
+        const pctLabel = revenuDispo < 500 ? "0%" : revenuDispo < 1000 ? "10%" : revenuDispo < 1500 ? "15%" : revenuDispo < 2000 ? "20%" : revenuDispo < 2500 ? "25%" : "30%";
+
+        const categories = [
+          { label: "FONDS PRO", value: fondsPro, color: "text-info", pct: "15%", desc: "Réinvestir dans l'entreprise" },
+          { label: "PLAISIRS", value: plaisirs, color: "text-warning", pct: "45%", desc: "Cash · Voyages · Cadeaux", sub: [
+            { label: "Cash", value: cash },
+            { label: "Voyages", value: voyages },
+            { label: "Cadeaux", value: cadeaux },
+          ]},
+          { label: "ÉPARGNE", value: epargne, color: "text-success", pct: "15%" },
+          { label: "INVEST+", value: investPlus, color: "text-bordeaux-2", pct: "15%" },
+          { label: "FOND D'URGENCE", value: fondUrgence, color: "text-destructive", pct: "10%", desc: revenuDispo < 0 ? "Désactivé (bénéfice négatif)" : undefined },
+        ];
+
+        return (
+          <div className="glass-card rounded-xl p-3.5 relative overflow-hidden mb-3">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px]">GESTION PERSO</div>
+                <div className="text-lg font-bold text-warning">{gestionPerso.toFixed(0)}€</div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-bold text-muted-foreground">{pctLabel}</div>
+                <div className="text-[9px] text-muted-foreground">du bénéfice net</div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {categories.map(cat => (
+                <div key={cat.label}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-semibold ${cat.color}`}>{cat.label}</span>
+                      <span className="text-[9px] text-muted-foreground">{cat.pct}</span>
+                    </div>
+                    <span className={`text-sm font-bold ${cat.color}`}>{cat.value.toFixed(0)}€</span>
+                  </div>
+                  {cat.desc && <div className="text-[9px] text-muted-foreground ml-0.5">{cat.desc}</div>}
+                  {cat.sub && (
+                    <div className="ml-4 mt-0.5 space-y-0.5">
+                      {cat.sub.map(s => (
+                        <div key={s.label} className="flex justify-between text-[10px] text-muted-foreground">
+                          <span>{s.label}</span>
+                          <span>{s.value.toFixed(0)}€</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Séparateur */}
+            <div className="border-t border-border mt-3 pt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground">RESTE PERSO</span>
+                <span className={`text-lg font-bold ${restePerso >= 0 ? "text-success" : "text-destructive"}`}>{restePerso.toFixed(0)}€</span>
+              </div>
+              <div className="text-[9px] text-muted-foreground">Bénéfice net – Gestion perso</div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Versement Perso */}
       <div className="glass-card rounded-xl p-3 relative overflow-hidden mb-3">
