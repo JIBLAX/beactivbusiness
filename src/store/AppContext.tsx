@@ -144,7 +144,7 @@ async function syncToSupabase<T>(
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState<AppPage>("prospects");
+  const [currentPage, setCurrentPage] = useState<AppPage>("finances");
   const [prospects, setProspectsState] = useState<Prospect[]>([]);
   const [activResetClients, setActivResetClientsState] = useState<ActivResetClient[]>([]);
   const [financeEntries, setFinanceEntriesState] = useState<FinanceEntry[]>([]);
