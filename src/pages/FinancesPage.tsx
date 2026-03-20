@@ -282,10 +282,6 @@ export default function FinancesPage() {
           <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">DÉPENSES</div>
           <div className="text-xl font-bold text-destructive">-{totalDepenses.toFixed(0)}€</div>
         </div>
-        <div className="glass-card rounded-xl p-3 relative overflow-hidden">
-          <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-1">RESTE PERSO</div>
-          <div className={`text-xl font-bold ${restePerso >= 0 ? "text-success" : "text-destructive"}`}>{restePerso.toFixed(0)}€</div>
-        </div>
       </div>
 
       {/* Bénéfice Net */}
