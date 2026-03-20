@@ -193,6 +193,7 @@ export type Database = {
           name: string
           price: number
           price_history: Json
+          theme: string | null
           unit_price: number | null
           updated_at: string
           user_id: string
@@ -207,6 +208,7 @@ export type Database = {
           name: string
           price?: number
           price_history?: Json
+          theme?: string | null
           unit_price?: number | null
           updated_at?: string
           user_id: string
@@ -221,6 +223,7 @@ export type Database = {
           name?: string
           price?: number
           price_history?: Json
+          theme?: string | null
           unit_price?: number | null
           updated_at?: string
           user_id?: string
