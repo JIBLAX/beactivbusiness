@@ -108,7 +108,7 @@ function offreToRow(o: Offre, userId: string) {
     price_history: JSON.parse(JSON.stringify(o.priceHistory)),
     duration: o.duration ? JSON.parse(JSON.stringify(o.duration)) : null,
     unit_price: o.unitPrice ?? null, min_quantity: o.minQuantity ?? null,
-    is_ala_carte: o.isAlaCarte ?? false,
+    is_ala_carte: o.isAlaCarte ?? false, theme: o.theme ?? "PROGRAMMES",
   };
 }
 
@@ -120,6 +120,7 @@ function rowToOffre(r: any): Offre {
     unitPrice: r.unit_price != null ? Number(r.unit_price) : undefined,
     minQuantity: r.min_quantity ?? undefined,
     isAlaCarte: r.is_ala_carte ?? false,
+    theme: r.theme ?? "PROGRAMMES",
   };
 }
 
@@ -143,7 +144,7 @@ async function syncToSupabase<T>(
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState<AppPage>("prospects");
+  const [currentPage, setCurrentPage] = useState<AppPage>("finances");
   const [prospects, setProspectsState] = useState<Prospect[]>([]);
   const [activResetClients, setActivResetClientsState] = useState<ActivResetClient[]>([]);
   const [financeEntries, setFinanceEntriesState] = useState<FinanceEntry[]>([]);

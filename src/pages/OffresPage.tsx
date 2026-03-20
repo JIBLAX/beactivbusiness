@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "@/store/AppContext";
-import { Offre, OffreDuration } from "@/data/types";
+import { Offre, OffreDuration, OffreTheme, OFFRE_THEMES } from "@/data/types";
 import { Switch } from "@/components/ui/switch";
 
 const DURATION_UNITS = [
@@ -15,6 +15,12 @@ function formatDuration(d?: OffreDuration): string {
   return `${d.value} ${unitLabel}`;
 }
 
+const THEME_ICONS: Record<string, string> = {
+  "COURS COLLECTIFS": "🏃",
+  "JM COACHING": "💪",
+  "PROGRAMMES": "📋",
+};
+
 export default function OffresPage() {
   const { offres, setOffres, prospects, setProspects, activResetClients, setActivResetClients, financeEntries, setFinanceEntries } = useApp();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -24,6 +30,7 @@ export default function OffresPage() {
   const [editIsAlaCarte, setEditIsAlaCarte] = useState(false);
   const [editUnitPrice, setEditUnitPrice] = useState<number | undefined>();
   const [editMinQty, setEditMinQty] = useState<number | undefined>();
+  const [editTheme, setEditTheme] = useState<OffreTheme>("PROGRAMMES");
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState(0);
@@ -31,6 +38,7 @@ export default function OffresPage() {
   const [newIsAlaCarte, setNewIsAlaCarte] = useState(false);
   const [newUnitPrice, setNewUnitPrice] = useState<number | undefined>();
   const [newMinQty, setNewMinQty] = useState<number | undefined>();
+  const [newTheme, setNewTheme] = useState<OffreTheme>("PROGRAMMES");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const startEdit = (o: Offre) => {
@@ -41,6 +49,7 @@ export default function OffresPage() {
     setEditIsAlaCarte(o.isAlaCarte || false);
     setEditUnitPrice(o.unitPrice);
     setEditMinQty(o.minQuantity);
+    setEditTheme(o.theme || "PROGRAMMES");
   };
 
   const saveEdit = () => {
@@ -57,70 +66,45 @@ export default function OffresPage() {
       if (o.id !== editingId) return o;
       const priceChanged = o.price !== editPrice;
       return {
-        ...o,
-        name: newOffreName,
-        price: editPrice,
+        ...o, name: newOffreName, price: editPrice,
         duration: editIsAlaCarte ? undefined : editDuration,
-        isAlaCarte: editIsAlaCarte,
-        unitPrice: editUnitPrice,
-        minQuantity: editMinQty,
-        priceHistory: priceChanged
-          ? [...o.priceHistory, { price: editPrice, date: today }]
-          : o.priceHistory,
+        isAlaCarte: editIsAlaCarte, unitPrice: editUnitPrice, minQuantity: editMinQty,
+        theme: editTheme,
+        priceHistory: priceChanged ? [...o.priceHistory, { price: editPrice, date: today }] : o.priceHistory,
       };
     }));
 
     if (nameChanged) {
-      setProspects(prospects.map(p =>
-        p.offre === oldName ? { ...p, offre: newOffreName } : p
-      ));
-      setActivResetClients(prev =>
-        prev.map(c => c.offre === oldName ? { ...c, offre: newOffreName } : c)
-      );
+      setProspects(prospects.map(p => p.offre === oldName ? { ...p, offre: newOffreName } : p));
+      setActivResetClients(prev => prev.map(c => c.offre === oldName ? { ...c, offre: newOffreName } : c));
       setFinanceEntries(financeEntries.map(e =>
         e.offre === oldName ? { ...e, offre: newOffreName, label: e.label === oldName ? newOffreName : e.label.replace(oldName, newOffreName) } : e
       ));
     }
-
     setEditingId(null);
   };
 
-  const toggleActive = (id: string) => {
-    setOffres(offres.map(o => o.id === id ? { ...o, active: !o.active } : o));
-  };
+  const toggleActive = (id: string) => setOffres(offres.map(o => o.id === id ? { ...o, active: !o.active } : o));
 
-  const deleteOffre = (id: string) => {
-    setOffres(offres.filter(o => o.id !== id));
-    setConfirmDeleteId(null);
-  };
+  const deleteOffre = (id: string) => { setOffres(offres.filter(o => o.id !== id)); setConfirmDeleteId(null); };
 
   const addOffre = () => {
     if (!newName) return;
     const today = new Date().toISOString().split("T")[0];
     const offre: Offre = {
-      id: "o" + Date.now(),
-      name: newName.toUpperCase(),
-      price: newPrice,
-      active: true,
+      id: "o" + Date.now(), name: newName.toUpperCase(), price: newPrice, active: true,
       priceHistory: [{ price: newPrice, date: today }],
       duration: newIsAlaCarte ? undefined : newDuration,
-      isAlaCarte: newIsAlaCarte,
-      unitPrice: newUnitPrice,
-      minQuantity: newMinQty,
+      isAlaCarte: newIsAlaCarte, unitPrice: newUnitPrice, minQuantity: newMinQty,
+      theme: newTheme,
     };
     setOffres([...offres, offre]);
     setShowAdd(false);
-    setNewName("");
-    setNewPrice(0);
-    setNewDuration({ value: 1, unit: "mois" });
-    setNewIsAlaCarte(false);
-    setNewUnitPrice(undefined);
-    setNewMinQty(undefined);
+    setNewName(""); setNewPrice(0); setNewDuration({ value: 1, unit: "mois" });
+    setNewIsAlaCarte(false); setNewUnitPrice(undefined); setNewMinQty(undefined); setNewTheme("PROGRAMMES");
   };
 
   const activeCount = offres.filter(o => o.active).length;
-  const alaCarteOffres = offres.filter(o => o.isAlaCarte);
-  const programOffres = offres.filter(o => !o.isAlaCarte);
 
   const renderOffreCard = (o: Offre) => (
     <div key={o.id} className={`glass-card rounded-xl p-3.5 relative overflow-hidden transition-all ${!o.active ? "opacity-40 grayscale" : ""}`}>
@@ -136,13 +120,21 @@ export default function OffresPage() {
             <span className="text-sm text-muted-foreground">€</span>
           </div>
 
-          {/* À la carte toggle */}
+          {/* Theme */}
+          <div>
+            <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Thème</label>
+            <select value={editTheme} onChange={e => setEditTheme(e.target.value as OffreTheme)}
+              className="w-full rounded-xl p-2.5 text-sm outline-none"
+              style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+              {OFFRE_THEMES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">À la carte (sans durée)</span>
+            <span className="text-xs text-muted-foreground">À la carte</span>
             <Switch checked={editIsAlaCarte} onCheckedChange={setEditIsAlaCarte} />
           </div>
 
-          {/* Duration */}
           {!editIsAlaCarte && (
             <div className="flex gap-2">
               <input type="number" value={editDuration?.value || ""} onChange={e => setEditDuration({ value: Number(e.target.value), unit: editDuration?.unit || "mois" })}
@@ -156,7 +148,6 @@ export default function OffresPage() {
             </div>
           )}
 
-          {/* Unit price & min qty */}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-0.5 block">Prix unitaire €</label>
@@ -174,13 +165,9 @@ export default function OffresPage() {
 
           <div className="flex gap-2">
             <button onClick={saveEdit} className="flex-1 py-2 rounded-xl text-sm font-semibold text-foreground"
-              style={{ background: "linear-gradient(135deg, hsl(var(--bordeaux2)), hsl(var(--bordeaux)))" }}>
-              Sauvegarder
-            </button>
+              style={{ background: "linear-gradient(135deg, hsl(var(--bordeaux2)), hsl(var(--bordeaux)))" }}>Sauvegarder</button>
             <button onClick={() => setEditingId(null)} className="px-4 py-2 rounded-xl text-sm text-muted-foreground"
-              style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>
-              ✕
-            </button>
+              style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))" }}>✕</button>
           </div>
         </div>
       ) : (
@@ -196,16 +183,10 @@ export default function OffresPage() {
                   </span>
                 ) : o.isAlaCarte ? (
                   <span className="inline-flex px-2 py-0.5 rounded-lg text-[10px] font-semibold text-muted-foreground"
-                    style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>
-                    ⚡ À la carte
-                  </span>
+                    style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))" }}>⚡ À la carte</span>
                 ) : null}
-                {o.unitPrice && (
-                  <span className="text-[10px] text-muted-foreground">{o.unitPrice}€/séance</span>
-                )}
-                {o.minQuantity && (
-                  <span className="text-[10px] text-muted-foreground">min. {o.minQuantity}</span>
-                )}
+                {o.unitPrice && <span className="text-[10px] text-muted-foreground">{o.unitPrice}€/séance</span>}
+                {o.minQuantity && <span className="text-[10px] text-muted-foreground">min. {o.minQuantity}</span>}
               </div>
             </div>
             <div className="text-right">
@@ -214,13 +195,10 @@ export default function OffresPage() {
           </div>
           <div className="flex items-center justify-between mt-2.5 pt-2" style={{ borderTop: "1px solid hsl(var(--glass-border) / 0.5)" }}>
             <div className="flex items-center gap-3">
-              <Switch
-                checked={o.active}
-                onCheckedChange={() => toggleActive(o.id)}
-                className="data-[state=checked]:bg-success data-[state=unchecked]:bg-surface-3"
-              />
+              <Switch checked={o.active} onCheckedChange={() => toggleActive(o.id)}
+                className="data-[state=checked]:bg-success data-[state=unchecked]:bg-surface-3" />
               <span className={`text-[11px] font-medium ${o.active ? "text-success" : "text-muted-foreground"}`}>
-                {o.active ? "Active" : "Désactivée"}
+                {o.active ? "Active" : "Off"}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -234,9 +212,6 @@ export default function OffresPage() {
               ) : (
                 <button onClick={() => setConfirmDeleteId(o.id)} className="text-[11px] text-destructive/60 cursor-pointer hover:text-destructive transition-colors">🗑</button>
               )}
-              {o.priceHistory.length > 1 && (
-                <span className="text-[10px] text-muted-foreground">{o.priceHistory.length} modif.</span>
-              )}
             </div>
           </div>
         </>
@@ -249,47 +224,36 @@ export default function OffresPage() {
       <h1 className="font-display text-[25px] font-extrabold text-foreground mb-0.5 pt-1">Offres</h1>
       <p className="text-xs text-muted-foreground mb-3.5">Gestion des offres & tarifs</p>
 
-      {/* Summary */}
       <div className="glass-card rounded-xl p-3 relative overflow-hidden mb-3">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-0.5">OFFRES ACTIVES</div>
             <div className="font-display text-2xl font-bold text-foreground">{activeCount}<span className="text-sm text-muted-foreground font-normal">/{offres.length}</span></div>
           </div>
-          <div className="text-right">
-            <div className="text-[9px] text-muted-foreground uppercase tracking-[1.5px] mb-0.5">INFO</div>
-            <div className="text-[11px] text-muted-foreground max-w-[200px]">Nouveaux prix → nouveaux clients. Noms propagés partout.</div>
-          </div>
         </div>
       </div>
 
-      {/* Programs */}
-      {programOffres.length > 0 && (
-        <>
-          <div className="text-[9px] uppercase tracking-[2px] text-bordeaux-2 font-bold pb-1 mb-2 border-b border-bordeaux/20">PROGRAMMES</div>
-          <div className="flex flex-col gap-2 mb-4">
-            {programOffres.map(renderOffreCard)}
+      {/* Grouped by theme */}
+      {OFFRE_THEMES.map(theme => {
+        const themeOffers = offres.filter(o => (o.theme || "PROGRAMMES") === theme);
+        if (themeOffers.length === 0) return null;
+        return (
+          <div key={theme} className="mb-4">
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-sm">{THEME_ICONS[theme]}</span>
+              <div className="text-[9px] uppercase tracking-[2px] text-bordeaux-2 font-bold pb-1 border-b border-bordeaux/20 flex-1">{theme}</div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {themeOffers.map(renderOffreCard)}
+            </div>
           </div>
-        </>
-      )}
-
-      {/* À la carte */}
-      {alaCarteOffres.length > 0 && (
-        <>
-          <div className="text-[9px] uppercase tracking-[2px] text-bordeaux-2 font-bold pb-1 mb-2 border-b border-bordeaux/20">À LA CARTE</div>
-          <div className="flex flex-col gap-2 mb-4">
-            {alaCarteOffres.map(renderOffreCard)}
-          </div>
-        </>
-      )}
+        );
+      })}
 
       {/* FAB */}
       <button onClick={() => setShowAdd(true)}
         className="fixed bottom-5 right-4 z-[60] w-[52px] h-[52px] rounded-full flex items-center justify-center text-2xl text-foreground active:scale-90 transition-transform"
-        style={{
-          background: "linear-gradient(135deg, hsl(var(--bordeaux2)), hsl(var(--bordeaux)))",
-          boxShadow: "0 8px 22px hsl(348 63% 30% / 0.5)",
-        }}>
+        style={{ background: "linear-gradient(135deg, hsl(var(--bordeaux2)), hsl(var(--bordeaux)))", boxShadow: "0 8px 22px hsl(348 63% 30% / 0.5)" }}>
         +
       </button>
 
@@ -307,7 +271,7 @@ export default function OffresPage() {
             </div>
             <div className="px-4 space-y-3">
               <div>
-                <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Nom de l'offre *</label>
+                <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Nom *</label>
                 <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Ex: ACTIV PROGRAM PREMIUM"
                   className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
               </div>
@@ -316,14 +280,17 @@ export default function OffresPage() {
                 <input type="number" value={newPrice || ""} onChange={e => setNewPrice(Number(e.target.value))} placeholder="0"
                   className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
               </div>
-
-              {/* À la carte toggle */}
+              <div>
+                <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Thème</label>
+                <select value={newTheme} onChange={e => setNewTheme(e.target.value as OffreTheme)}
+                  className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                  {OFFRE_THEMES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
               <div className="flex items-center justify-between py-1">
-                <span className="text-xs text-muted-foreground">À la carte (sans durée fixe)</span>
+                <span className="text-xs text-muted-foreground">À la carte</span>
                 <Switch checked={newIsAlaCarte} onCheckedChange={setNewIsAlaCarte} />
               </div>
-
-              {/* Duration */}
               {!newIsAlaCarte && (
                 <div>
                   <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Durée</label>
@@ -339,23 +306,20 @@ export default function OffresPage() {
                   </div>
                 </div>
               )}
-
-              {/* Unit price & min qty */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Prix unitaire €</label>
                   <input type="number" value={newUnitPrice || ""} onChange={e => setNewUnitPrice(e.target.value ? Number(e.target.value) : undefined)}
-                    placeholder="Optionnel" className="w-full rounded-xl p-2.5 text-sm outline-none"
+                    placeholder="—" className="w-full rounded-xl p-2 text-sm outline-none"
                     style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
                 </div>
                 <div>
                   <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Min. séances</label>
                   <input type="number" value={newMinQty || ""} onChange={e => setNewMinQty(e.target.value ? Number(e.target.value) : undefined)}
-                    placeholder="Optionnel" className="w-full rounded-xl p-2.5 text-sm outline-none"
+                    placeholder="—" className="w-full rounded-xl p-2 text-sm outline-none"
                     style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
                 </div>
               </div>
-
               <button onClick={addOffre} className="w-full py-3 rounded-xl font-semibold text-sm text-foreground"
                 style={{ background: "linear-gradient(135deg, hsl(var(--bordeaux2)), hsl(var(--bordeaux)))" }}>
                 Créer l'offre
