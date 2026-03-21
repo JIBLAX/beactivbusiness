@@ -162,6 +162,10 @@ export default function OffresPage() {
             <span className="text-[12px] text-muted-foreground">TVA 20%</span>
             <ToggleSwitch checked={editTva} onChange={() => setEditTva(!editTva)} />
           </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] text-muted-foreground">Éligible Portage JUMP</span>
+            <ToggleSwitch checked={editPortage} onChange={() => setEditPortage(!editPortage)} />
+          </div>
           <div className="flex gap-2 pt-1">
             <button onClick={saveEdit} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white btn-primary">✓ Sauvegarder</button>
             <button onClick={() => setEditingId(null)} className="px-4 py-2.5 rounded-xl text-sm text-muted-foreground input-field">✕</button>
