@@ -10,7 +10,7 @@ import ClientsPage from "@/pages/ClientsPage";
 import ActivResetPage from "@/pages/ActivResetPage";
 
 export default function AppLayout() {
-  const { currentPage, financeEntries } = useApp();
+  const { currentPage, setCurrentPage, financeEntries } = useApp();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const currentYear = new Date().getFullYear();
@@ -37,14 +37,14 @@ export default function AppLayout() {
         style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.04)" }}>
         
         {/* Logo */}
-        <div className="w-9 h-9 rounded-[14px] overflow-hidden flex-shrink-0 relative"
+        <button onClick={() => setCurrentPage("finances")} className="w-9 h-9 rounded-[14px] overflow-hidden flex-shrink-0 relative"
           style={{ 
             border: "1px solid hsl(348 63% 30% / 0.25)",
             boxShadow: "0 0 20px hsl(348 63% 30% / 0.08)"
           }}>
           <img src={beactivLogo} alt="Be Activ" className="w-full h-full object-contain" 
             style={{ background: "hsl(240 6% 4%)" }} />
-        </div>
+        </button>
 
         {/* Title area */}
         <div className="flex-1 min-w-0">

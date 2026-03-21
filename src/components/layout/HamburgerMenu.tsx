@@ -1,7 +1,10 @@
+import { useRef } from "react";
 import { useApp } from "@/store/AppContext";
 import beactivLogo from "@/assets/beactiv-logo.png";
 import { AppPage } from "@/data/types";
 import { supabase } from "@/integrations/supabase/client";
+import { exportToExcel, exportToCSV, importFromFile } from "@/lib/importExport";
+import { toast } from "sonner";
 
 interface HamburgerMenuProps {
   open: boolean;
@@ -17,7 +20,8 @@ const menuItems: { id: AppPage; icon: string; label: string; sub: string }[] = [
 ];
 
 export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
-  const { currentPage, setCurrentPage } = useApp();
+  const { currentPage, setCurrentPage, prospects, financeEntries, expenses, activResetClients, offres, setProspects, setFinanceEntries, setExpenses } = useApp();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navigate = (page: AppPage) => {
     setCurrentPage(page);
@@ -26,6 +30,35 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
 
   const handleLock = async () => {
     await supabase.auth.signOut();
+    onClose();
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({ prospects, financeEntries, expenses, activResetClients, offres });
+    toast.success("Export Excel téléchargé");
+    onClose();
+  };
+
+  const handleExportCSV = () => {
+    exportToCSV({ prospects, financeEntries, expenses, activResetClients, offres });
+    toast.success("Export CSV téléchargé");
+    onClose();
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const data = await importFromFile(file);
+      let count = 0;
+      if (data.prospects) { setProspects(data.prospects); count++; }
+      if (data.financeEntries) { setFinanceEntries(data.financeEntries); count++; }
+      if (data.expenses) { setExpenses(data.expenses); count++; }
+      toast.success(`Import réussi (${count} table${count > 1 ? "s" : ""} importée${count > 1 ? "s" : ""})`);
+    } catch {
+      toast.error("Erreur lors de l'import");
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
     onClose();
   };
 
@@ -91,6 +124,38 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
             );
           })}
         </nav>
+
+        {/* Import/Export */}
+        <div className="px-6 py-4" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
+          <div className="text-[9px] text-muted-foreground/50 font-medium tracking-[3px] uppercase mb-3">DONNÉES</div>
+          <div className="flex flex-col gap-1.5">
+            <button onClick={handleExportExcel}
+              className="flex items-center gap-3 text-muted-foreground text-[13px] py-2 hover:text-foreground transition-colors w-full">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: "hsl(142 71% 45% / 0.06)", border: "1px solid hsl(142 71% 45% / 0.1)" }}>
+                📥
+              </div>
+              <span className="font-medium">Export Excel</span>
+            </button>
+            <button onClick={handleExportCSV}
+              className="flex items-center gap-3 text-muted-foreground text-[13px] py-2 hover:text-foreground transition-colors w-full">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: "hsl(38 92% 55% / 0.06)", border: "1px solid hsl(38 92% 55% / 0.1)" }}>
+                📄
+              </div>
+              <span className="font-medium">Export CSV</span>
+            </button>
+            <button onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-3 text-muted-foreground text-[13px] py-2 hover:text-foreground transition-colors w-full">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: "hsl(210 70% 50% / 0.06)", border: "1px solid hsl(210 70% 50% / 0.1)" }}>
+                📤
+              </div>
+              <span className="font-medium">Importer</span>
+            </button>
+            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
+          </div>
+        </div>
 
         {/* Footer */}
         <div className="px-6 py-5" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
