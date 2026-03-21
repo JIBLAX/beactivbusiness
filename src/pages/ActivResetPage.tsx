@@ -245,6 +245,17 @@ export default function ActivResetPage() {
                   🔄 Extension Cycle {selected.cycle + 1}
                 </button>
               )}
+
+              {/* Archive / Unarchive */}
+              <button onClick={(e) => {
+                e.stopPropagation();
+                setActivResetClients(prev => prev.map(c => c.id === selected.id ? { ...c, archived: !c.archived } : c));
+                setSelectedId(null);
+              }}
+                className="w-full mt-3 py-3 rounded-xl font-semibold text-sm"
+                style={{ background: "hsl(0 0% 100% / 0.04)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 60%)" }}>
+                {selected.archived ? "📂 Désarchiver" : "📦 Archiver le client"}
+              </button>
             </div>
           </div>
         </div>
