@@ -10,7 +10,8 @@ import ClientsPage from "@/pages/ClientsPage";
 import ActivResetPage from "@/pages/ActivResetPage";
 
 export default function AppLayout() {
-  const { currentPage, financeEntries } = useApp();
+  const { currentPage, setCurrentPage, financeEntries } = useApp();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const currentYear = new Date().getFullYear();
