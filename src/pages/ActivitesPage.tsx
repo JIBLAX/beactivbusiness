@@ -51,6 +51,7 @@ const THEME_ICONS: Record<string, string> = {
 export default function ActivitesPage() {
   const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  const [activeTab, setActiveTab] = useState<"entrees" | "depenses">("entrees");
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
@@ -261,34 +262,51 @@ export default function ActivitesPage() {
         )}
       </div>
 
-      {/* Summary strip */}
-      <div className="grid grid-cols-3 gap-2 mb-5">
-        <div className="stat-card rounded-2xl p-3 text-center">
-          <div className="value-lg text-[18px] text-success">{totalEntries.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
-          <div className="text-[8px] text-muted-foreground font-medium uppercase tracking-wider mt-1">Entrées</div>
-        </div>
-        <div className="stat-card rounded-2xl p-3 text-center">
-          <div className="value-lg text-[18px] text-destructive">-{totalExpenses.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
-          <div className="text-[8px] text-muted-foreground font-medium uppercase tracking-wider mt-1">Dépenses</div>
-        </div>
-        <div className="stat-card rounded-2xl p-3 text-center">
-          <div className="value-lg text-[18px] text-foreground">{monthEntries.length + monthExpenses.length}</div>
-          <div className="text-[8px] text-muted-foreground font-medium uppercase tracking-wider mt-1">Opérations</div>
-        </div>
+      {/* Toggle Cards */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <button
+          onClick={() => setActiveTab("entrees")}
+          className={`relative rounded-2xl p-4 text-center transition-all ${
+            activeTab === "entrees"
+              ? "ring-2 ring-success/40"
+              : "opacity-60"
+          }`}
+          style={{
+            background: activeTab === "entrees"
+              ? "linear-gradient(135deg, hsl(142 71% 45% / 0.12), hsl(142 71% 45% / 0.04))"
+              : "hsl(0 0% 100% / 0.03)",
+            border: activeTab === "entrees" ? "1px solid hsl(142 71% 45% / 0.2)" : "1px solid hsl(0 0% 100% / 0.06)",
+            backdropFilter: "blur(20px)",
+          }}
+        >
+          <div className="value-lg text-[20px] text-success">{totalEntries.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
+          <div className="text-[11px] font-bold text-foreground tracking-wider mt-1">ENTRÉES</div>
+          <div className="text-[9px] text-muted-foreground mt-0.5">{monthEntries.length} opération{monthEntries.length !== 1 ? "s" : ""}</div>
+        </button>
+        <button
+          onClick={() => setActiveTab("depenses")}
+          className={`relative rounded-2xl p-4 text-center transition-all ${
+            activeTab === "depenses"
+              ? "ring-2 ring-destructive/40"
+              : "opacity-60"
+          }`}
+          style={{
+            background: activeTab === "depenses"
+              ? "linear-gradient(135deg, hsl(0 62% 50% / 0.12), hsl(0 62% 50% / 0.04))"
+              : "hsl(0 0% 100% / 0.03)",
+            border: activeTab === "depenses" ? "1px solid hsl(0 62% 50% / 0.2)" : "1px solid hsl(0 0% 100% / 0.06)",
+            backdropFilter: "blur(20px)",
+          }}
+        >
+          <div className="value-lg text-[20px] text-destructive">-{totalExpenses.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
+          <div className="text-[11px] font-bold text-foreground tracking-wider mt-1">DÉPENSES</div>
+          <div className="text-[9px] text-muted-foreground mt-0.5">{monthExpenses.length} dépense{monthExpenses.length !== 1 ? "s" : ""}</div>
+        </button>
       </div>
 
-      {/* SECTION: ENTRÉES */}
+      {/* ENTRÉES TAB */}
+      {activeTab === "entrees" && (
       <div className="mb-2">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-xl" style={{ background: "hsl(142 71% 45% / 0.12)" }}>
-            <span className="text-success text-sm">↗</span>
-          </div>
-          <div>
-            <div className="text-[13px] font-bold text-foreground tracking-wide">ENTRÉES</div>
-            <div className="text-[10px] text-muted-foreground">{monthEntries.length} opération{monthEntries.length > 1 ? "s" : ""} · <span className="text-success font-semibold">{totalEntries.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</span></div>
-          </div>
-        </div>
-      </div>
 
       {OFFRE_THEMES.map(theme => {
         const entries = entriesByTheme[theme] || [];
@@ -395,20 +413,17 @@ export default function ActivitesPage() {
         </div>
       )}
 
-      {/* SECTION: DÉPENSES */}
-      <div className="mb-4 mt-6">
-        <div className="w-full h-px mb-5" style={{ background: "linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.08), transparent)" }} />
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-xl" style={{ background: "hsl(0 62% 50% / 0.12)" }}>
-            <span className="text-destructive text-sm">↙</span>
-          </div>
-          <div>
-            <div className="text-[13px] font-bold text-foreground tracking-wide">DÉPENSES PRO</div>
-            <div className="text-[10px] text-muted-foreground">{monthExpenses.length} dépense{monthExpenses.length > 1 ? "s" : ""} · <span className="text-destructive font-semibold">{totalExpenses > 0 ? `-${totalExpenses.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€` : "0€"}</span></div>
-          </div>
+      {monthEntries.length === 0 && (
+        <div className="rounded-2xl p-6 text-center stat-card" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
+          <div className="text-muted-foreground text-[11px]">Aucune entrée ce mois</div>
         </div>
+      )}
       </div>
+      )}
 
+      {/* DÉPENSES TAB */}
+      {activeTab === "depenses" && (
+      <div>
       {monthExpenses.length > 0 ? (
         <div className="mb-6">
           <div className="space-y-1.5">
@@ -455,13 +470,7 @@ export default function ActivitesPage() {
           <div className="text-muted-foreground text-[11px]">Aucune dépense ce mois</div>
         </div>
       )}
-
-      {monthEntries.length === 0 && monthExpenses.length === 0 && (
-        <div className="text-center py-16 text-muted-foreground">
-          <div className="text-4xl mb-3">📝</div>
-          <div className="text-sm">Aucune activité ce mois</div>
-          <div className="text-[11px] mt-1 text-muted-foreground/60">Appuie sur + pour ajouter</div>
-        </div>
+      </div>
       )}
 
       {/* FAB */}
