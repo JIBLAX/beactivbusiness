@@ -265,9 +265,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, currentPage, prospects, activResetClients,
-      financeEntries, expenses, portageMonths, versementsPerso, offres, loading,
+      financeEntries, expenses, portageMonths, versementsPerso, offres, urssafMode, loading,
       setCurrentPage, setProspects, setActivResetClients, setFinanceEntries,
-      setExpenses, setPortageMonths, setVersementsPerso, setOffres,
+      setExpenses, setPortageMonths, setVersementsPerso, setOffres, setUrssafMode,
     }}>
       {children}
     </AppContext.Provider>
