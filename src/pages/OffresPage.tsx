@@ -315,6 +315,10 @@ export default function OffresPage() {
                 <span className="text-[12px] text-muted-foreground">TVA 20%</span>
                 <ToggleSwitch checked={newTva} onChange={() => setNewTva(!newTva)} />
               </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-[12px] text-muted-foreground">Éligible Portage JUMP</span>
+                <ToggleSwitch checked={newPortage} onChange={() => setNewPortage(!newPortage)} />
+              </div>
               <button onClick={addOffre} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Créer l'offre
               </button>
