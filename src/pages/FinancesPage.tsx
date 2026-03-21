@@ -41,13 +41,6 @@ function getAllMonths(): string[] {
   return months;
 }
 
-function isEditable(month: string): boolean {
-  const [y, m] = month.split("-").map(Number);
-  const endOfMonth = new Date(y, m, 0);
-  const lockDate = new Date(endOfMonth);
-  lockDate.setDate(lockDate.getDate() + 30);
-  return new Date() <= lockDate;
-}
 
 function getQuarterMonths(year: number, quarter: number): string[] {
   const startMonth = (quarter - 1) * 3 + 1;
