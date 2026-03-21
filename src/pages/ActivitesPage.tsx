@@ -806,15 +806,14 @@ export default function ActivitesPage() {
                   className="w-full rounded-xl px-3 py-3 text-sm input-field" />
               </div>
               <div>
-                <label className="section-label mb-2 block">Activité liée (Portage)</label>
-                <div className="flex gap-1.5 flex-wrap">
-                  {EXPENSE_THEMES.map(t => (
-                    <button key={t} onClick={() => setNewExpense(p => ({ ...p, expenseTheme: t }))}
-                      className={`px-3 py-2 rounded-xl text-[11px] font-semibold transition-all ${(newExpense.expenseTheme ?? "TOUS") === t ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
-                      {t}
-                    </button>
-                  ))}
+                <label className="section-label mb-2 block">% Professionnel</label>
+                <div className="flex items-center gap-3">
+                  <input type="range" min={0} max={100} step={5} value={newExpense.proPct ?? 100}
+                    onChange={e => setNewExpense(p => ({ ...p, proPct: Number(e.target.value) }))}
+                    className="flex-1 accent-primary" />
+                  <span className="text-sm font-semibold text-foreground w-12 text-right">{newExpense.proPct ?? 100}%</span>
                 </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Part déductible en charges pro</p>
               </div>
               <button onClick={addExpense} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Ajouter la dépense
