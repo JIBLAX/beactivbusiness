@@ -23,7 +23,7 @@ export interface Prospect {
   sapEnabled?: boolean;
 }
 
-export type AppPage = "prospects" | "clients" | "activreset" | "finances" | "stats" | "offres";
+export type AppPage = "prospects" | "clients" | "activreset" | "finances" | "stats" | "offres" | "activites";
 
 export interface ActivResetClient {
   id: string;
