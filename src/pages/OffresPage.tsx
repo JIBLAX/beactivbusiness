@@ -32,6 +32,7 @@ export default function OffresPage() {
   const [editTheme, setEditTheme] = useState<OffreTheme>("PROGRAMMES");
   const [editTva, setEditTva] = useState(false);
   const [editPortage, setEditPortage] = useState(false);
+  const [editMaxInstallments, setEditMaxInstallments] = useState<number | undefined>();
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState(0);
@@ -42,6 +43,7 @@ export default function OffresPage() {
   const [newTheme, setNewTheme] = useState<OffreTheme>("PROGRAMMES");
   const [newTva, setNewTva] = useState(false);
   const [newPortage, setNewPortage] = useState(false);
+  const [newMaxInstallments, setNewMaxInstallments] = useState<number | undefined>();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const startEdit = (o: Offre) => {
@@ -49,7 +51,7 @@ export default function OffresPage() {
     setEditDuration(o.duration); setEditIsAlaCarte(o.isAlaCarte || false);
     setEditUnitPrice(o.unitPrice); setEditMinQty(o.minQuantity);
     setEditTheme(o.theme || "PROGRAMMES"); setEditTva(o.tvaEnabled || false);
-    setEditPortage(o.portageEligible || false);
+    setEditPortage(o.portageEligible || false); setEditMaxInstallments(o.maxInstallments);
   };
 
   const saveEdit = () => {
@@ -69,6 +71,7 @@ export default function OffresPage() {
         duration: editIsAlaCarte ? undefined : editDuration,
         isAlaCarte: editIsAlaCarte, unitPrice: editUnitPrice, minQuantity: editMinQty,
         theme: editTheme, tvaEnabled: editTva, portageEligible: editPortage,
+        maxInstallments: editMaxInstallments,
         priceHistory: priceChanged ? [...o.priceHistory, { price: editPrice, date: today }] : o.priceHistory,
       };
     }));
@@ -95,12 +98,13 @@ export default function OffresPage() {
       duration: newIsAlaCarte ? undefined : newDuration,
       isAlaCarte: newIsAlaCarte, unitPrice: newUnitPrice, minQuantity: newMinQty,
       theme: newTheme, tvaEnabled: newTva, portageEligible: newPortage,
+      maxInstallments: newMaxInstallments,
     };
     setOffres([...offres, offre]);
     setShowAdd(false);
     setNewName(""); setNewPrice(0); setNewDuration({ value: 1, unit: "mois" });
     setNewIsAlaCarte(false); setNewUnitPrice(undefined); setNewMinQty(undefined);
-    setNewTheme("PROGRAMMES"); setNewTva(false); setNewPortage(false);
+    setNewTheme("PROGRAMMES"); setNewTva(false); setNewPortage(false); setNewMaxInstallments(undefined);
   };
 
   const activeCount = offres.filter(o => o.active).length;
@@ -166,6 +170,17 @@ export default function OffresPage() {
             <span className="text-[12px] text-muted-foreground">Éligible Portage JUMP</span>
             <ToggleSwitch checked={editPortage} onChange={() => setEditPortage(!editPortage)} />
           </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] text-muted-foreground">Paiement en plusieurs fois</span>
+            <ToggleSwitch checked={!!editMaxInstallments && editMaxInstallments > 1} onChange={() => setEditMaxInstallments(editMaxInstallments && editMaxInstallments > 1 ? undefined : 3)} />
+          </div>
+          {editMaxInstallments && editMaxInstallments > 1 && (
+            <div>
+              <label className="section-label mb-1 block">Nombre de fois max</label>
+              <input type="number" value={editMaxInstallments} onChange={e => setEditMaxInstallments(Number(e.target.value) || undefined)}
+                min={2} max={12} className="w-full rounded-xl px-3 py-2 text-sm input-field" />
+            </div>
+          )}
           <div className="flex gap-2 pt-1">
             <button onClick={saveEdit} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white btn-primary">✓ Sauvegarder</button>
             <button onClick={() => setEditingId(null)} className="px-4 py-2.5 rounded-xl text-sm text-muted-foreground input-field">✕</button>
@@ -188,6 +203,7 @@ export default function OffresPage() {
                 {o.minQuantity && <span className="text-[10px] text-muted-foreground">min. {o.minQuantity}</span>}
                 {o.tvaEnabled && <span className="badge-pill text-[9px]" style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>TVA</span>}
                 {o.portageEligible && <span className="badge-pill text-[9px]" style={{ background: "hsl(217 70% 60% / 0.1)", color: "hsl(217 70% 60%)" }}>PORTAGE</span>}
+                {o.maxInstallments && o.maxInstallments > 1 && <span className="badge-pill text-[9px]" style={{ background: "hsl(280 60% 55% / 0.1)", color: "hsl(280 60% 55%)" }}>Jusqu'à {o.maxInstallments}×</span>}
               </div>
             </div>
             <div className="value-lg text-[18px]" style={{ color: "hsl(348 63% 45%)" }}>{o.price}€</div>
@@ -319,6 +335,17 @@ export default function OffresPage() {
                 <span className="text-[12px] text-muted-foreground">Éligible Portage JUMP</span>
                 <ToggleSwitch checked={newPortage} onChange={() => setNewPortage(!newPortage)} />
               </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-[12px] text-muted-foreground">Paiement en plusieurs fois</span>
+                <ToggleSwitch checked={!!newMaxInstallments && newMaxInstallments > 1} onChange={() => setNewMaxInstallments(newMaxInstallments && newMaxInstallments > 1 ? undefined : 3)} />
+              </div>
+              {newMaxInstallments && newMaxInstallments > 1 && (
+                <div>
+                  <label className="section-label mb-2 block">Nombre de fois max</label>
+                  <input type="number" value={newMaxInstallments} onChange={e => setNewMaxInstallments(Number(e.target.value) || undefined)}
+                    min={2} max={12} className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
+                </div>
+              )}
               <button onClick={addOffre} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Créer l'offre
               </button>

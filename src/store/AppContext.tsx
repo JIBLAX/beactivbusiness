@@ -109,6 +109,7 @@ function offreToRow(o: Offre, userId: string) {
     unit_price: o.unitPrice ?? null, min_quantity: o.minQuantity ?? null,
     is_ala_carte: o.isAlaCarte ?? false, theme: o.theme ?? "PROGRAMMES",
     tva_enabled: o.tvaEnabled ?? false, portage_eligible: o.portageEligible ?? false,
+    max_installments: o.maxInstallments ?? null,
   };
 }
 
@@ -123,6 +124,7 @@ function rowToOffre(r: any): Offre {
     theme: r.theme ?? "PROGRAMMES",
     tvaEnabled: r.tva_enabled ?? false,
     portageEligible: r.portage_eligible ?? false,
+    maxInstallments: r.max_installments ?? undefined,
   };
 }
 

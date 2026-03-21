@@ -21,9 +21,15 @@ function getClientMetrics(entries: any[], offreName: string, offres: any[]): { p
   if (!found) return { programmesLabel: "-", programmesCount: 0, seancesLabel: "-", seancesCount: 0 };
 
   if (found.theme === "PROGRAMMES") {
-    // Programmes: count units, no séances
-    const count = entries.length > 0 ? entries.length : 1;
-    return { programmesLabel: `${count} unité${count > 1 ? "s" : ""}`, programmesCount: count, seancesLabel: "-", seancesCount: 0 };
+    // Group installments: entries with same installmentGroup count as 1 unit
+    const groups = new Set<string>();
+    let standalone = 0;
+    entries.forEach((e: any) => {
+      if (e.installmentGroup) groups.add(e.installmentGroup);
+      else standalone++;
+    });
+    const count = groups.size + standalone;
+    return { programmesLabel: `${count || 1} unité${count > 1 ? "s" : ""}`, programmesCount: count || 1, seancesLabel: "-", seancesCount: 0 };
   }
 
   // JM COACHING / COURS COLLECTIFS: count séances, no programmes
