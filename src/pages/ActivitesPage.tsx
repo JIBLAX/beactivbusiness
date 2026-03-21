@@ -89,6 +89,8 @@ export default function ActivitesPage() {
   const [entrySapHours, setEntrySapHours] = useState(0);
   const [entryCashDeclaration, setEntryCashDeclaration] = useState<string>("micro");
   const [entryNbSessions, setEntryNbSessions] = useState(0);
+  const [entryDiscountType, setEntryDiscountType] = useState<"percent" | "euro" | "none">("none");
+  const [entryDiscountValue, setEntryDiscountValue] = useState(0);
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
   const editable = isEditable(selectedMonth);
