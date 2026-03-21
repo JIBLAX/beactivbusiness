@@ -330,7 +330,6 @@ export default function ActivitesPage() {
               </div>
               {themeTotal > 0 && <span className="value-lg text-[13px] text-success">{themeTotal.toFixed(0)}€</span>}
             </div>
-            </div>
 
             <div className="space-y-1.5 ml-1">
               {entries.map(e => (
