@@ -527,6 +527,15 @@ export default function ActivitesPage() {
                         <span className="text-[11px] font-semibold text-foreground w-10 text-right">{editExpense.proPct ?? 100}%</span>
                       </div>
                     </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block">% Portage <span className="text-muted-foreground">(optionnel)</span></label>
+                      <div className="flex items-center gap-2">
+                        <input type="range" min={0} max={100} step={5} value={editExpense.portagePct ?? 0}
+                          onChange={ev => setEditExpense(p => ({ ...p, portagePct: Number(ev.target.value) || null }))}
+                          className="flex-1" style={{ accentColor: "hsl(262 80% 65%)" }} />
+                        <span className="text-[11px] font-semibold w-10 text-right" style={{ color: "hsl(262 80% 65%)" }}>{editExpense.portagePct ?? 0}%</span>
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <button onClick={saveEditExpense} className="flex-1 py-2 rounded-xl text-xs font-semibold text-white btn-primary">✓</button>
                       <button onClick={() => setEditingExpenseId(null)} className="px-4 py-2 rounded-xl text-xs text-muted-foreground input-field">✕</button>
