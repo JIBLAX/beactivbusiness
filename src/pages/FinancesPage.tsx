@@ -40,12 +40,15 @@ function isEditable(month: string): boolean {
   return new Date() <= lockDate;
 }
 
-function getRolling12Months(): string[] {
+function getAllMonths(): string[] {
+  const start = new Date(2025, 8, 1); // September 2025
   const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth() + 3, 1); // 3 months ahead
   const months: string[] = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+  const d = new Date(start);
+  while (d <= end) {
     months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    d.setMonth(d.getMonth() + 1);
   }
   return months;
 }
