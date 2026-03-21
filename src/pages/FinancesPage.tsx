@@ -97,7 +97,8 @@ export default function FinancesPage() {
   const beneficeNet = totalReel - urssaf - totalDepenses;
   const gestionPerso = calcGestionPerso(beneficeNet);
   const restePerso = beneficeNet - gestionPerso;
-  const versementReel = versementsPerso[selectedMonth] ?? null;
+  const monthVersements = versementsPerso[selectedMonth] ?? {};
+  const totalVerse = Object.values(monthVersements).reduce((s, v) => s + (v ?? 0), 0);
 
   const bureauExpenses = monthExpenses.filter(e => e.category === "LOCAUX & BUREAUX");
   const prorataAmount = bureauExpenses.reduce((s, e) => s + e.amount, 0) * PRORATA_BUREAU;
