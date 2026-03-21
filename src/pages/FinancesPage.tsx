@@ -110,7 +110,7 @@ export default function FinancesPage() {
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
   const editable = isEditable(selectedMonth);
-  const rolling12 = useMemo(() => getRolling12Months(), []);
+  const allMonths = useMemo(() => getAllMonths(), []);
   const activeOffres = offres.filter(o => o.active);
 
   const sapClientNames = useMemo(() => new Set(prospects.filter(p => p.sapEnabled).map(p => p.name)), [prospects]);
