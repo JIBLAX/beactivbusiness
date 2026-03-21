@@ -367,6 +367,16 @@ export default function ActivitesPage() {
                           </select>
                         )}
                         <span className="value-lg text-[14px] text-success">+{e.amount}€</span>
+                        {editable && (() => {
+                          const entryOffre = offres.find(o => o.name === e.offre);
+                          return entryOffre?.unitPrice ? (
+                            <button onClick={() => { setShowAddSessions(true); setExtraSessionsOffre(e.offre || ""); setExtraSessionsClient(e.clientName || ""); setExtraSessionsCount(0); }}
+                              className="text-[10px] px-1.5 py-0.5 rounded-lg transition-colors"
+                              style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)", border: "1px solid hsl(38 92% 55% / 0.2)" }}>
+                              +séances
+                            </button>
+                          ) : null;
+                        })()}
                         {editable && (
                           <>
                             <button onClick={() => startEditEntry(e)} className="text-muted-foreground hover:text-foreground transition-colors p-1">✏️</button>
