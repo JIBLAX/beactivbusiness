@@ -8,8 +8,14 @@ function AppContent() {
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center"
-        style={{ background: "hsl(0 6% 4%)" }}>
-        <div className="text-muted-foreground text-sm animate-pulse">Chargement...</div>
+        style={{ background: "hsl(240 6% 3%)" }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-xl" style={{ 
+            background: "var(--gradient-primary)",
+            animation: "pulseSub 1.5s ease-in-out infinite"
+          }} />
+          <div className="text-muted-foreground/60 text-[11px] font-medium tracking-wider uppercase">Chargement</div>
+        </div>
       </div>
     );
   }

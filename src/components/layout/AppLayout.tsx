@@ -20,37 +20,69 @@ export default function AppLayout() {
       .reduce((s, e) => s + e.amount, 0);
   }, [financeEntries, currentYear]);
 
+  const pageTitle = {
+    finances: "Finances",
+    offres: "Offres",
+    stats: "Statistiques",
+    clients: "Clients",
+    activreset: "Activ Reset",
+  }[currentPage] || "Finances";
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col h-[100dvh] bg-background">
-      {/* Topbar */}
-      <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0 relative z-10"
-        style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.05)" }}>
-        <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0"
-          style={{ border: "1px solid hsl(348 63% 30% / 0.3)" }}>
-          <img src={beactivLogo} alt="Be Activ" className="w-full h-full object-contain" style={{ background: "#0a0808" }} />
+      {/* Premium Topbar */}
+      <div className="topbar-blur flex items-center gap-3 px-4 py-3 flex-shrink-0 relative z-10"
+        style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.04)" }}>
+        
+        {/* Logo */}
+        <div className="w-9 h-9 rounded-[14px] overflow-hidden flex-shrink-0 relative"
+          style={{ 
+            border: "1px solid hsl(348 63% 30% / 0.25)",
+            boxShadow: "0 0 20px hsl(348 63% 30% / 0.08)"
+          }}>
+          <img src={beactivLogo} alt="Be Activ" className="w-full h-full object-contain" 
+            style={{ background: "hsl(240 6% 4%)" }} />
         </div>
 
+        {/* Title area */}
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-semibold text-foreground tracking-tight">COACH JM</div>
-          <div className="text-[10px] text-muted-foreground font-medium">BUSINESS</div>
+          <div className="text-[14px] font-semibold text-foreground tracking-tight leading-none">
+            {pageTitle}
+          </div>
+          <div className="text-[10px] text-muted-foreground font-medium mt-0.5 tracking-wide">
+            COACH JM
+          </div>
         </div>
 
+        {/* CA badge */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="text-right">
-            <div className="value-lg text-[18px] text-foreground leading-none">{yearlyCA.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
-            <div className="text-[9px] text-muted-foreground font-medium mt-0.5">CA {currentYear}</div>
+          <div className="rounded-2xl px-3.5 py-1.5" 
+            style={{ 
+              background: "hsl(0 0% 100% / 0.03)", 
+              border: "1px solid hsl(0 0% 100% / 0.05)",
+              boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.03)"
+            }}>
+            <div className="value-lg text-[16px] text-foreground leading-none">
+              {yearlyCA.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
+            </div>
+            <div className="text-[8px] text-muted-foreground font-medium mt-0.5 text-center tracking-widest">
+              CA {currentYear}
+            </div>
           </div>
 
+          {/* Menu button */}
           <button onClick={() => setMenuOpen(true)}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground"
-            style={{ background: "hsl(0 0% 100% / 0.05)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
-            <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
-              <path d="M0 1h16M0 6h12M0 11h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+            style={{ 
+              background: "hsl(0 0% 100% / 0.03)", 
+              border: "1px solid hsl(0 0% 100% / 0.05)" 
+            }}>
+            <svg width="15" height="11" viewBox="0 0 15 11" fill="none">
+              <path d="M0 0.5h15M0 5.5h10M0 10.5h6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
       </div>
-
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
