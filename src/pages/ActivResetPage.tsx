@@ -13,7 +13,10 @@ function getDaysRemaining(phase: ActivResetClient["phases"][number]): number | n
 export default function ActivResetPage() {
   const { activResetClients, setActivResetClients } = useApp();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
+  const visibleClients = showArchived ? activResetClients : activResetClients.filter(c => !c.archived);
+  const archivedCount = activResetClients.filter(c => c.archived).length;
   const selected = selectedId ? activResetClients.find(c => c.id === selectedId) : null;
 
   // Alerts
