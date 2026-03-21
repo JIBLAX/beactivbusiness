@@ -46,7 +46,7 @@ const THEME_LOGOS: Record<string, string> = {
 };
 
 export default function ActivitesPage() {
-  const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths } = useApp();
+  const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths, quarterEdits, incrementQuarterEdit } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [activeTab, setActiveTab] = useState<"entrees" | "depenses">("entrees");
   const [showFabMenu, setShowFabMenu] = useState(false);
