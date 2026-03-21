@@ -9,6 +9,42 @@ function formatDurationFromOffre(offre: string, offres: any[]): string {
   return `${found.duration.value} ${u}`;
 }
 
+function getOffreType(offreName: string, offres: any[]): "programme" | "seance" {
+  const found = offres.find((o: any) => o.name === offreName);
+  if (!found) return "seance";
+  if (found.theme === "PROGRAMMES") return "programme";
+  return "seance";
+}
+
+function getClientSessionCount(entries: any[], offreName: string, offres: any[]): { label: string; count: number } {
+  const found = offres.find((o: any) => o.name === offreName);
+  if (!found) return { label: `${entries.length} entrées`, count: entries.length };
+  
+  if (found.theme === "PROGRAMMES") {
+    return { label: "1 programme", count: 1 };
+  }
+  
+  // For JM COACHING with min_quantity (JM PASS types) — count sessions
+  if (found.minQuantity || found.unitPrice) {
+    // Each entry might represent multiple sessions based on amount / unitPrice
+    const unitPrice = found.unitPrice || found.price;
+    const totalSessions = entries.reduce((sum: number, e: any) => {
+      if (unitPrice > 0) {
+        return sum + Math.round(e.amount / unitPrice);
+      }
+      return sum + 1;
+    }, 0);
+    return { label: `${totalSessions} séance${totalSessions > 1 ? "s" : ""}`, count: totalSessions };
+  }
+  
+  // For à la carte or one shot
+  if (found.isAlaCarte) {
+    return { label: `${entries.length} séance${entries.length > 1 ? "s" : ""}`, count: entries.length };
+  }
+  
+  return { label: `${entries.length} séance${entries.length > 1 ? "s" : ""}`, count: entries.length };
+}
+
 export default function ClientsPage() {
   const { prospects, setProspects, financeEntries, offres } = useApp();
   const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
@@ -19,9 +55,13 @@ export default function ClientsPage() {
 
   const getClientEntries = (name: string) => financeEntries.filter(e => e.clientName === name);
   const getClientTotal = (name: string) => getClientEntries(name).reduce((s, e) => s + e.amount, 0);
-  const getClientSessions = (name: string) => getClientEntries(name).length;
   const getClientSapHours = (name: string) => getClientEntries(name).reduce((s, e) => s + (e.sapHours || 0), 0);
   const getClientSapTotal = (name: string) => getClientEntries(name).filter(e => e.sapHours && e.sapHours > 0).reduce((s, e) => s + e.amount, 0);
+
+  const getSessionInfo = (client: Prospect) => {
+    const entries = getClientEntries(client.name);
+    return getClientSessionCount(entries, client.offre, offres);
+  };
 
   const startEdit = (c: Prospect) => {
     setEditData({ ...c });
@@ -41,6 +81,8 @@ export default function ClientsPage() {
     const sapHours = getClientSapHours(selectedClient.name);
     const sapTotal = getClientSapTotal(selectedClient.name);
     const duration = formatDurationFromOffre(selectedClient.offre, offres);
+    const sessionInfo = getSessionInfo(selectedClient);
+    const offreType = getOffreType(selectedClient.offre, offres);
 
     return (
       <div className="px-4 pt-4 pb-24">
@@ -159,8 +201,8 @@ export default function ClientsPage() {
             <div className="value-lg text-[22px] text-success">{totalPaid.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
           </div>
           <div className="stat-card rounded-2xl p-4 text-center">
-            <div className="section-label mb-1">Entrées</div>
-            <div className="value-lg text-[22px] text-foreground">{entries.length}</div>
+            <div className="section-label mb-1">{offreType === "programme" ? "Programme" : "Séances"}</div>
+            <div className="value-lg text-[22px] text-foreground">{sessionInfo.count}</div>
           </div>
         </div>
 
@@ -171,15 +213,26 @@ export default function ClientsPage() {
               <div className="section-label">Historique des paiements</div>
             </div>
             <div className="divide-y" style={{ borderColor: "hsl(0 0% 100% / 0.04)" }}>
-              {entries.map(e => (
-                <div key={e.id} className="px-4 py-3 flex items-center justify-between">
-                  <div>
-                    <div className="text-[13px] font-medium text-foreground">{e.label}</div>
-                    <div className="text-[10px] text-muted-foreground">{e.month}{e.paymentMode ? ` · ${e.paymentMode}` : ""}{e.sapHours ? ` · ${e.sapHours}h SAP` : ""}</div>
+              {entries.map(e => {
+                const entryOffre = offres.find(o => o.name === e.offre);
+                const sessionsInEntry = entryOffre?.unitPrice && entryOffre.unitPrice > 0 
+                  ? Math.round(e.amount / entryOffre.unitPrice) 
+                  : null;
+                return (
+                  <div key={e.id} className="px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <div className="text-[13px] font-medium text-foreground">{e.label}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {e.month}
+                        {e.paymentMode ? ` · ${e.paymentMode}` : ""}
+                        {sessionsInEntry ? ` · ${sessionsInEntry} séance${sessionsInEntry > 1 ? "s" : ""}` : ""}
+                        {e.sapHours ? ` · ${e.sapHours}h SAP` : ""}
+                      </div>
+                    </div>
+                    <div className="value-lg text-[14px] text-success">+{e.amount}€</div>
                   </div>
-                  <div className="value-lg text-[14px] text-success">+{e.amount}€</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -219,24 +272,27 @@ export default function ClientsPage() {
 
       {/* Client list */}
       <div className="space-y-2">
-        {clients.map(c => (
-          <button key={c.id} onClick={() => setSelectedClient(c)}
-            className="w-full text-left card-elevated rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold"
-              style={{ background: c.sex === "F" ? "hsl(330 60% 50% / 0.12)" : "hsl(210 60% 50% / 0.12)", color: c.sex === "F" ? "hsl(330 60% 60%)" : "hsl(210 60% 60%)" }}>
-              {c.name.charAt(0)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[14px] font-semibold text-foreground">{c.name}</div>
-              <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{c.offre}</div>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <div className="value-lg text-[14px] text-success">{getClientTotal(c.name).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
-              <div className="text-[10px] text-muted-foreground">{getClientSessions(c.name)} entrées</div>
-            </div>
-            <span className="text-muted-foreground text-xs">›</span>
-          </button>
-        ))}
+        {clients.map(c => {
+          const info = getSessionInfo(c);
+          return (
+            <button key={c.id} onClick={() => setSelectedClient(c)}
+              className="w-full text-left card-elevated rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold"
+                style={{ background: c.sex === "F" ? "hsl(330 60% 50% / 0.12)" : "hsl(210 60% 50% / 0.12)", color: c.sex === "F" ? "hsl(330 60% 60%)" : "hsl(210 60% 60%)" }}>
+                {c.name.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[14px] font-semibold text-foreground">{c.name}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{c.offre}</div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <div className="value-lg text-[14px] text-success">{getClientTotal(c.name).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
+                <div className="text-[10px] text-muted-foreground">{info.label}</div>
+              </div>
+              <span className="text-muted-foreground text-xs">›</span>
+            </button>
+          );
+        })}
       </div>
 
       {clients.length === 0 && (

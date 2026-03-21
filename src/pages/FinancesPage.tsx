@@ -77,6 +77,17 @@ export default function FinancesPage() {
   const [editEntry, setEditEntry] = useState<Partial<FinanceEntry>>({});
   const [editExpense, setEditExpense] = useState<Partial<Expense>>({});
 
+  // Quick-add for cours collectifs
+  const [showQuickCours, setShowQuickCours] = useState(false);
+  const [quickCoursData, setQuickCoursData] = useState<Record<string, number>>({});
+  const [quickCoursPayment, setQuickCoursPayment] = useState<string>("cb");
+
+  // JM PASS extra sessions
+  const [showAddSessions, setShowAddSessions] = useState(false);
+  const [extraSessionsOffre, setExtraSessionsOffre] = useState("");
+  const [extraSessionsClient, setExtraSessionsClient] = useState("");
+  const [extraSessionsCount, setExtraSessionsCount] = useState(0);
+
   const currentYear = new Date().getFullYear();
   const [sapYear, setSapYear] = useState(currentYear);
   const [sapQuarter, setSapQuarter] = useState(Math.ceil((new Date().getMonth() + 1) / 3));
@@ -92,6 +103,7 @@ export default function FinancesPage() {
   const [entryInstallments, setEntryInstallments] = useState(1);
   const [entrySapHours, setEntrySapHours] = useState(0);
   const [entryCashDeclaration, setEntryCashDeclaration] = useState<string>("micro");
+  const [entryNbSessions, setEntryNbSessions] = useState(0);
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
   const editable = isEditable(selectedMonth);
@@ -158,20 +170,88 @@ export default function FinancesPage() {
   const handleOffreSelect = (offreName: string) => {
     setEntryOffre(offreName);
     const found = offres.find(o => o.name === offreName);
-    if (found) setEntryAmount(found.price);
+    if (found) {
+      // For JM PASS type offres with unitPrice and minQuantity, default to min sessions
+      if (found.unitPrice && found.minQuantity) {
+        setEntryNbSessions(found.minQuantity);
+        setEntryAmount(found.unitPrice * found.minQuantity);
+      } else {
+        setEntryAmount(found.price);
+        setEntryNbSessions(0);
+      }
+    }
+  };
+
+  // When session count changes for JM PASS type offres
+  const handleSessionCountChange = (count: number) => {
+    setEntryNbSessions(count);
+    const found = offres.find(o => o.name === entryOffre);
+    if (found?.unitPrice) {
+      setEntryAmount(found.unitPrice * count);
+    }
   };
 
   const resetEntryForm = () => {
     setEntrySource("offre"); setEntryOffre(""); setEntryExterneLabel(""); setEntryClientName("");
     setEntryAmount(0); setEntryType("micro"); setEntryPaymentMode("cb");
     setEntryInstallments(1); setEntrySapHours(0); setEntryCashDeclaration("micro"); setAddTheme(null);
+    setEntryNbSessions(0);
   };
 
   const openAddByTheme = (theme: OffreTheme) => {
+    if (theme === "COURS COLLECTIFS") {
+      // Open quick-add for cours collectifs
+      const coursOffres = activeOffres.filter(o => o.theme === "COURS COLLECTIFS");
+      const initial: Record<string, number> = {};
+      coursOffres.forEach(o => initial[o.name] = 0);
+      setQuickCoursData(initial);
+      setQuickCoursPayment("cb");
+      setShowQuickCours(true);
+      return;
+    }
     resetEntryForm();
     setAddTheme(theme);
     setEntrySource("offre");
     setShowAddEntry(true);
+  };
+
+  const addQuickCours = () => {
+    const newEntries: FinanceEntry[] = [];
+    Object.entries(quickCoursData).forEach(([offreName, qty]) => {
+      if (qty <= 0) return;
+      const found = offres.find(o => o.name === offreName);
+      if (!found) return;
+      const totalAmount = found.price * qty;
+      newEntries.push({
+        id: "fe" + Date.now() + "_" + offreName.replace(/\s/g, ""),
+        month: selectedMonth, type: "micro",
+        label: `${offreName} × ${qty}`,
+        amount: totalAmount, offre: offreName,
+        paymentMode: quickCoursPayment as any,
+      });
+    });
+    if (newEntries.length > 0) {
+      setFinanceEntries([...financeEntries, ...newEntries]);
+    }
+    setShowQuickCours(false);
+  };
+
+  const addExtraSessions = () => {
+    if (!extraSessionsOffre || extraSessionsCount <= 0 || !extraSessionsClient) return;
+    const found = offres.find(o => o.name === extraSessionsOffre);
+    if (!found?.unitPrice) return;
+    const amount = found.unitPrice * extraSessionsCount;
+    const entry: FinanceEntry = {
+      id: "fe" + Date.now() + "_extra",
+      month: selectedMonth, type: "micro",
+      label: `${extraSessionsOffre} +${extraSessionsCount} séances supp.`,
+      amount, offre: extraSessionsOffre,
+      clientName: extraSessionsClient,
+      paymentMode: "cb",
+    };
+    setFinanceEntries([...financeEntries, entry]);
+    setShowAddSessions(false);
+    setExtraSessionsOffre(""); setExtraSessionsClient(""); setExtraSessionsCount(0);
   };
 
   const addEntry = () => {
@@ -179,12 +259,14 @@ export default function FinancesPage() {
     if (!label || !entryAmount) return;
     const groupId = "grp" + Date.now();
     const installmentAmount = Math.round((entryAmount / entryInstallments) * 100) / 100;
+    const found = offres.find(o => o.name === entryOffre);
+    const sessionsLabel = entryNbSessions > 0 ? ` (${entryNbSessions} séances)` : "";
     const newEntries: FinanceEntry[] = [];
     for (let i = 0; i < entryInstallments; i++) {
       const month = addMonthsOffset(selectedMonth, i);
       newEntries.push({
         id: "fe" + Date.now() + "_" + i, month, type: entryType,
-        label: entryInstallments > 1 ? `${label} (${i + 1}/${entryInstallments})` : label,
+        label: entryInstallments > 1 ? `${label}${sessionsLabel} (${i + 1}/${entryInstallments})` : `${label}${sessionsLabel}`,
         amount: installmentAmount, offre: entrySource === "offre" ? entryOffre : undefined,
         clientName: entryClientName || undefined, paymentMode: entryPaymentMode as any,
         installmentGroup: entryInstallments > 1 ? groupId : undefined,
@@ -471,8 +553,15 @@ export default function FinancesPage() {
                   <span className="text-[12px] font-bold text-foreground">{theme}</span>
                   {entries.length > 0 && <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{entries.length}</span>}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {themeTotal > 0 && <span className="value-lg text-[13px] text-success">{themeTotal.toFixed(0)}€</span>}
+                  {editable && theme === "JM COACHING" && entries.length > 0 && (
+                    <button onClick={() => { setShowAddSessions(true); setExtraSessionsOffre(""); setExtraSessionsClient(""); setExtraSessionsCount(0); }}
+                      className="badge-pill text-[10px] cursor-pointer"
+                      style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)", border: "1px solid hsl(38 92% 55% / 0.2)" }}>
+                      + Séances supp.
+                    </button>
+                  )}
                   {editable && (
                     <button onClick={() => openAddByTheme(theme)} className="badge-pill text-[10px] cursor-pointer"
                       style={{ background: "hsl(348 63% 30% / 0.1)", color: "hsl(348 63% 45%)", border: "1px solid hsl(348 63% 30% / 0.2)" }}>
@@ -665,6 +754,31 @@ export default function FinancesPage() {
                     <label className="section-label mb-2 block">Client</label>
                     <ClientAutocomplete value={entryClientName} onChange={v => setEntryClientName(v)} />
                   </div>
+                  {/* Session counter for JM PASS type offres */}
+                  {(() => {
+                    const selectedOffre = offres.find(o => o.name === entryOffre);
+                    if (selectedOffre?.unitPrice && selectedOffre?.minQuantity) {
+                      return (
+                        <div>
+                          <label className="section-label mb-2 block">Nombre de séances</label>
+                          <div className="flex items-center gap-3">
+                            <button onClick={() => entryNbSessions > (selectedOffre.minQuantity || 1) && handleSessionCountChange(entryNbSessions - 1)}
+                              className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold input-field">−</button>
+                            <div className="flex-1 text-center">
+                              <div className="value-lg text-[24px] text-foreground">{entryNbSessions}</div>
+                              <div className="text-[10px] text-muted-foreground">min. {selectedOffre.minQuantity}</div>
+                            </div>
+                            <button onClick={() => handleSessionCountChange(entryNbSessions + 1)}
+                              className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold input-field">+</button>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground text-center mt-1">
+                            {entryNbSessions} × {selectedOffre.unitPrice}€ = <span className="text-success font-semibold">{entryAmount}€</span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </>
               ) : (
                 <div>
@@ -774,6 +888,125 @@ export default function FinancesPage() {
               </div>
               <button onClick={addExpense} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Ajouter la dépense
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QUICK COURS COLLECTIFS SHEET */}
+      {showQuickCours && (
+        <div className="fixed inset-0 z-[200] flex items-end" onClick={() => setShowQuickCours(false)}
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+          <div className="w-full max-h-[85dvh] rounded-t-3xl overflow-y-auto pb-8 animate-fade-up" onClick={e => e.stopPropagation()}
+            style={{ background: "hsl(0 0% 6%)", borderTop: "1px solid hsl(0 0% 100% / 0.08)" }}>
+            <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1" style={{ background: "hsl(0 0% 20%)" }} />
+            <div className="flex items-center justify-between px-5 pt-3 pb-3">
+              <h2 className="font-display text-[17px] font-bold text-foreground">🏃 Cours Collectifs</h2>
+              <button onClick={() => setShowQuickCours(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm text-muted-foreground"
+                style={{ background: "hsl(0 0% 100% / 0.05)" }}>✕</button>
+            </div>
+            <div className="px-5 space-y-3">
+              <p className="text-[11px] text-muted-foreground">Entrez le nombre vendu pour chaque offre ce mois</p>
+              {activeOffres.filter(o => o.theme === "COURS COLLECTIFS").map(o => (
+                <div key={o.id} className="rounded-2xl p-4 flex items-center justify-between" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                  <div className="flex-1 min-w-0 mr-3">
+                    <div className="text-[13px] font-semibold text-foreground">{o.name}</div>
+                    <div className="text-[11px] text-muted-foreground">{o.price}€ / unité</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setQuickCoursData(p => ({ ...p, [o.name]: Math.max(0, (p[o.name] || 0) - 1) }))}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold input-field">−</button>
+                    <div className="w-10 text-center value-lg text-[18px] text-foreground">{quickCoursData[o.name] || 0}</div>
+                    <button onClick={() => setQuickCoursData(p => ({ ...p, [o.name]: (p[o.name] || 0) + 1 }))}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold input-field">+</button>
+                  </div>
+                  {(quickCoursData[o.name] || 0) > 0 && (
+                    <div className="ml-3 value-lg text-[13px] text-success min-w-[50px] text-right">
+                      {(o.price * (quickCoursData[o.name] || 0)).toFixed(0)}€
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div>
+                <label className="section-label mb-2 block">Mode paiement</label>
+                <select value={quickCoursPayment} onChange={e => setQuickCoursPayment(e.target.value)}
+                  className="w-full rounded-xl px-3 py-3 text-sm input-field">
+                  {PAYMENT_MODES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </select>
+              </div>
+              {(() => {
+                const total = Object.entries(quickCoursData).reduce((s, [name, qty]) => {
+                  const o = offres.find(of => of.name === name);
+                  return s + (o ? o.price * qty : 0);
+                }, 0);
+                return total > 0 ? (
+                  <div className="rounded-2xl p-4 text-center" style={{ background: "hsl(152 55% 42% / 0.08)", border: "1px solid hsl(152 55% 42% / 0.2)" }}>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total cours collectifs</div>
+                    <div className="value-lg text-[24px] text-success">{total.toFixed(0)}€</div>
+                  </div>
+                ) : null;
+              })()}
+              <button onClick={addQuickCours} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
+                Ajouter les entrées
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD EXTRA SESSIONS SHEET */}
+      {showAddSessions && (
+        <div className="fixed inset-0 z-[200] flex items-end" onClick={() => setShowAddSessions(false)}
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+          <div className="w-full max-h-[80dvh] rounded-t-3xl overflow-y-auto pb-8 animate-fade-up" onClick={e => e.stopPropagation()}
+            style={{ background: "hsl(0 0% 6%)", borderTop: "1px solid hsl(0 0% 100% / 0.08)" }}>
+            <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1" style={{ background: "hsl(0 0% 20%)" }} />
+            <div className="flex items-center justify-between px-5 pt-3 pb-3">
+              <h2 className="font-display text-[17px] font-bold text-foreground">💪 Séances supplémentaires</h2>
+              <button onClick={() => setShowAddSessions(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm text-muted-foreground"
+                style={{ background: "hsl(0 0% 100% / 0.05)" }}>✕</button>
+            </div>
+            <div className="px-5 space-y-4">
+              <p className="text-[11px] text-muted-foreground">Ajoutez des séances en plus du minimum inclus dans le PASS du client</p>
+              <div>
+                <label className="section-label mb-2 block">Offre JM PASS</label>
+                <select value={extraSessionsOffre} onChange={e => setExtraSessionsOffre(e.target.value)}
+                  className="w-full rounded-xl px-3 py-3 text-sm input-field">
+                  <option value="">— Sélectionner —</option>
+                  {activeOffres.filter(o => o.theme === "JM COACHING" && o.unitPrice && o.minQuantity).map(o => (
+                    <option key={o.id} value={o.name}>{o.name} — {o.unitPrice}€/séance</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="section-label mb-2 block">Client</label>
+                <ClientAutocomplete value={extraSessionsClient} onChange={v => setExtraSessionsClient(v)} />
+              </div>
+              <div>
+                <label className="section-label mb-2 block">Nombre de séances supp.</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => extraSessionsCount > 1 && setExtraSessionsCount(extraSessionsCount - 1)}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold input-field">−</button>
+                  <div className="flex-1 text-center">
+                    <div className="value-lg text-[24px] text-foreground">{extraSessionsCount}</div>
+                  </div>
+                  <button onClick={() => setExtraSessionsCount(extraSessionsCount + 1)}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold input-field">+</button>
+                </div>
+              </div>
+              {extraSessionsOffre && extraSessionsCount > 0 && (() => {
+                const found = offres.find(o => o.name === extraSessionsOffre);
+                const total = (found?.unitPrice || 0) * extraSessionsCount;
+                return (
+                  <div className="rounded-2xl p-4 text-center" style={{ background: "hsl(38 92% 55% / 0.08)", border: "1px solid hsl(38 92% 55% / 0.2)" }}>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total séances supplémentaires</div>
+                    <div className="value-lg text-[20px] text-warning">{extraSessionsCount} × {found?.unitPrice}€ = {total}€</div>
+                  </div>
+                );
+              })()}
+              <button onClick={addExtraSessions} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
+                Ajouter les séances
               </button>
             </div>
           </div>
