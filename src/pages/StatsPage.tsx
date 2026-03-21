@@ -35,12 +35,16 @@ export default function StatsPage() {
   const yearlyCA = yearEntries.reduce((s, e) => s + e.amount, 0);
   const yearlyExpenses = yearExpenses.reduce((s, e) => s + e.amount, 0);
 
-  // Micro CA (excluding portage entries)
+  // Micro CA (excluding portage entries only when portage is active for that month)
   const getMicroCA = (entries: typeof financeEntries) => {
     return entries.filter(e => {
       const portageOn = portageMonths[e.month] ?? false;
+      // Only exclude ACTIV RESET/PROGRAM from micro if portage IS active for that month
       if (portageOn && (e.offre?.includes("ACTIV RESET") || e.offre?.includes("ACTIV PROGRAM"))) return false;
+      // Cash entries follow their own declaration
       if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
+      // If portage is NOT active, all entries count as micro (ignore type=portage)
+      if (!portageOn) return true;
       return e.type === "micro";
     }).reduce((s, e) => s + e.amount, 0);
   };
