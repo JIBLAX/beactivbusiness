@@ -110,10 +110,13 @@ export default function ActivResetPage() {
               className="glass-card rounded-xl p-3.5 cursor-pointer transition-transform active:scale-[0.984] relative overflow-hidden">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <div className="font-semibold text-[15px] text-foreground">{c.name}</div>
+                  <div className="font-semibold text-[15px] text-foreground flex items-center gap-1.5">
+                    {c.name}
+                    {c.archived && <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold" style={{ background: "hsl(0 0% 100% / 0.06)", color: "hsl(0 0% 50%)" }}>Archivé</span>}
+                  </div>
                   <div className="text-[11px] text-muted-foreground">{c.offre}</div>
                 </div>
-                {daysLeft !== null && daysLeft >= 0 && (
+                {daysLeft !== null && daysLeft >= 0 && !c.archived && (
                   <div className={`px-2.5 py-1 rounded-full text-[10px] font-semibold
                     ${daysLeft <= 7 ? "bg-destructive/20 text-destructive border border-destructive/50" : "bg-warning/15 text-warning border border-warning/40"}`}>
                     J-{daysLeft}
