@@ -70,8 +70,16 @@ export default function ActivResetPage() {
 
   return (
     <div className="px-3.5">
-      <h1 className="font-display text-[25px] font-extrabold text-foreground mb-0.5 pt-1">Activ Reset</h1>
-      <p className="text-xs text-muted-foreground mb-3.5">Suivi des accompagnements — {activResetClients.length} clients</p>
+      <div className="flex items-center justify-between pt-1 mb-0.5">
+        <h1 className="font-display text-[25px] font-extrabold text-foreground">Activ Reset</h1>
+        {archivedCount > 0 && (
+          <button onClick={() => setShowArchived(!showArchived)}
+            className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold transition-all ${showArchived ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
+            {showArchived ? "Masquer archivés" : `📦 ${archivedCount} archivé${archivedCount > 1 ? "s" : ""}`}
+          </button>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground mb-3.5">Suivi des accompagnements — {visibleClients.length} client{visibleClients.length !== 1 ? "s" : ""}</p>
 
       {/* Alerts */}
       {alerts.length > 0 && (
