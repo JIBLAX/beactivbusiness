@@ -122,6 +122,7 @@ function rowToOffre(r: any): Offre {
     isAlaCarte: r.is_ala_carte ?? false,
     theme: r.theme ?? "PROGRAMMES",
     tvaEnabled: r.tva_enabled ?? false,
+    portageEligible: r.portage_eligible ?? false,
   };
 }
 
