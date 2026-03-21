@@ -3,6 +3,7 @@ import { useApp } from "@/store/AppContext";
 import beactivLogo from "@/assets/beactiv-logo.png";
 import HamburgerMenu from "./HamburgerMenu";
 import FinancesPage from "@/pages/FinancesPage";
+import ActivitesPage from "@/pages/ActivitesPage";
 import StatsPage from "@/pages/StatsPage";
 import OffresPage from "@/pages/OffresPage";
 import ClientsPage from "@/pages/ClientsPage";
@@ -22,6 +23,7 @@ export default function AppLayout() {
 
   const pageTitle = {
     finances: "Finances",
+    activites: "Activités",
     offres: "Offres",
     stats: "Statistiques",
     clients: "Clients",
