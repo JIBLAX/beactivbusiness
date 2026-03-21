@@ -267,15 +267,15 @@ export default function FinancesPage() {
             style={{ background: "hsl(348 63% 30% / 0.15)" }}>💰</div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className={`grid gap-2 ${portageEnabled ? "grid-cols-3" : "grid-cols-2"}`}>
           {[
             { label: "Micro", value: declaredMicro, color: "hsl(152 55% 52%)" },
-            { label: "Portage", value: declaredPortage, color: "hsl(217 70% 60%)" },
+            ...(portageEnabled ? [{ label: "Portage", value: declaredPortage, color: "hsl(217 70% 60%)" }] : []),
             { label: "URSSAF", value: -urssaf, color: "hsl(0 62% 50%)" },
           ].map(k => (
             <div key={k.label} className="rounded-2xl p-3 text-center" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
               <div className="value-lg text-[15px] leading-none mb-1" style={{ color: k.color }}>
-                {k.value >= 0 ? "" : ""}{Math.abs(k.value).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
+                {Math.abs(k.value).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
               </div>
               <div className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">{k.label}</div>
             </div>
