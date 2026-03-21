@@ -187,6 +187,7 @@ export interface Offre {
   isAlaCarte?: boolean;
   theme?: OffreTheme;
   tvaEnabled?: boolean;
+  portageEligible?: boolean;
 }
 
 export const INITIAL_OFFRES: Offre[] = [

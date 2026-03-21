@@ -197,6 +197,7 @@ export type Database = {
           is_ala_carte: boolean | null
           min_quantity: number | null
           name: string
+          portage_eligible: boolean | null
           price: number
           price_history: Json
           theme: string | null
@@ -213,6 +214,7 @@ export type Database = {
           is_ala_carte?: boolean | null
           min_quantity?: number | null
           name: string
+          portage_eligible?: boolean | null
           price?: number
           price_history?: Json
           theme?: string | null
@@ -229,6 +231,7 @@ export type Database = {
           is_ala_carte?: boolean | null
           min_quantity?: number | null
           name?: string
+          portage_eligible?: boolean | null
           price?: number
           price_history?: Json
           theme?: string | null

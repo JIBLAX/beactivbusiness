@@ -3,7 +3,7 @@ import { useApp } from "@/store/AppContext";
 import ClientAutocomplete from "@/components/ui/ClientAutocomplete";
 import { EXPENSE_CATEGORIES, Expense, FinanceEntry, ExpenseCategory, PAYMENT_MODES, CASH_DECLARATIONS, OffreTheme, OFFRE_THEMES } from "@/data/types";
 
-const MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
 function getCurrentMonth(): string {
   const now = new Date();
@@ -116,22 +116,21 @@ export default function FinancesPage() {
     return grouped;
   }, [monthEntries, offres]);
 
-  // When portage is ON for this month, Activ Reset entries are excluded from micro
-  const isActivReset = (e: FinanceEntry) => {
+  // Check if an entry's offre is eligible for portage
+  const isPortageEligible = (e: FinanceEntry) => {
     const o = offres.find(of => of.name === e.offre);
-    return e.offre && (e.offre.includes("ACTIV RESET") || e.offre.includes("ACTIV PROGRAM"));
+    return o?.portageEligible ?? false;
   };
 
   const declaredMicro = monthEntries.filter(e => {
-    if (portageEnabled && isActivReset(e)) return false;
+    if (portageEnabled && isPortageEligible(e)) return false;
     if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
-    // If portage is off, everything counts as micro
     if (!portageEnabled) return true;
     return e.type === "micro";
   }).reduce((s, e) => s + e.amount, 0);
 
   const declaredPortage = portageEnabled ? monthEntries.filter(e => {
-    if (isActivReset(e)) return true;
+    if (isPortageEligible(e)) return true;
     if (e.paymentMode === "especes") return e.cashDeclaration === "portage";
     return e.type === "portage";
   }).reduce((s, e) => s + e.amount, 0) : 0;
@@ -284,7 +283,7 @@ export default function FinancesPage() {
         </div>
         {portageEnabled && (
           <div className="mt-3 px-3 py-2 rounded-xl text-[10px] text-muted-foreground" style={{ background: "hsl(217 70% 60% / 0.08)", border: "1px solid hsl(217 70% 60% / 0.15)" }}>
-            ℹ️ Les revenus <strong className="text-foreground">Activ Reset / Program</strong> passent par <strong className="text-foreground">JUMP</strong> ce mois — charges sociales déduites par JUMP, <strong className="text-foreground">non déclarés à l'URSSAF</strong>.
+            ℹ️ Les offres marquées <strong className="text-foreground">Portage</strong> passent par <strong className="text-foreground">JUMP</strong> ce mois — charges sociales gérées par JUMP, <strong className="text-foreground">non déclarées à l'URSSAF</strong>.
           </div>
         )}
       </div>

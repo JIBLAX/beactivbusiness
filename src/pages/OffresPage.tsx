@@ -31,6 +31,7 @@ export default function OffresPage() {
   const [editMinQty, setEditMinQty] = useState<number | undefined>();
   const [editTheme, setEditTheme] = useState<OffreTheme>("PROGRAMMES");
   const [editTva, setEditTva] = useState(false);
+  const [editPortage, setEditPortage] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState(0);
@@ -40,6 +41,7 @@ export default function OffresPage() {
   const [newMinQty, setNewMinQty] = useState<number | undefined>();
   const [newTheme, setNewTheme] = useState<OffreTheme>("PROGRAMMES");
   const [newTva, setNewTva] = useState(false);
+  const [newPortage, setNewPortage] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const startEdit = (o: Offre) => {
@@ -47,6 +49,7 @@ export default function OffresPage() {
     setEditDuration(o.duration); setEditIsAlaCarte(o.isAlaCarte || false);
     setEditUnitPrice(o.unitPrice); setEditMinQty(o.minQuantity);
     setEditTheme(o.theme || "PROGRAMMES"); setEditTva(o.tvaEnabled || false);
+    setEditPortage(o.portageEligible || false);
   };
 
   const saveEdit = () => {
@@ -65,7 +68,7 @@ export default function OffresPage() {
         ...o, name: newOffreName, price: editPrice,
         duration: editIsAlaCarte ? undefined : editDuration,
         isAlaCarte: editIsAlaCarte, unitPrice: editUnitPrice, minQuantity: editMinQty,
-        theme: editTheme, tvaEnabled: editTva,
+        theme: editTheme, tvaEnabled: editTva, portageEligible: editPortage,
         priceHistory: priceChanged ? [...o.priceHistory, { price: editPrice, date: today }] : o.priceHistory,
       };
     }));
@@ -91,12 +94,13 @@ export default function OffresPage() {
       priceHistory: [{ price: newPrice, date: today }],
       duration: newIsAlaCarte ? undefined : newDuration,
       isAlaCarte: newIsAlaCarte, unitPrice: newUnitPrice, minQuantity: newMinQty,
-      theme: newTheme, tvaEnabled: newTva,
+      theme: newTheme, tvaEnabled: newTva, portageEligible: newPortage,
     };
     setOffres([...offres, offre]);
     setShowAdd(false);
     setNewName(""); setNewPrice(0); setNewDuration({ value: 1, unit: "mois" });
-    setNewIsAlaCarte(false); setNewUnitPrice(undefined); setNewMinQty(undefined); setNewTheme("PROGRAMMES"); setNewTva(false);
+    setNewIsAlaCarte(false); setNewUnitPrice(undefined); setNewMinQty(undefined);
+    setNewTheme("PROGRAMMES"); setNewTva(false); setNewPortage(false);
   };
 
   const activeCount = offres.filter(o => o.active).length;
@@ -158,6 +162,10 @@ export default function OffresPage() {
             <span className="text-[12px] text-muted-foreground">TVA 20%</span>
             <ToggleSwitch checked={editTva} onChange={() => setEditTva(!editTva)} />
           </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] text-muted-foreground">Éligible Portage JUMP</span>
+            <ToggleSwitch checked={editPortage} onChange={() => setEditPortage(!editPortage)} />
+          </div>
           <div className="flex gap-2 pt-1">
             <button onClick={saveEdit} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white btn-primary">✓ Sauvegarder</button>
             <button onClick={() => setEditingId(null)} className="px-4 py-2.5 rounded-xl text-sm text-muted-foreground input-field">✕</button>
@@ -179,6 +187,7 @@ export default function OffresPage() {
                 {o.unitPrice && <span className="text-[10px] text-muted-foreground">{o.unitPrice}€/séance</span>}
                 {o.minQuantity && <span className="text-[10px] text-muted-foreground">min. {o.minQuantity}</span>}
                 {o.tvaEnabled && <span className="badge-pill text-[9px]" style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>TVA</span>}
+                {o.portageEligible && <span className="badge-pill text-[9px]" style={{ background: "hsl(217 70% 60% / 0.1)", color: "hsl(217 70% 60%)" }}>PORTAGE</span>}
               </div>
             </div>
             <div className="value-lg text-[18px]" style={{ color: "hsl(348 63% 45%)" }}>{o.price}€</div>
@@ -305,6 +314,10 @@ export default function OffresPage() {
               <div className="flex items-center justify-between py-1">
                 <span className="text-[12px] text-muted-foreground">TVA 20%</span>
                 <ToggleSwitch checked={newTva} onChange={() => setNewTva(!newTva)} />
+              </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-[12px] text-muted-foreground">Éligible Portage JUMP</span>
+                <ToggleSwitch checked={newPortage} onChange={() => setNewPortage(!newPortage)} />
               </div>
               <button onClick={addOffre} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Créer l'offre

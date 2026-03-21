@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useApp } from "@/store/AppContext";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
-const MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 const QUARTERS = [
   { label: "T1", months: ["01", "02", "03"] },
   { label: "T2", months: ["04", "05", "06"] },
@@ -35,15 +35,13 @@ export default function StatsPage() {
   const yearlyCA = yearEntries.reduce((s, e) => s + e.amount, 0);
   const yearlyExpenses = yearExpenses.reduce((s, e) => s + e.amount, 0);
 
-  // Micro CA (excluding portage entries only when portage is active for that month)
+  // Micro CA (excluding portage-eligible entries when portage is active for that month)
   const getMicroCA = (entries: typeof financeEntries) => {
     return entries.filter(e => {
       const portageOn = portageMonths[e.month] ?? false;
-      // Only exclude ACTIV RESET/PROGRAM from micro if portage IS active for that month
-      if (portageOn && (e.offre?.includes("ACTIV RESET") || e.offre?.includes("ACTIV PROGRAM"))) return false;
-      // Cash entries follow their own declaration
+      const o = offres.find(of => of.name === e.offre);
+      if (portageOn && o?.portageEligible) return false;
       if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
-      // If portage is NOT active, all entries count as micro (ignore type=portage)
       if (!portageOn) return true;
       return e.type === "micro";
     }).reduce((s, e) => s + e.amount, 0);

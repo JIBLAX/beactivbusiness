@@ -1,0 +1,1 @@
+ALTER TABLE public.offres ADD COLUMN IF NOT EXISTS portage_eligible boolean DEFAULT false;
