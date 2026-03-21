@@ -221,14 +221,18 @@ export default function ClientsPage() {
         </div>
 
         {/* Financial summary */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="stat-card rounded-2xl p-4 text-center">
             <div className="section-label mb-1">Total payé</div>
             <div className="value-lg text-[22px] text-success">{totalPaid.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
           </div>
           <div className="stat-card rounded-2xl p-4 text-center">
-            <div className="section-label mb-1">{offreType === "programme" ? "Programme" : "Séances"}</div>
-            <div className="value-lg text-[22px] text-foreground">{sessionInfo.count}</div>
+            <div className="section-label mb-1">Programmes</div>
+            <div className="value-lg text-[22px] text-foreground">{metrics.programmesLabel}</div>
+          </div>
+          <div className="stat-card rounded-2xl p-4 text-center">
+            <div className="section-label mb-1">Séances</div>
+            <div className="value-lg text-[22px] text-foreground">{metrics.seancesLabel}</div>
           </div>
         </div>
 
