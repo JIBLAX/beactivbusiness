@@ -30,6 +30,7 @@ interface AppState {
   setVersementsPerso: (v: Record<string, Record<string, number | null>>) => void;
   setOffres: (o: Offre[]) => void;
   setUrssafMode: (m: "mois" | "trimestre") => void;
+  setQuarterEdits: (q: Record<string, number>) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
