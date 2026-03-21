@@ -810,6 +810,17 @@ export default function ActivitesPage() {
                 <input type="number" value={newExpense.amount || ""} onChange={e => setNewExpense(p => ({ ...p, amount: Number(e.target.value) }))} placeholder="0"
                   className="w-full rounded-xl px-3 py-3 text-sm input-field" />
               </div>
+              <div>
+                <label className="section-label mb-2 block">Activité liée (Portage)</label>
+                <div className="flex gap-1.5 flex-wrap">
+                  {EXPENSE_THEMES.map(t => (
+                    <button key={t} onClick={() => setNewExpense(p => ({ ...p, expenseTheme: t }))}
+                      className={`px-3 py-2 rounded-xl text-[11px] font-semibold transition-all ${(newExpense.expenseTheme ?? "TOUS") === t ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button onClick={addExpense} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Ajouter la dépense
               </button>
