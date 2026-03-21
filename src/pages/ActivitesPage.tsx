@@ -520,7 +520,12 @@ export default function ActivitesPage() {
             <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1" style={{ background: "hsl(0 0% 20%)" }} />
             <div className="flex items-center justify-between px-5 pt-3 pb-3">
               <h2 className="font-display text-[17px] font-bold text-foreground">
-                {addTheme ? `${THEME_ICONS[addTheme]} ${addTheme}` : "Nouvelle entrée"}
+                {addTheme ? (
+                  <span className="flex items-center gap-2">
+                    {THEME_LOGOS[addTheme] && <img src={THEME_LOGOS[addTheme]} alt={addTheme} className="w-6 h-6 rounded-lg object-cover" />}
+                    {addTheme}
+                  </span>
+                ) : "Nouvelle entrée"}
               </h2>
               <button onClick={() => setShowAddEntry(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm text-muted-foreground"
                 style={{ background: "hsl(0 0% 100% / 0.05)" }}>✕</button>
