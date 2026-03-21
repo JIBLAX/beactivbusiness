@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       activ_reset_clients: {
         Row: {
+          archived: boolean | null
           created_at: string
           current_phase: number | null
           cycle: number | null
@@ -31,6 +32,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived?: boolean | null
           created_at?: string
           current_phase?: number | null
           cycle?: number | null
@@ -46,6 +48,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archived?: boolean | null
           created_at?: string
           current_phase?: number | null
           cycle?: number | null
@@ -104,6 +107,7 @@ export type Database = {
           category: string
           created_at: string
           date: string
+          expense_theme: string | null
           id: string
           label: string
           month: string
@@ -115,6 +119,7 @@ export type Database = {
           category: string
           created_at?: string
           date: string
+          expense_theme?: string | null
           id: string
           label: string
           month: string
@@ -126,6 +131,7 @@ export type Database = {
           category?: string
           created_at?: string
           date?: string
+          expense_theme?: string | null
           id?: string
           label?: string
           month?: string
