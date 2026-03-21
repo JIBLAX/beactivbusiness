@@ -51,6 +51,7 @@ const THEME_ICONS: Record<string, string> = {
 export default function ActivitesPage() {
   const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  const [activeTab, setActiveTab] = useState<"entrees" | "depenses">("entrees");
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
