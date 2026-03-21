@@ -141,7 +141,7 @@ export default function ActivitesPage() {
     setEntrySource("offre"); setEntryOffre(""); setEntryExterneLabel(""); setEntryClientName("");
     setEntryAmount(0); setEntryType("micro"); setEntryPaymentMode("cb");
     setEntryInstallments(1); setEntrySapHours(0); setEntryCashDeclaration("micro"); setAddTheme(null);
-    setEntryNbSessions(0);
+    setEntryNbSessions(0); setEntryDiscountType("none"); setEntryDiscountValue(0);
   };
 
   const openAddByTheme = (theme: OffreTheme) => {
