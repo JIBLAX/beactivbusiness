@@ -108,6 +108,7 @@ export interface Expense {
   amount: number;
   date: string;
   proPct: number; // 0-100, default 100
+  portagePct?: number | null; // 0-100, optional — part of pro amount attributed to portage
 }
 
 export type ExpenseCategory =
