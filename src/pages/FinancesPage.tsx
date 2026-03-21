@@ -131,7 +131,6 @@ export default function FinancesPage() {
   const tvaCollectee = tvaCA * 0.20;
 
   // Fiscal reminders
-  const currentYear = new Date().getFullYear();
   const reminders = useMemo(() => getFiscalReminders(currentYear, urssafMode), [currentYear, urssafMode]);
   const upcomingReminders = reminders.filter(r => getDaysUntil(r.date) >= 0).slice(0, 5);
   const nextReminder = upcomingReminders[0];
