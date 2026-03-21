@@ -31,6 +31,7 @@ export default function OffresPage() {
   const [editMinQty, setEditMinQty] = useState<number | undefined>();
   const [editTheme, setEditTheme] = useState<OffreTheme>("PROGRAMMES");
   const [editTva, setEditTva] = useState(false);
+  const [editPortage, setEditPortage] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState(0);
@@ -40,6 +41,7 @@ export default function OffresPage() {
   const [newMinQty, setNewMinQty] = useState<number | undefined>();
   const [newTheme, setNewTheme] = useState<OffreTheme>("PROGRAMMES");
   const [newTva, setNewTva] = useState(false);
+  const [newPortage, setNewPortage] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const startEdit = (o: Offre) => {
