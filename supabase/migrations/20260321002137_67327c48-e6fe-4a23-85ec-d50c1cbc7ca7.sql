@@ -1,0 +1,1 @@
+ALTER TABLE public.app_settings ADD COLUMN IF NOT EXISTS urssaf_mode text DEFAULT 'trimestre';

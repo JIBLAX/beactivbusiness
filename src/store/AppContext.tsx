@@ -17,6 +17,7 @@ interface AppState {
   portageMonths: Record<string, boolean>;
   versementsPerso: Record<string, number | null>;
   offres: Offre[];
+  urssafMode: "mois" | "trimestre";
   loading: boolean;
   setCurrentPage: (p: AppPage) => void;
   setProspects: (p: Prospect[]) => void;
@@ -26,6 +27,7 @@ interface AppState {
   setPortageMonths: (v: Record<string, boolean>) => void;
   setVersementsPerso: (v: Record<string, number | null>) => void;
   setOffres: (o: Offre[]) => void;
+  setUrssafMode: (m: "mois" | "trimestre") => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -143,6 +145,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [portageMonths, setPortageMonthsState] = useState<Record<string, boolean>>({});
   const [versementsPerso, setVersementsPersoState] = useState<Record<string, number | null>>({});
   const [offres, setOffresState] = useState<Offre[]>([]);
+  const [urssafMode, setUrssafModeState] = useState<"mois" | "trimestre">("trimestre");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -206,8 +209,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (sRes.data) {
         setPortageMonthsState((sRes.data.portage_months as any) ?? {});
         setVersementsPersoState((sRes.data.versements_perso as any) ?? {});
+        setUrssafModeState(((sRes.data as any).urssaf_mode as any) ?? "trimestre");
       } else {
-        await supabase.from("app_settings").insert({ user_id: userId, portage_enabled: false, versements_perso: {}, portage_months: {} });
+        await supabase.from("app_settings").insert({ user_id: userId, portage_enabled: false, versements_perso: {}, portage_months: {}, urssaf_mode: "trimestre" } as any);
       }
     } catch (err) {
       console.error("Error loading data:", err);
@@ -253,12 +257,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) syncToSupabase("offres", o, offreToRow, user.id);
   }, [user]);
 
+  const setUrssafMode = useCallback((m: "mois" | "trimestre") => {
+    setUrssafModeState(m);
+    if (user) supabase.from("app_settings").update({ urssaf_mode: m } as any).eq("user_id", user.id).then();
+  }, [user]);
+
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, currentPage, prospects, activResetClients,
-      financeEntries, expenses, portageMonths, versementsPerso, offres, loading,
+      financeEntries, expenses, portageMonths, versementsPerso, offres, urssafMode, loading,
       setCurrentPage, setProspects, setActivResetClients, setFinanceEntries,
-      setExpenses, setPortageMonths, setVersementsPerso, setOffres,
+      setExpenses, setPortageMonths, setVersementsPerso, setOffres, setUrssafMode,
     }}>
       {children}
     </AppContext.Provider>
