@@ -186,6 +186,7 @@ export interface Offre {
   minQuantity?: number;
   isAlaCarte?: boolean;
   theme?: OffreTheme;
+  tvaEnabled?: boolean;
 }
 
 export const INITIAL_OFFRES: Offre[] = [

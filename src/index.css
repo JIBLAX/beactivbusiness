@@ -2,48 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Clash+Display:wght@600;700;800&family=Syne:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
 
 @layer base {
   :root {
-    --background: 0 6% 4%;
-    --foreground: 30 50% 93%;
+    --background: 0 0% 3%;
+    --foreground: 0 0% 96%;
 
-    --card: 0 8% 8%;
-    --card-foreground: 30 50% 93%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 0 8% 10%;
-    --popover-foreground: 30 50% 93%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 96%;
 
     --primary: 348 63% 30%;
-    --primary-foreground: 30 50% 93%;
+    --primary-foreground: 0 0% 96%;
 
-    --secondary: 348 63% 22%;
-    --secondary-foreground: 30 50% 93%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 96%;
 
-    --muted: 25 12% 15%;
-    --muted-foreground: 25 15% 62%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 50%;
 
     --accent: 348 50% 18%;
-    --accent-foreground: 30 50% 93%;
+    --accent-foreground: 0 0% 96%;
 
-    --destructive: 0 50% 43%;
-    --destructive-foreground: 30 50% 93%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 148 33% 46%;
+    --success: 152 55% 52%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 36 60% 44%;
+    --warning: 38 92% 55%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 210 45% 47%;
+    --info: 217 70% 60%;
     --info-foreground: 0 0% 100%;
 
-    --border: 0 0% 100% / 0.08;
-    --input: 0 0% 100% / 0.08;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
     --ring: 348 63% 30%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
     --beige: 30 50% 93%;
     --beige2: 32 35% 76%;
@@ -51,11 +51,11 @@
     --bordeaux2: 348 63% 38%;
     --bordeaux3: 348 55% 48%;
 
-    --glass: 0 0% 100% / 0.05;
-    --glass-border: 0 0% 100% / 0.10;
-    --surface1: 0 8% 8%;
-    --surface2: 0 8% 11%;
-    --surface3: 0 0% 100% / 0.045;
+    --glass: 0 0% 100% / 0.04;
+    --glass-border: 0 0% 100% / 0.08;
+    --surface1: 0 0% 5%;
+    --surface2: 0 0% 8%;
+    --surface3: 0 0% 100% / 0.035;
   }
 }
 
@@ -67,57 +67,103 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow: hidden;
-  }
-
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background:
-      radial-gradient(ellipse 80% 50% at 50% -10%, hsl(348 63% 30% / 0.18) 0%, transparent 65%),
-      radial-gradient(ellipse 50% 40% at 80% 110%, hsl(348 63% 30% / 0.09) 0%, transparent 65%);
   }
 }
 
 @layer components {
   .font-display {
-    font-family: 'Clash Display', 'Syne', sans-serif;
+    font-family: 'Syne', 'Space Grotesk', sans-serif;
+    letter-spacing: -0.02em;
   }
 
   .glass-card {
-    background: hsl(var(--glass));
-    border: 1px solid hsl(var(--glass-border));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: hsl(0 0% 100% / 0.03);
+    border: 1px solid hsl(0 0% 100% / 0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
-  .glass-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, hsl(0 0% 100% / 0.03), transparent 60%);
-    border-radius: inherit;
-    pointer-events: none;
+  .card-elevated {
+    background: hsl(0 0% 7%);
+    border: 1px solid hsl(0 0% 100% / 0.06);
+    box-shadow: 0 1px 3px hsl(0 0% 0% / 0.3), 0 8px 24px hsl(0 0% 0% / 0.15);
   }
 
-  .badge-source-fp { background: hsl(45 80% 48% / 0.12); color: hsl(45 80% 58%); border: 1px solid hsl(45 80% 48% / 0.3); }
-  .badge-source-ig { background: hsl(330 70% 48% / 0.15); color: hsl(330 60% 63%); border: 1px solid hsl(330 70% 48% / 0.3); }
-  .badge-source-bao { background: hsl(280 30% 50% / 0.15); color: hsl(280 40% 72%); border: 1px solid hsl(280 30% 50% / 0.3); }
-  .badge-source-cc { background: hsl(30 50% 45% / 0.15); color: hsl(30 50% 65%); border: 1px solid hsl(30 50% 45% / 0.3); }
-  .badge-source-default { background: hsl(0 0% 100% / 0.04); color: hsl(var(--muted-foreground)); border: 1px solid hsl(var(--glass-border)); }
+  .card-hero {
+    background: linear-gradient(145deg, hsl(0 0% 8%) 0%, hsl(0 0% 5%) 100%);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    box-shadow: 0 2px 8px hsl(0 0% 0% / 0.2), 0 16px 48px hsl(0 0% 0% / 0.12);
+  }
 
-  .badge-closed { background: hsl(148 33% 46% / 0.14); color: hsl(148 40% 65%); border: 1px solid hsl(148 33% 46% / 0.28); }
-  .badge-present { background: hsl(148 33% 46% / 0.10); color: hsl(148 40% 65%); border: 1px solid hsl(148 33% 46% / 0.22); }
-  .badge-reflexion { background: hsl(36 60% 44% / 0.14); color: hsl(36 60% 64%); border: 1px solid hsl(36 60% 44% / 0.28); }
-  .badge-absent { background: hsl(0 50% 43% / 0.12); color: hsl(0 50% 63%); border: 1px solid hsl(0 50% 43% / 0.22); }
+  .stat-card {
+    background: hsl(0 0% 7%);
+    border: 1px solid hsl(0 0% 100% / 0.05);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .stat-card:active {
+    transform: scale(0.98);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, hsl(348 63% 35%), hsl(348 63% 25%));
+    border: 1px solid hsl(348 63% 40% / 0.3);
+    box-shadow: 0 2px 8px hsl(348 63% 30% / 0.3);
+    transition: all 0.2s;
+  }
+
+  .btn-primary:active {
+    transform: scale(0.97);
+    box-shadow: 0 1px 4px hsl(348 63% 30% / 0.2);
+  }
+
+  .input-field {
+    background: hsl(0 0% 100% / 0.04);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    color: hsl(0 0% 96%);
+    transition: border-color 0.2s;
+  }
+
+  .input-field:focus {
+    border-color: hsl(348 63% 38%);
+    outline: none;
+  }
+
+  .input-field::placeholder {
+    color: hsl(0 0% 35%);
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(0 0% 40%);
+  }
+
+  .value-lg {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .badge-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
 
   .animate-fade-up {
-    animation: fadeUp 0.2s ease;
+    animation: fadeUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .animate-shake {
@@ -125,16 +171,12 @@
   }
 
   .animate-glow {
-    animation: glow 1.6s ease-in-out infinite;
-  }
-
-  .animate-pulse-dot {
-    animation: pulseDot 2s infinite;
+    animation: glow 2.5s ease-in-out infinite;
   }
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(7px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -145,16 +187,20 @@
 }
 
 @keyframes glow {
-  0%, 100% { box-shadow: 0 0 10px hsl(348 63% 30% / 0.2); }
-  50% { box-shadow: 0 0 36px hsl(348 63% 30% / 0.75); }
-}
-
-@keyframes pulseDot {
-  0%, 100% { box-shadow: 0 0 0 0 hsl(36 60% 44% / 0.4); }
-  50% { box-shadow: 0 0 0 6px hsl(36 60% 44% / 0); }
+  0%, 100% { box-shadow: 0 0 12px hsl(348 63% 30% / 0.15); }
+  50% { box-shadow: 0 0 40px hsl(348 63% 30% / 0.5); }
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(var(--bordeaux)); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: hsl(0 0% 20%); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(0 0% 30%); }
+
+/* Number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; }
