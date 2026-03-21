@@ -77,6 +77,33 @@ export default function ClientsPage() {
     setEditing(false);
   };
 
+  const addNewClient = () => {
+    if (!newClient.name || !newClient.offre) return;
+    const client: Prospect = {
+      id: "c" + Date.now(),
+      sex: newClient.sex || "F",
+      name: newClient.name,
+      contact: newClient.contact || "",
+      source: newClient.source || "",
+      statut: "CLIENT",
+      date: new Date().toISOString().split("T")[0],
+      type: "",
+      presence: "",
+      heure: "",
+      objectif: newClient.objectif || "",
+      objection: "",
+      closing: "OUI",
+      offre: newClient.offre || "-",
+      notes: newClient.notes || "",
+      profile: "",
+      age: newClient.age,
+      sapEnabled: newClient.sapEnabled ?? false,
+    };
+    setProspects([...prospects, client]);
+    setShowAddClient(false);
+    setNewClient({ sex: "F", closing: "OUI", statut: "CLIENT" });
+  };
+
   if (selectedClient) {
     const entries = getClientEntries(selectedClient.name);
     const totalPaid = getClientTotal(selectedClient.name);
