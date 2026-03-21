@@ -150,6 +150,7 @@ export default function FinancesPage() {
     return e.type === "portage";
   }).reduce((s, e) => s + e.amount, 0) : 0;
 
+  const especesNonDeclarees = monthEntries.filter(e => e.paymentMode === "especes" && e.cashDeclaration === "non_declare").reduce((s, e) => s + e.amount, 0);
   const totalReel = monthEntries.reduce((s, e) => s + e.amount, 0);
   const totalDepenses = monthExpenses.reduce((s, e) => s + e.amount, 0);
   const urssaf = calcUrssaf(declaredMicro);
