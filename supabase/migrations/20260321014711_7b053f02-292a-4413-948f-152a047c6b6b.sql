@@ -1,0 +1,1 @@
+ALTER TABLE public.offres ADD COLUMN IF NOT EXISTS max_installments integer DEFAULT NULL;
