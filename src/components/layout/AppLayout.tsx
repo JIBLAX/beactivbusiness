@@ -90,6 +90,7 @@ export default function AppLayout() {
       <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
         style={{ WebkitOverflowScrolling: "touch" }}>
         {currentPage === "finances" && <FinancesPage />}
+        {currentPage === "activites" && <ActivitesPage />}
         {currentPage === "offres" && <OffresPage />}
         {currentPage === "stats" && <StatsPage />}
         {currentPage === "clients" && <ClientsPage />}
