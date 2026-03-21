@@ -222,6 +222,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setPortageMonthsState((sRes.data.portage_months as any) ?? {});
         setVersementsPersoState((sRes.data.versements_perso as any) ?? {});
         setUrssafModeState(((sRes.data as any).urssaf_mode as any) ?? "trimestre");
+        setQuarterEditsState(((sRes.data as any).quarter_edits as any) ?? {});
       } else {
         await supabase.from("app_settings").insert({ user_id: userId, portage_enabled: false, versements_perso: {}, portage_months: {}, urssaf_mode: "trimestre" } as any);
       }
