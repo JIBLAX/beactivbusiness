@@ -277,7 +277,19 @@ export default function ActivitesPage() {
         </div>
       </div>
 
-      {/* ENTRIES BY THEME */}
+      {/* SECTION: ENTRÉES */}
+      <div className="mb-2">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl" style={{ background: "hsl(142 71% 45% / 0.12)" }}>
+            <span className="text-success text-sm">↗</span>
+          </div>
+          <div>
+            <div className="text-[13px] font-bold text-foreground tracking-wide">ENTRÉES</div>
+            <div className="text-[10px] text-muted-foreground">{monthEntries.length} opération{monthEntries.length > 1 ? "s" : ""} · <span className="text-success font-semibold">{totalEntries.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</span></div>
+          </div>
+        </div>
+      </div>
+
       {OFFRE_THEMES.map(theme => {
         const entries = entriesByTheme[theme] || [];
         const themeTotal = entries.reduce((s, e) => s + e.amount, 0);
@@ -383,12 +395,22 @@ export default function ActivitesPage() {
         </div>
       )}
 
-      {/* EXPENSES */}
-      {monthExpenses.length > 0 && (
-        <div className="mb-6">
-          <div className="section-label mb-3 pb-2" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.05)" }}>
-            Dépenses Pro
+      {/* SECTION: DÉPENSES */}
+      <div className="mb-4 mt-6">
+        <div className="w-full h-px mb-5" style={{ background: "linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.08), transparent)" }} />
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl" style={{ background: "hsl(0 62% 50% / 0.12)" }}>
+            <span className="text-destructive text-sm">↙</span>
           </div>
+          <div>
+            <div className="text-[13px] font-bold text-foreground tracking-wide">DÉPENSES PRO</div>
+            <div className="text-[10px] text-muted-foreground">{monthExpenses.length} dépense{monthExpenses.length > 1 ? "s" : ""} · <span className="text-destructive font-semibold">{totalExpenses > 0 ? `-${totalExpenses.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€` : "0€"}</span></div>
+          </div>
+        </div>
+      </div>
+
+      {monthExpenses.length > 0 ? (
+        <div className="mb-6">
           <div className="space-y-1.5">
             {monthExpenses.map(e => (
               <div key={e.id}>
@@ -427,6 +449,10 @@ export default function ActivitesPage() {
               </div>
             ))}
           </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl p-6 text-center stat-card mb-6" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
+          <div className="text-muted-foreground text-[11px]">Aucune dépense ce mois</div>
         </div>
       )}
 
