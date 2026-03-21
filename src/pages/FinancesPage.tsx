@@ -77,6 +77,17 @@ export default function FinancesPage() {
   const [editEntry, setEditEntry] = useState<Partial<FinanceEntry>>({});
   const [editExpense, setEditExpense] = useState<Partial<Expense>>({});
 
+  // Quick-add for cours collectifs
+  const [showQuickCours, setShowQuickCours] = useState(false);
+  const [quickCoursData, setQuickCoursData] = useState<Record<string, number>>({});
+  const [quickCoursPayment, setQuickCoursPayment] = useState<string>("cb");
+
+  // JM PASS extra sessions
+  const [showAddSessions, setShowAddSessions] = useState(false);
+  const [extraSessionsOffre, setExtraSessionsOffre] = useState("");
+  const [extraSessionsClient, setExtraSessionsClient] = useState("");
+  const [extraSessionsCount, setExtraSessionsCount] = useState(0);
+
   const currentYear = new Date().getFullYear();
   const [sapYear, setSapYear] = useState(currentYear);
   const [sapQuarter, setSapQuarter] = useState(Math.ceil((new Date().getMonth() + 1) / 3));
@@ -92,6 +103,7 @@ export default function FinancesPage() {
   const [entryInstallments, setEntryInstallments] = useState(1);
   const [entrySapHours, setEntrySapHours] = useState(0);
   const [entryCashDeclaration, setEntryCashDeclaration] = useState<string>("micro");
+  const [entryNbSessions, setEntryNbSessions] = useState(0);
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
   const editable = isEditable(selectedMonth);
