@@ -342,7 +342,8 @@ export default function ClientsPage() {
       {/* Client list */}
       <div className="space-y-2">
         {clients.map(c => {
-          const info = getSessionInfo(c);
+          const m = getMetrics(c);
+          const infoLabel = m.programmesCount > 0 ? m.programmesLabel : m.seancesLabel;
           return (
             <button key={c.id} onClick={() => setSelectedClient(c)}
               className="w-full text-left card-elevated rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
@@ -356,7 +357,7 @@ export default function ClientsPage() {
               </div>
               <div className="text-right flex-shrink-0">
                 <div className="value-lg text-[14px] text-success">{getClientTotal(c.name).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
-                <div className="text-[10px] text-muted-foreground">{info.label}</div>
+                <div className="text-[10px] text-muted-foreground">{infoLabel}</div>
               </div>
               <span className="text-muted-foreground text-xs">›</span>
             </button>
