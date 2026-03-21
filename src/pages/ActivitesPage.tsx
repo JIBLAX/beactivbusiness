@@ -250,21 +250,30 @@ export default function ActivitesPage() {
   };
 
   const startEditEntry = (e: FinanceEntry) => { setEditingEntryId(e.id); setEditEntry({ ...e }); };
+  const trackSealedEdit = () => {
+    if (editState.sealed) {
+      const { key } = getQuarterForMonth(selectedMonth);
+      incrementQuarterEdit(key);
+    }
+  };
   const saveEditEntry = () => {
     if (!editingEntryId || !editEntry.label || !editEntry.amount) return;
     setFinanceEntries(financeEntries.map(e => e.id === editingEntryId ? { ...e, ...editEntry, amount: Number(editEntry.amount) } as FinanceEntry : e));
     setEditingEntryId(null);
+    trackSealedEdit();
   };
   const startEditExpense = (e: Expense) => { setEditingExpenseId(e.id); setEditExpense({ ...e }); };
   const saveEditExpense = () => {
     if (!editingExpenseId || !editExpense.label || !editExpense.amount) return;
     setExpenses(expenses.map(e => e.id === editingExpenseId ? { ...e, ...editExpense, amount: Number(editExpense.amount) } as Expense : e));
     setEditingExpenseId(null);
+    trackSealedEdit();
   };
-  const deleteEntry = (id: string) => setFinanceEntries(financeEntries.filter(e => e.id !== id));
-  const deleteExpense = (id: string) => setExpenses(expenses.filter(e => e.id !== id));
+  const deleteEntry = (id: string) => { setFinanceEntries(financeEntries.filter(e => e.id !== id)); trackSealedEdit(); };
+  const deleteExpense = (id: string) => { setExpenses(expenses.filter(e => e.id !== id)); trackSealedEdit(); };
   const updateCashDeclaration = (id: string, decl: string) => {
     setFinanceEntries(financeEntries.map(e => e.id === id ? { ...e, cashDeclaration: decl as any } : e));
+    trackSealedEdit();
   };
   const paymentModeLabel = (mode?: string) => PAYMENT_MODES.find(p => p.value === mode)?.label || "";
 
