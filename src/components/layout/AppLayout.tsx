@@ -3,6 +3,7 @@ import { useApp } from "@/store/AppContext";
 import beactivLogo from "@/assets/beactiv-logo.png";
 import HamburgerMenu from "./HamburgerMenu";
 import FinancesPage from "@/pages/FinancesPage";
+import ActivitesPage from "@/pages/ActivitesPage";
 import StatsPage from "@/pages/StatsPage";
 import OffresPage from "@/pages/OffresPage";
 import ClientsPage from "@/pages/ClientsPage";
@@ -22,6 +23,7 @@ export default function AppLayout() {
 
   const pageTitle = {
     finances: "Finances",
+    activites: "Activités",
     offres: "Offres",
     stats: "Statistiques",
     clients: "Clients",
@@ -88,6 +90,7 @@ export default function AppLayout() {
       <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
         style={{ WebkitOverflowScrolling: "touch" }}>
         {currentPage === "finances" && <FinancesPage />}
+        {currentPage === "activites" && <ActivitesPage />}
         {currentPage === "offres" && <OffresPage />}
         {currentPage === "stats" && <StatsPage />}
         {currentPage === "clients" && <ClientsPage />}

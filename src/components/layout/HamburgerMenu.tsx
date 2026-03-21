@@ -9,7 +9,8 @@ interface HamburgerMenuProps {
 }
 
 const menuItems: { id: AppPage; icon: string; label: string; sub: string }[] = [
-  { id: "finances", icon: "💰", label: "Finances", sub: "Revenus & dépenses" },
+  { id: "finances", icon: "💰", label: "Finances", sub: "Revenus & synthèse" },
+  { id: "activites", icon: "📝", label: "Activités", sub: "Entrées & dépenses" },
   { id: "clients", icon: "👤", label: "Clients", sub: "Fiches & suivi" },
   { id: "offres", icon: "📦", label: "Offres", sub: "Tarifs & catalogues" },
   { id: "stats", icon: "📊", label: "Statistiques", sub: "Santé financière" },
