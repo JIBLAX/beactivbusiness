@@ -36,6 +36,7 @@ export interface ActivResetClient {
   objectifAtteint?: boolean | null;
   cycle: number;
   notes: string;
+  archived?: boolean;
 }
 
 export interface PhaseStatus {
