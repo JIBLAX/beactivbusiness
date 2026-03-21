@@ -170,20 +170,88 @@ export default function FinancesPage() {
   const handleOffreSelect = (offreName: string) => {
     setEntryOffre(offreName);
     const found = offres.find(o => o.name === offreName);
-    if (found) setEntryAmount(found.price);
+    if (found) {
+      // For JM PASS type offres with unitPrice and minQuantity, default to min sessions
+      if (found.unitPrice && found.minQuantity) {
+        setEntryNbSessions(found.minQuantity);
+        setEntryAmount(found.unitPrice * found.minQuantity);
+      } else {
+        setEntryAmount(found.price);
+        setEntryNbSessions(0);
+      }
+    }
+  };
+
+  // When session count changes for JM PASS type offres
+  const handleSessionCountChange = (count: number) => {
+    setEntryNbSessions(count);
+    const found = offres.find(o => o.name === entryOffre);
+    if (found?.unitPrice) {
+      setEntryAmount(found.unitPrice * count);
+    }
   };
 
   const resetEntryForm = () => {
     setEntrySource("offre"); setEntryOffre(""); setEntryExterneLabel(""); setEntryClientName("");
     setEntryAmount(0); setEntryType("micro"); setEntryPaymentMode("cb");
     setEntryInstallments(1); setEntrySapHours(0); setEntryCashDeclaration("micro"); setAddTheme(null);
+    setEntryNbSessions(0);
   };
 
   const openAddByTheme = (theme: OffreTheme) => {
+    if (theme === "COURS COLLECTIFS") {
+      // Open quick-add for cours collectifs
+      const coursOffres = activeOffres.filter(o => o.theme === "COURS COLLECTIFS");
+      const initial: Record<string, number> = {};
+      coursOffres.forEach(o => initial[o.name] = 0);
+      setQuickCoursData(initial);
+      setQuickCoursPayment("cb");
+      setShowQuickCours(true);
+      return;
+    }
     resetEntryForm();
     setAddTheme(theme);
     setEntrySource("offre");
     setShowAddEntry(true);
+  };
+
+  const addQuickCours = () => {
+    const newEntries: FinanceEntry[] = [];
+    Object.entries(quickCoursData).forEach(([offreName, qty]) => {
+      if (qty <= 0) return;
+      const found = offres.find(o => o.name === offreName);
+      if (!found) return;
+      const totalAmount = found.price * qty;
+      newEntries.push({
+        id: "fe" + Date.now() + "_" + offreName.replace(/\s/g, ""),
+        month: selectedMonth, type: "micro",
+        label: `${offreName} × ${qty}`,
+        amount: totalAmount, offre: offreName,
+        paymentMode: quickCoursPayment as any,
+      });
+    });
+    if (newEntries.length > 0) {
+      setFinanceEntries([...financeEntries, ...newEntries]);
+    }
+    setShowQuickCours(false);
+  };
+
+  const addExtraSessions = () => {
+    if (!extraSessionsOffre || extraSessionsCount <= 0 || !extraSessionsClient) return;
+    const found = offres.find(o => o.name === extraSessionsOffre);
+    if (!found?.unitPrice) return;
+    const amount = found.unitPrice * extraSessionsCount;
+    const entry: FinanceEntry = {
+      id: "fe" + Date.now() + "_extra",
+      month: selectedMonth, type: "micro",
+      label: `${extraSessionsOffre} +${extraSessionsCount} séances supp.`,
+      amount, offre: extraSessionsOffre,
+      clientName: extraSessionsClient,
+      paymentMode: "cb",
+    };
+    setFinanceEntries([...financeEntries, entry]);
+    setShowAddSessions(false);
+    setExtraSessionsOffre(""); setExtraSessionsClient(""); setExtraSessionsCount(0);
   };
 
   const addEntry = () => {
@@ -191,12 +259,14 @@ export default function FinancesPage() {
     if (!label || !entryAmount) return;
     const groupId = "grp" + Date.now();
     const installmentAmount = Math.round((entryAmount / entryInstallments) * 100) / 100;
+    const found = offres.find(o => o.name === entryOffre);
+    const sessionsLabel = entryNbSessions > 0 ? ` (${entryNbSessions} séances)` : "";
     const newEntries: FinanceEntry[] = [];
     for (let i = 0; i < entryInstallments; i++) {
       const month = addMonthsOffset(selectedMonth, i);
       newEntries.push({
         id: "fe" + Date.now() + "_" + i, month, type: entryType,
-        label: entryInstallments > 1 ? `${label} (${i + 1}/${entryInstallments})` : label,
+        label: entryInstallments > 1 ? `${label}${sessionsLabel} (${i + 1}/${entryInstallments})` : `${label}${sessionsLabel}`,
         amount: installmentAmount, offre: entrySource === "offre" ? entryOffre : undefined,
         clientName: entryClientName || undefined, paymentMode: entryPaymentMode as any,
         installmentGroup: entryInstallments > 1 ? groupId : undefined,
