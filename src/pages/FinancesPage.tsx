@@ -754,6 +754,31 @@ export default function FinancesPage() {
                     <label className="section-label mb-2 block">Client</label>
                     <ClientAutocomplete value={entryClientName} onChange={v => setEntryClientName(v)} />
                   </div>
+                  {/* Session counter for JM PASS type offres */}
+                  {(() => {
+                    const selectedOffre = offres.find(o => o.name === entryOffre);
+                    if (selectedOffre?.unitPrice && selectedOffre?.minQuantity) {
+                      return (
+                        <div>
+                          <label className="section-label mb-2 block">Nombre de séances</label>
+                          <div className="flex items-center gap-3">
+                            <button onClick={() => entryNbSessions > (selectedOffre.minQuantity || 1) && handleSessionCountChange(entryNbSessions - 1)}
+                              className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold input-field">−</button>
+                            <div className="flex-1 text-center">
+                              <div className="value-lg text-[24px] text-foreground">{entryNbSessions}</div>
+                              <div className="text-[10px] text-muted-foreground">min. {selectedOffre.minQuantity}</div>
+                            </div>
+                            <button onClick={() => handleSessionCountChange(entryNbSessions + 1)}
+                              className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold input-field">+</button>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground text-center mt-1">
+                            {entryNbSessions} × {selectedOffre.unitPrice}€ = <span className="text-success font-semibold">{entryAmount}€</span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </>
               ) : (
                 <div>
