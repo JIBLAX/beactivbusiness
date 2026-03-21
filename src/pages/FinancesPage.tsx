@@ -331,7 +331,7 @@ export default function FinancesPage() {
       <div className="flex items-center gap-2 mb-5">
         <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}
           className="flex-1 rounded-2xl px-4 py-3 text-sm font-medium input-field appearance-none">
-          {rolling12.map(m => <option key={m} value={m}>{formatMonth(m)}</option>)}
+          {allMonths.map(m => <option key={m} value={m}>{formatMonth(m)}</option>)}
         </select>
         {!editable && (
           <div className="badge-pill" style={{ background: "hsl(0 62% 50% / 0.1)", color: "hsl(0 62% 60%)" }}>
