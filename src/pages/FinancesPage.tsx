@@ -182,9 +182,7 @@ export default function FinancesPage() {
         setEntryAmount(found.price);
         setEntryNbSessions(0);
       }
-      // Default installments to 1, max based on offre config
       setEntryInstallments(1);
-    }
     }
   };
 
