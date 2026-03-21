@@ -209,11 +209,23 @@ export default function FinancesPage() {
           className="w-full p-4 flex items-center justify-between text-left">
           <div>
             <div className="section-label mb-1">Gestion Perso</div>
-            <div className="value-lg text-[20px] text-warning">{gestionPerso.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
+            <div className="flex items-center gap-3">
+              <div>
+                <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Prévu</div>
+                <div className="value-lg text-[20px] text-warning">{gestionPerso.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
+              </div>
+              <div className="text-muted-foreground/30 text-lg">→</div>
+              <div>
+                <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Versé</div>
+                <div className={`value-lg text-[20px] ${versementReel != null ? (versementReel >= gestionPerso ? "text-success" : "text-warning") : "text-muted-foreground/40"}`}>
+                  {versementReel != null ? `${versementReel.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€` : "—"}
+                </div>
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <div className="text-[11px] text-muted-foreground">Reste perso</div>
+              <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Reste Perso</div>
               <div className={`value-lg text-[16px] ${restePerso >= 0 ? "text-success" : "text-destructive"}`}>
                 {restePerso.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
               </div>
@@ -224,7 +236,18 @@ export default function FinancesPage() {
 
         {showGestionDetail && (
           <div className="px-4 pb-4 space-y-2 animate-fade-up" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.05)" }}>
-            <div className="pt-3" />
+            {/* Versement réel input */}
+            <div className="pt-3 pb-2">
+              <div className="flex items-center gap-3">
+                <input type="number" value={versementReel ?? ""} onChange={e => editable && setVersementsPerso({ ...versementsPerso, [selectedMonth]: e.target.value ? Number(e.target.value) : null })}
+                  placeholder="Montant réellement versé" disabled={!editable} className="flex-1 rounded-xl px-3 py-2.5 text-sm input-field disabled:opacity-40" />
+                {versementReel != null && gestionPerso > 0 && (
+                  <div className={`text-[11px] font-semibold ${versementReel >= gestionPerso ? "text-success" : "text-warning"}`}>
+                    {versementReel >= gestionPerso ? "✓ Objectif" : `${((versementReel / gestionPerso) * 100).toFixed(0)}%`}
+                  </div>
+                )}
+              </div>
+            </div>
             {[
               { label: "FONDS PRO", value: fondsPro, color: "hsl(217 70% 60%)", pct: "15%" },
               { label: "PLAISIRS", value: plaisirs, color: "hsl(38 92% 55%)", pct: "45%", sub: ["Cash", "Voyages", "Cadeaux"] },
@@ -252,19 +275,6 @@ export default function FinancesPage() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Versement Perso */}
-      <div className="card-elevated rounded-2xl p-4 mb-4">
-        <div className="section-label mb-2">Versement Perso Réel</div>
-        <div className="flex items-center gap-3">
-          <input type="number" value={versementReel ?? ""} onChange={e => editable && setVersementsPerso({ ...versementsPerso, [selectedMonth]: e.target.value ? Number(e.target.value) : null })}
-            placeholder="Montant versé" disabled={!editable} className="flex-1 rounded-xl px-3 py-2.5 text-sm input-field disabled:opacity-40" />
-          <div className="text-right">
-            <div className="text-[10px] text-muted-foreground">Prévu</div>
-            <div className="value-lg text-[13px] text-foreground">{restePerso.toFixed(0)}€</div>
-          </div>
-        </div>
       </div>
 
       {/* Prorata Bureau */}
