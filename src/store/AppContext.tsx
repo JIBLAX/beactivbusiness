@@ -63,6 +63,7 @@ function arClientToRow(c: ActivResetClient, userId: string) {
     id: c.id, user_id: userId, name: c.name, phone: c.phone, offre: c.offre,
     start_date: c.startDate, current_phase: c.currentPhase, phases: JSON.parse(JSON.stringify(c.phases)),
     objectif_atteint: c.objectifAtteint ?? null, cycle: c.cycle, notes: c.notes,
+    archived: c.archived ?? false,
   };
 }
 
@@ -71,7 +72,7 @@ function rowToArClient(r: any): ActivResetClient {
     id: r.id, name: r.name, phone: r.phone ?? "", offre: r.offre ?? "",
     startDate: r.start_date ?? "", currentPhase: r.current_phase ?? 0,
     phases: (r.phases as any) ?? [], objectifAtteint: r.objectif_atteint,
-    cycle: r.cycle ?? 1, notes: r.notes ?? "",
+    cycle: r.cycle ?? 1, notes: r.notes ?? "", archived: r.archived ?? false,
   };
 }
 
@@ -102,11 +103,11 @@ function rowToFinance(r: any): FinanceEntry {
 }
 
 function expenseToRow(e: Expense, userId: string) {
-  return { id: e.id, user_id: userId, month: e.month, category: e.category, label: e.label, amount: e.amount, date: e.date };
+  return { id: e.id, user_id: userId, month: e.month, category: e.category, label: e.label, amount: e.amount, date: e.date, expense_theme: e.expenseTheme ?? "TOUS" };
 }
 
 function rowToExpense(r: any): Expense {
-  return { id: r.id, month: r.month, category: r.category, label: r.label, amount: Number(r.amount), date: r.date };
+  return { id: r.id, month: r.month, category: r.category, label: r.label, amount: Number(r.amount), date: r.date, expenseTheme: r.expense_theme ?? "TOUS" };
 }
 
 function offreToRow(o: Offre, userId: string) {

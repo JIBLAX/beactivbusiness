@@ -13,11 +13,14 @@ function getDaysRemaining(phase: ActivResetClient["phases"][number]): number | n
 export default function ActivResetPage() {
   const { activResetClients, setActivResetClients } = useApp();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
+  const visibleClients = showArchived ? activResetClients : activResetClients.filter(c => !c.archived);
+  const archivedCount = activResetClients.filter(c => c.archived).length;
   const selected = selectedId ? activResetClients.find(c => c.id === selectedId) : null;
 
   // Alerts
-  const alerts = activResetClients.flatMap(c => {
+  const alerts = activResetClients.filter(c => !c.archived).flatMap(c => {
     if (c.currentPhase >= c.phases.length) return [];
     const phase = c.phases[c.currentPhase];
     const days = getDaysRemaining(phase);
@@ -67,8 +70,16 @@ export default function ActivResetPage() {
 
   return (
     <div className="px-3.5">
-      <h1 className="font-display text-[25px] font-extrabold text-foreground mb-0.5 pt-1">Activ Reset</h1>
-      <p className="text-xs text-muted-foreground mb-3.5">Suivi des accompagnements — {activResetClients.length} clients</p>
+      <div className="flex items-center justify-between pt-1 mb-0.5">
+        <h1 className="font-display text-[25px] font-extrabold text-foreground">Activ Reset</h1>
+        {archivedCount > 0 && (
+          <button onClick={() => setShowArchived(!showArchived)}
+            className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold transition-all ${showArchived ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
+            {showArchived ? "Masquer archivés" : `📦 ${archivedCount} archivé${archivedCount > 1 ? "s" : ""}`}
+          </button>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground mb-3.5">Suivi des accompagnements — {visibleClients.length} client{visibleClients.length !== 1 ? "s" : ""}</p>
 
       {/* Alerts */}
       {alerts.length > 0 && (
@@ -89,7 +100,7 @@ export default function ActivResetPage() {
 
       {/* Client Cards */}
       <div className="flex flex-col gap-3">
-        {activResetClients.map(c => {
+        {visibleClients.map(c => {
           const currentPhase = c.phases[c.currentPhase];
           const daysLeft = currentPhase ? getDaysRemaining(currentPhase) : null;
           const progress = c.phases.length > 0 ? (c.phases.filter(p => p.done).length / c.phases.length) * 100 : 0;
@@ -99,10 +110,13 @@ export default function ActivResetPage() {
               className="glass-card rounded-xl p-3.5 cursor-pointer transition-transform active:scale-[0.984] relative overflow-hidden">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <div className="font-semibold text-[15px] text-foreground">{c.name}</div>
+                  <div className="font-semibold text-[15px] text-foreground flex items-center gap-1.5">
+                    {c.name}
+                    {c.archived && <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold" style={{ background: "hsl(0 0% 100% / 0.06)", color: "hsl(0 0% 50%)" }}>Archivé</span>}
+                  </div>
                   <div className="text-[11px] text-muted-foreground">{c.offre}</div>
                 </div>
-                {daysLeft !== null && daysLeft >= 0 && (
+                {daysLeft !== null && daysLeft >= 0 && !c.archived && (
                   <div className={`px-2.5 py-1 rounded-full text-[10px] font-semibold
                     ${daysLeft <= 7 ? "bg-destructive/20 text-destructive border border-destructive/50" : "bg-warning/15 text-warning border border-warning/40"}`}>
                     J-{daysLeft}
@@ -231,6 +245,17 @@ export default function ActivResetPage() {
                   🔄 Extension Cycle {selected.cycle + 1}
                 </button>
               )}
+
+              {/* Archive / Unarchive */}
+              <button onClick={(e) => {
+                e.stopPropagation();
+                setActivResetClients(prev => prev.map(c => c.id === selected.id ? { ...c, archived: !c.archived } : c));
+                setSelectedId(null);
+              }}
+                className="w-full mt-3 py-3 rounded-xl font-semibold text-sm"
+                style={{ background: "hsl(0 0% 100% / 0.04)", border: "1px solid hsl(0 0% 100% / 0.08)", color: "hsl(0 0% 60%)" }}>
+                {selected.archived ? "📂 Désarchiver" : "📦 Archiver le client"}
+              </button>
             </div>
           </div>
         </div>
