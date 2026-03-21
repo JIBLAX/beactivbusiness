@@ -104,7 +104,7 @@ export default function OffresPage() {
     setShowAdd(false);
     setNewName(""); setNewPrice(0); setNewDuration({ value: 1, unit: "mois" });
     setNewIsAlaCarte(false); setNewUnitPrice(undefined); setNewMinQty(undefined);
-    setNewTheme("PROGRAMMES"); setNewTva(false); setNewPortage(false);
+    setNewTheme("PROGRAMMES"); setNewTva(false); setNewPortage(false); setNewMaxInstallments(undefined);
   };
 
   const activeCount = offres.filter(o => o.active).length;
