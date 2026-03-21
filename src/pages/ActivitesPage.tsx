@@ -2,6 +2,9 @@ import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import ClientAutocomplete from "@/components/ui/ClientAutocomplete";
 import { FinanceEntry, Expense, ExpenseCategory, EXPENSE_CATEGORIES, PAYMENT_MODES, CASH_DECLARATIONS, OffreTheme, OFFRE_THEMES } from "@/data/types";
+import logoBeActiv from "@/assets/logo-beactiv.png";
+import logoCardioMouv from "@/assets/logo-cardiomouv.png";
+import logoJM from "@/assets/logo-jm.png";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
