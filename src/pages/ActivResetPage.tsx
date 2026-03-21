@@ -100,7 +100,7 @@ export default function ActivResetPage() {
 
       {/* Client Cards */}
       <div className="flex flex-col gap-3">
-        {activResetClients.map(c => {
+        {visibleClients.map(c => {
           const currentPhase = c.phases[c.currentPhase];
           const daysLeft = currentPhase ? getDaysRemaining(currentPhase) : null;
           const progress = c.phases.length > 0 ? (c.phases.filter(p => p.done).length / c.phases.length) * 100 : 0;
