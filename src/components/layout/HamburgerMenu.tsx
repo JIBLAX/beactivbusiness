@@ -125,6 +125,38 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
           })}
         </nav>
 
+        {/* Import/Export */}
+        <div className="px-6 py-4" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
+          <div className="text-[9px] text-muted-foreground/50 font-medium tracking-[3px] uppercase mb-3">DONNÉES</div>
+          <div className="flex flex-col gap-1.5">
+            <button onClick={handleExportExcel}
+              className="flex items-center gap-3 text-muted-foreground text-[13px] py-2 hover:text-foreground transition-colors w-full">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: "hsl(142 71% 45% / 0.06)", border: "1px solid hsl(142 71% 45% / 0.1)" }}>
+                📥
+              </div>
+              <span className="font-medium">Export Excel</span>
+            </button>
+            <button onClick={handleExportCSV}
+              className="flex items-center gap-3 text-muted-foreground text-[13px] py-2 hover:text-foreground transition-colors w-full">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: "hsl(38 92% 55% / 0.06)", border: "1px solid hsl(38 92% 55% / 0.1)" }}>
+                📄
+              </div>
+              <span className="font-medium">Export CSV</span>
+            </button>
+            <button onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-3 text-muted-foreground text-[13px] py-2 hover:text-foreground transition-colors w-full">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: "hsl(210 70% 50% / 0.06)", border: "1px solid hsl(210 70% 50% / 0.1)" }}>
+                📤
+              </div>
+              <span className="font-medium">Importer</span>
+            </button>
+            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
+          </div>
+        </div>
+
         {/* Footer */}
         <div className="px-6 py-5" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
           <button onClick={handleLock}
