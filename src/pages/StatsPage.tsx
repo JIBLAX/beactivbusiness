@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useApp } from "@/store/AppContext";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
-const MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 const QUARTERS = [
   { label: "T1", months: ["01", "02", "03"] },
   { label: "T2", months: ["04", "05", "06"] },
