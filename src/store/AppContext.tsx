@@ -15,7 +15,7 @@ interface AppState {
   financeEntries: FinanceEntry[];
   expenses: Expense[];
   portageMonths: Record<string, boolean>;
-  versementsPerso: Record<string, number | null>;
+  versementsPerso: Record<string, Record<string, number | null>>;
   offres: Offre[];
   urssafMode: "mois" | "trimestre";
   loading: boolean;
