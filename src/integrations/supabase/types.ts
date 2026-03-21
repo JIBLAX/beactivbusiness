@@ -68,6 +68,7 @@ export type Database = {
           id: string
           portage_enabled: boolean | null
           portage_months: Json | null
+          quarter_edits: Json | null
           updated_at: string
           urssaf_mode: string | null
           user_id: string
@@ -78,6 +79,7 @@ export type Database = {
           id?: string
           portage_enabled?: boolean | null
           portage_months?: Json | null
+          quarter_edits?: Json | null
           updated_at?: string
           urssaf_mode?: string | null
           user_id: string
@@ -88,6 +90,7 @@ export type Database = {
           id?: string
           portage_enabled?: boolean | null
           portage_months?: Json | null
+          quarter_edits?: Json | null
           updated_at?: string
           urssaf_mode?: string | null
           user_id?: string
