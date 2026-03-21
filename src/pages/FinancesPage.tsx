@@ -50,7 +50,7 @@ function getQuarterMonths(year: number, quarter: number): string[] {
 const PRORATA_BUREAU = 13 / 43;
 
 export default function FinancesPage() {
-  const { financeEntries, expenses, portageMonths, setPortageMonths, versementsPerso, setVersementsPerso, offres, prospects, urssafMode } = useApp();
+  const { financeEntries, expenses, portageMonths, setPortageMonths, versementsPerso, setVersementsPerso, offres, prospects, urssafMode, quarterEdits } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [showSapTable, setShowSapTable] = useState(false);
   const [showGestionDetail, setShowGestionDetail] = useState(false);
@@ -62,7 +62,9 @@ export default function FinancesPage() {
   const [sapQuarter, setSapQuarter] = useState(Math.ceil((new Date().getMonth() + 1) / 3));
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
-  const editable = isEditable(selectedMonth);
+  const editState = getMonthEditState(selectedMonth, quarterEdits);
+  const editable = editState.editable;
+  const sealedLabel = getSealedLabel(editState);
   const allMonths = useMemo(() => getAllMonths(), []);
 
   const sapClientNames = useMemo(() => new Set(prospects.filter(p => p.sapEnabled).map(p => p.name)), [prospects]);
