@@ -269,25 +269,36 @@ export default function FinancesPage() {
 
         <div className={`grid gap-2 ${portageEnabled ? "grid-cols-3" : "grid-cols-2"}`}>
           {[
-            { label: "Micro", value: declaredMicro, color: "hsl(152 55% 52%)" },
-            ...(portageEnabled ? [{ label: "Portage", value: declaredPortage, color: "hsl(217 70% 60%)" }] : []),
-            { label: "URSSAF", value: -urssaf, color: "hsl(0 62% 50%)" },
+            { label: "CA Micro", sub: "Déclaré URSSAF", value: declaredMicro, color: "hsl(152 55% 52%)" },
+            ...(portageEnabled ? [{ label: "Portage JUMP", sub: "Charges gérées par JUMP", value: declaredPortage, color: "hsl(217 70% 60%)" }] : []),
+            { label: "URSSAF dû", sub: "26.1% du CA Micro", value: -urssaf, color: "hsl(0 62% 50%)" },
           ].map(k => (
             <div key={k.label} className="rounded-2xl p-3 text-center" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
               <div className="value-lg text-[15px] leading-none mb-1" style={{ color: k.color }}>
                 {Math.abs(k.value).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
               </div>
               <div className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">{k.label}</div>
+              <div className="text-[8px] text-muted-foreground/60 mt-0.5">{k.sub}</div>
             </div>
           ))}
         </div>
+        {portageEnabled && (
+          <div className="mt-3 px-3 py-2 rounded-xl text-[10px] text-muted-foreground" style={{ background: "hsl(217 70% 60% / 0.08)", border: "1px solid hsl(217 70% 60% / 0.15)" }}>
+            ℹ️ Les revenus <strong className="text-foreground">Activ Reset / Program</strong> passent par <strong className="text-foreground">JUMP</strong> ce mois — charges sociales déduites par JUMP, <strong className="text-foreground">non déclarés à l'URSSAF</strong>.
+          </div>
+        )}
       </div>
 
-      {/* Portage switch for THIS month */}
+      {/* Portage JUMP switch for THIS month */}
       <div className="card-elevated rounded-2xl p-4 mb-3 flex items-center justify-between">
         <div>
           <div className="text-[13px] font-semibold text-foreground">Portage JUMP</div>
-          <div className="text-[10px] text-muted-foreground">Activer pour {formatMonth(selectedMonth)}</div>
+          <div className="text-[10px] text-muted-foreground">
+            {portageEnabled 
+              ? "Actif — Activ Reset/Program exclus de la déclaration URSSAF"
+              : `Activer pour ${formatMonth(selectedMonth)}`
+            }
+          </div>
         </div>
         <button onClick={() => editable && setPortageMonths({ ...portageMonths, [selectedMonth]: !portageEnabled })}
           className={`w-12 h-7 rounded-full transition-all relative ${!editable ? "opacity-40" : ""}`}
