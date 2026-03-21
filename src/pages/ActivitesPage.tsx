@@ -276,8 +276,11 @@ export default function ActivitesPage() {
           className="flex-1 rounded-2xl px-4 py-3 text-sm font-medium input-field appearance-none">
           {allMonths.map(m => <option key={m} value={m}>{formatMonth(m)}</option>)}
         </select>
-        {!editable && (
-          <div className="badge-pill" style={{ background: "hsl(0 62% 50% / 0.1)", color: "hsl(0 62% 60%)" }}>🔒 Scellé</div>
+        {editState.sealed && (
+          <div className="badge-pill" style={{ 
+            background: editState.editsRemaining > 0 ? "hsl(38 92% 55% / 0.1)" : "hsl(0 62% 50% / 0.1)", 
+            color: editState.editsRemaining > 0 ? "hsl(38 92% 55%)" : "hsl(0 62% 60%)" 
+          }}>{sealedLabel}</div>
         )}
       </div>
 
