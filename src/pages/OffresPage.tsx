@@ -43,6 +43,7 @@ export default function OffresPage() {
   const [newTheme, setNewTheme] = useState<OffreTheme>("PROGRAMMES");
   const [newTva, setNewTva] = useState(false);
   const [newPortage, setNewPortage] = useState(false);
+  const [newMaxInstallments, setNewMaxInstallments] = useState<number | undefined>();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const startEdit = (o: Offre) => {
