@@ -277,7 +277,19 @@ export default function ActivitesPage() {
         </div>
       </div>
 
-      {/* ENTRIES BY THEME */}
+      {/* SECTION: ENTRÉES */}
+      <div className="mb-2">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl" style={{ background: "hsl(142 71% 45% / 0.12)" }}>
+            <span className="text-success text-sm">↗</span>
+          </div>
+          <div>
+            <div className="text-[13px] font-bold text-foreground tracking-wide">ENTRÉES</div>
+            <div className="text-[10px] text-muted-foreground">{monthEntries.length} opération{monthEntries.length > 1 ? "s" : ""} · <span className="text-success font-semibold">{totalEntries.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</span></div>
+          </div>
+        </div>
+      </div>
+
       {OFFRE_THEMES.map(theme => {
         const entries = entriesByTheme[theme] || [];
         const themeTotal = entries.reduce((s, e) => s + e.amount, 0);
