@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useApp } from "@/store/AppContext";
 import { Offre, OffreDuration, OffreTheme, OFFRE_THEMES } from "@/data/types";
+import logoBeActiv from "@/assets/logo-beactiv.png";
+import logoCardioMouv from "@/assets/logo-cardiomouv.png";
+import logoJM from "@/assets/logo-jm.png";
 
 const DURATION_UNITS = [
   { value: "jours", label: "Jours" },
@@ -14,10 +17,10 @@ function formatDuration(d?: OffreDuration): string {
   return `${d.value} ${unitLabel}`;
 }
 
-const THEME_ICONS: Record<string, string> = {
-  "COURS COLLECTIFS": "🏃",
-  "JM COACHING": "💪",
-  "PROGRAMMES": "📋",
+const THEME_LOGOS: Record<string, string> = {
+  "COURS COLLECTIFS": logoCardioMouv,
+  "JM COACHING": logoJM,
+  "PROGRAMMES": logoBeActiv,
 };
 
 export default function OffresPage() {
