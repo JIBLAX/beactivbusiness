@@ -58,9 +58,9 @@ export default function ClientsPage() {
   const getClientSapHours = (name: string) => getClientEntries(name).reduce((s, e) => s + (e.sapHours || 0), 0);
   const getClientSapTotal = (name: string) => getClientEntries(name).filter(e => e.sapHours && e.sapHours > 0).reduce((s, e) => s + e.amount, 0);
 
-  const getSessionInfo = (client: Prospect) => {
+  const getMetrics = (client: Prospect) => {
     const entries = getClientEntries(client.name);
-    return getClientSessionCount(entries, client.offre, offres);
+    return getClientMetrics(entries, client.offre, offres);
   };
 
   const startEdit = (c: Prospect) => {
