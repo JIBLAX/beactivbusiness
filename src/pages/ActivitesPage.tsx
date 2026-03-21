@@ -328,16 +328,7 @@ export default function ActivitesPage() {
                 <span className="text-[12px] font-bold text-foreground">{theme}</span>
                 <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{entries.length}</span>
               </div>
-              <div className="flex items-center gap-2">
-                {themeTotal > 0 && <span className="value-lg text-[13px] text-success">{themeTotal.toFixed(0)}€</span>}
-                {editable && theme === "JM COACHING" && entries.length > 0 && (
-                  <button onClick={() => { setShowAddSessions(true); setExtraSessionsOffre(""); setExtraSessionsClient(""); setExtraSessionsCount(0); }}
-                    className="badge-pill text-[10px] cursor-pointer"
-                    style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)", border: "1px solid hsl(38 92% 55% / 0.2)" }}>
-                    + Séances
-                  </button>
-                )}
-              </div>
+              {themeTotal > 0 && <span className="value-lg text-[13px] text-success">{themeTotal.toFixed(0)}€</span>}
             </div>
 
             <div className="space-y-1.5 ml-1">
@@ -375,6 +366,16 @@ export default function ActivitesPage() {
                           </select>
                         )}
                         <span className="value-lg text-[14px] text-success">+{e.amount}€</span>
+                        {editable && (() => {
+                          const entryOffre = offres.find(o => o.name === e.offre);
+                          return entryOffre?.unitPrice ? (
+                            <button onClick={() => { setShowAddSessions(true); setExtraSessionsOffre(e.offre || ""); setExtraSessionsClient(e.clientName || ""); setExtraSessionsCount(0); }}
+                              className="text-[10px] px-1.5 py-0.5 rounded-lg transition-colors"
+                              style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)", border: "1px solid hsl(38 92% 55% / 0.2)" }}>
+                              +séances
+                            </button>
+                          ) : null;
+                        })()}
                         {editable && (
                           <>
                             <button onClick={() => startEditEntry(e)} className="text-muted-foreground hover:text-foreground transition-colors p-1">✏️</button>
