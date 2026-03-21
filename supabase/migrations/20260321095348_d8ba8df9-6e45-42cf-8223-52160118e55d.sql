@@ -1,0 +1,1 @@
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS pro_pct integer NOT NULL DEFAULT 100;

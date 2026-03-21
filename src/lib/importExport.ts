@@ -153,6 +153,7 @@ export function importFromFile(file: File): Promise<Partial<AllData>> {
             label: r.Libellé || r.label || "",
             amount: Number(r.Montant || r.amount) || 0,
             date: r.Date || r.date || "",
+            proPct: Number(r.ProPct || r.proPct || r["% Pro"]) || 100,
           }));
         }
 

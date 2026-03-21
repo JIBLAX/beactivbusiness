@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import ClientAutocomplete from "@/components/ui/ClientAutocomplete";
-import { FinanceEntry, Expense, ExpenseCategory, EXPENSE_CATEGORIES, PAYMENT_MODES, CASH_DECLARATIONS, OffreTheme, OFFRE_THEMES, ExpenseTheme, EXPENSE_THEMES } from "@/data/types";
+import { FinanceEntry, Expense, ExpenseCategory, EXPENSE_CATEGORIES, PAYMENT_MODES, CASH_DECLARATIONS, OffreTheme, OFFRE_THEMES } from "@/data/types";
 import { getMonthEditState, getSealedLabel, getQuarterForMonth } from "@/lib/quarterLock";
 import logoBeActiv from "@/assets/logo-beactiv.png";
 import logoCardioMouv from "@/assets/logo-cardiomouv.png";
@@ -59,8 +59,7 @@ export default function ActivitesPage() {
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState<Partial<FinanceEntry>>({});
   const [editExpense, setEditExpense] = useState<Partial<Expense>>({});
-  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "LOCAUX & BUREAUX", amount: 0, expenseTheme: "TOUS" });
-  const [expenseThemeFilter, setExpenseThemeFilter] = useState<ExpenseTheme | "ALL">("ALL");
+  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100 });
 
   // Quick cours
   const [quickCoursData, setQuickCoursData] = useState<Record<string, number>>({});
@@ -244,11 +243,11 @@ export default function ActivitesPage() {
       category: newExpense.category as ExpenseCategory,
       label: newExpense.label || "", amount: Number(newExpense.amount) || 0,
       date: new Date().toISOString().split("T")[0],
-      expenseTheme: (newExpense.expenseTheme as any) || "TOUS",
+      proPct: newExpense.proPct ?? 100,
     };
     setExpenses([...expenses, exp]);
     setShowAddExpense(false);
-    setNewExpense({ category: "LOCAUX & BUREAUX", amount: 0, expenseTheme: "TOUS" });
+    setNewExpense({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100 });
   };
 
   const startEditEntry = (e: FinanceEntry) => { setEditingEntryId(e.id); setEditEntry({ ...e }); };
@@ -478,20 +477,18 @@ export default function ActivitesPage() {
         ) : null;
       })()}
 
-      {/* Theme filter */}
-      <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
-        {(["ALL", ...EXPENSE_THEMES] as const).map(t => (
-          <button key={t} onClick={() => setExpenseThemeFilter(t)}
-            className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold whitespace-nowrap transition-all ${
-              expenseThemeFilter === t ? "text-foreground btn-primary" : "text-muted-foreground input-field"
-            }`}>
-            {t === "ALL" ? "Tous" : t}
-          </button>
-        ))}
-      </div>
+      {/* Total charges pro */}
+      {monthExpenses.length > 0 && (
+        <div className="flex justify-between items-center mb-4 px-1">
+          <span className="text-[11px] text-muted-foreground">Total charges pro</span>
+          <span className="text-[13px] font-bold text-destructive">
+            -{monthExpenses.reduce((s, e) => s + (e.amount * (e.proPct ?? 100) / 100), 0).toFixed(0)}€
+          </span>
+        </div>
+      )}
 
       {(() => {
-        const filtered = expenseThemeFilter === "ALL" ? monthExpenses : monthExpenses.filter(e => (e.expenseTheme ?? "TOUS") === expenseThemeFilter);
+        const filtered = monthExpenses;
         return filtered.length > 0 ? (
         <div className="mb-6">
           <div className="space-y-1.5">
@@ -508,14 +505,12 @@ export default function ActivitesPage() {
                     <input type="number" value={editExpense.amount || ""} onChange={ev => setEditExpense(p => ({ ...p, amount: Number(ev.target.value) }))}
                       className="w-full rounded-xl px-3 py-2 text-sm input-field" />
                     <div>
-                      <label className="text-[10px] text-muted-foreground mb-1 block">Activité liée</label>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {EXPENSE_THEMES.map(t => (
-                          <button key={t} onClick={() => setEditExpense(p => ({ ...p, expenseTheme: t }))}
-                            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${(editExpense.expenseTheme ?? "TOUS") === t ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
-                            {t}
-                          </button>
-                        ))}
+                      <label className="text-[10px] text-muted-foreground mb-1 block">% Pro</label>
+                      <div className="flex items-center gap-2">
+                        <input type="range" min={0} max={100} step={5} value={editExpense.proPct ?? 100}
+                          onChange={ev => setEditExpense(p => ({ ...p, proPct: Number(ev.target.value) }))}
+                          className="flex-1 accent-primary" />
+                        <span className="text-[11px] font-semibold text-foreground w-10 text-right">{editExpense.proPct ?? 100}%</span>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -529,10 +524,10 @@ export default function ActivitesPage() {
                       <div className="text-[13px] font-medium text-foreground">{e.label}</div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] text-muted-foreground">{e.category}</span>
-                        {e.expenseTheme && e.expenseTheme !== "TOUS" && (
+                        {(e.proPct ?? 100) < 100 && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold"
                             style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
-                            {e.expenseTheme}
+                            {e.proPct}% pro
                           </span>
                         )}
                       </div>
@@ -554,7 +549,7 @@ export default function ActivitesPage() {
         </div>
       ) : (
         <div className="rounded-2xl p-6 text-center stat-card mb-6" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
-          <div className="text-muted-foreground text-[11px]">Aucune dépense{expenseThemeFilter !== "ALL" ? ` pour ${expenseThemeFilter}` : ""} ce mois</div>
+          <div className="text-muted-foreground text-[11px]">Aucune dépense ce mois</div>
         </div>
       );
       })()}
@@ -811,15 +806,14 @@ export default function ActivitesPage() {
                   className="w-full rounded-xl px-3 py-3 text-sm input-field" />
               </div>
               <div>
-                <label className="section-label mb-2 block">Activité liée (Portage)</label>
-                <div className="flex gap-1.5 flex-wrap">
-                  {EXPENSE_THEMES.map(t => (
-                    <button key={t} onClick={() => setNewExpense(p => ({ ...p, expenseTheme: t }))}
-                      className={`px-3 py-2 rounded-xl text-[11px] font-semibold transition-all ${(newExpense.expenseTheme ?? "TOUS") === t ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
-                      {t}
-                    </button>
-                  ))}
+                <label className="section-label mb-2 block">% Professionnel</label>
+                <div className="flex items-center gap-3">
+                  <input type="range" min={0} max={100} step={5} value={newExpense.proPct ?? 100}
+                    onChange={e => setNewExpense(p => ({ ...p, proPct: Number(e.target.value) }))}
+                    className="flex-1 accent-primary" />
+                  <span className="text-sm font-semibold text-foreground w-12 text-right">{newExpense.proPct ?? 100}%</span>
                 </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Part déductible en charges pro</p>
               </div>
               <button onClick={addExpense} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Ajouter la dépense
