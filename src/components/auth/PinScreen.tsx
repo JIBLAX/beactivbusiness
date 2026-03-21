@@ -18,21 +18,14 @@ interface PinScreenProps {
 export default function PinScreen({ onSuccess }: PinScreenProps) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   const autoLogin = async () => {
     setLoading(true);
-    // Try login first, if fails create account
     const { error: loginErr } = await supabase.auth.signInWithPassword({ email: AUTO_EMAIL, password: AUTO_PASS });
     if (loginErr) {
       const { error: signupErr } = await supabase.auth.signUp({ email: AUTO_EMAIL, password: AUTO_PASS });
-      if (signupErr) {
-        console.error("Auto-login failed:", signupErr);
-        setLoading(false);
-        return;
-      }
-      // After signup with auto-confirm, sign in
+      if (signupErr) { console.error("Auto-login failed:", signupErr); setLoading(false); return; }
       await supabase.auth.signInWithPassword({ email: AUTO_EMAIL, password: AUTO_PASS });
     }
     setLoading(false);
@@ -44,14 +37,11 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
     const newPin = pin + d;
     setPin(newPin);
     setError(false);
-    setErrorMsg("");
-
     if (newPin.length === 6) {
       if (newPin === PIN_CODE) {
         autoLogin();
       } else {
         setError(true);
-        setErrorMsg("Code incorrect");
         setTimeout(() => { setPin(""); setError(false); }, 600);
       }
     }
@@ -60,75 +50,55 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
   const handleDelete = useCallback(() => {
     setPin(p => p.slice(0, -1));
     setError(false);
-    setErrorMsg("");
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
-      style={{
-        background: `
-          radial-gradient(ellipse 100% 80% at 50% 0%, hsl(348 63% 30% / 0.35) 0%, transparent 60%),
-          linear-gradient(180deg, hsl(0 6% 4% / 0.7) 0%, hsl(0 6% 4% / 0.95) 100%)`,
-        backdropFilter: "blur(40px)",
-      }}>
-      <div className="w-[90px] h-[90px] rounded-full overflow-hidden border-2 mb-4 animate-glow"
-        style={{ borderColor: "hsl(348 63% 30% / 0.5)", boxShadow: "0 0 40px hsl(348 63% 30% / 0.5), 0 0 80px hsl(348 63% 30% / 0.2)" }}>
-        <img src={beactivLogo} alt="Be Activ" className="w-full h-full object-contain" style={{ background: "#0d0909" }} />
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background">
+      <div className="w-20 h-20 rounded-3xl overflow-hidden mb-6 animate-glow"
+        style={{ border: "1px solid hsl(348 63% 30% / 0.3)", boxShadow: "0 0 60px hsl(348 63% 30% / 0.2)" }}>
+        <img src={beactivLogo} alt="Be Activ" className="w-full h-full object-contain" style={{ background: "#0a0808" }} />
       </div>
 
-      <h1 className="font-display text-2xl font-extrabold text-foreground mb-8 tracking-tight">
-        Be Activ <span className="font-sans font-normal text-sm text-muted-foreground tracking-[3px] uppercase ml-1.5 align-middle">BUSINESS</span>
-      </h1>
+      <h1 className="font-display text-[20px] font-bold text-foreground mb-1 tracking-tight">Be Activ</h1>
+      <p className="text-[10px] text-muted-foreground tracking-[4px] uppercase mb-10">BUSINESS</p>
 
       {/* Dots */}
-      <div className="flex gap-4 mb-3">
+      <div className="flex gap-3 mb-8">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-150
-            ${error ? "bg-destructive border-destructive animate-shake" :
-              i < pin.length ? "bg-foreground border-foreground shadow-[0_0_8px_hsl(30_50%_93%/0.4)]" :
-              "bg-transparent border-foreground/25"}`} />
+          <div key={i} className={`w-3 h-3 rounded-full transition-all duration-150
+            ${error ? "bg-destructive animate-shake" :
+              i < pin.length ? "bg-foreground shadow-[0_0_8px_hsl(0_0%_96%/0.3)]" :
+              "bg-transparent border-[1.5px] border-[hsl(0_0%_25%)]"}`} />
         ))}
       </div>
 
-      <div className="h-5 text-xs text-destructive text-center mb-2.5 tracking-wide">
-        {errorMsg}
-      </div>
-
-      {loading && (
-        <div className="text-xs text-muted-foreground mb-2 animate-pulse">Connexion en cours...</div>
-      )}
+      {loading && <div className="text-[11px] text-muted-foreground mb-4 animate-pulse">Connexion...</div>}
 
       {/* Keypad */}
-      <div className="grid grid-cols-3 gap-3 mt-3">
+      <div className="grid grid-cols-3 gap-3">
         {["1","2","3","4","5","6","7","8","9","","0","del"].map((key) => {
-          if (key === "") return <div key="empty" className="w-[72px] h-[72px]" />;
+          if (key === "") return <div key="empty" className="w-[68px] h-[68px]" />;
           if (key === "del") return (
             <button key="del" onClick={handleDelete}
-              className="w-[72px] h-[72px] rounded-full flex items-center justify-center text-xl text-muted-foreground active:text-foreground active:scale-[0.92] transition-all">
+              className="w-[68px] h-[68px] rounded-2xl flex items-center justify-center text-xl text-muted-foreground active:text-foreground active:scale-[0.92] transition-all">
               ⌫
             </button>
           );
           return (
             <button key={key} onClick={() => handleDigit(key)}
-              className="w-[72px] h-[72px] rounded-full flex flex-col items-center justify-center gap-0.5 text-foreground font-medium text-[22px] transition-all active:scale-[0.92]"
-              style={{
-                background: "hsl(0 0% 100% / 0.08)",
-                border: "1px solid hsl(0 0% 100% / 0.12)",
-                backdropFilter: "blur(10px)",
-              }}>
+              className="w-[68px] h-[68px] rounded-2xl flex flex-col items-center justify-center gap-0.5 text-foreground font-medium text-[20px] transition-all active:scale-[0.92] active:bg-white/[0.08]"
+              style={{ background: "hsl(0 0% 100% / 0.04)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
               {key}
               {PIN_LETTERS[key] && (
-                <span className="text-[8px] tracking-[2px] text-muted-foreground font-semibold uppercase">
-                  {PIN_LETTERS[key]}
-                </span>
+                <span className="text-[7px] tracking-[2px] text-muted-foreground font-medium uppercase">{PIN_LETTERS[key]}</span>
               )}
             </button>
           );
         })}
       </div>
 
-      <div className="mt-6 text-[10px] text-muted-foreground tracking-[1.5px] uppercase">
-        MADE BY <span className="text-bordeaux-2 font-semibold">COACH JM</span> · <span className="text-bordeaux-2 font-semibold">JBLX STUDIO</span>
+      <div className="mt-8 text-[9px] text-muted-foreground tracking-[2px] uppercase">
+        COACH JM · JBLX STUDIO
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ interface AppState {
   activResetClients: ActivResetClient[];
   financeEntries: FinanceEntry[];
   expenses: Expense[];
-  portageEnabled: boolean;
+  portageMonths: Record<string, boolean>;
   versementsPerso: Record<string, number | null>;
   offres: Offre[];
   loading: boolean;
@@ -23,15 +23,12 @@ interface AppState {
   setActivResetClients: (c: ActivResetClient[] | ((prev: ActivResetClient[]) => ActivResetClient[])) => void;
   setFinanceEntries: (e: FinanceEntry[]) => void;
   setExpenses: (e: Expense[]) => void;
-  setPortageEnabled: (v: boolean) => void;
+  setPortageMonths: (v: Record<string, boolean>) => void;
   setVersementsPerso: (v: Record<string, number | null>) => void;
   setOffres: (o: Offre[]) => void;
-  
 }
 
 const AppContext = createContext<AppState | null>(null);
-
-// ---- Supabase <-> App type mappers ----
 
 function prospectToRow(p: Prospect, userId: string) {
   return {
@@ -109,6 +106,7 @@ function offreToRow(o: Offre, userId: string) {
     duration: o.duration ? JSON.parse(JSON.stringify(o.duration)) : null,
     unit_price: o.unitPrice ?? null, min_quantity: o.minQuantity ?? null,
     is_ala_carte: o.isAlaCarte ?? false, theme: o.theme ?? "PROGRAMMES",
+    tva_enabled: o.tvaEnabled ?? false,
   };
 }
 
@@ -121,18 +119,11 @@ function rowToOffre(r: any): Offre {
     minQuantity: r.min_quantity ?? undefined,
     isAlaCarte: r.is_ala_carte ?? false,
     theme: r.theme ?? "PROGRAMMES",
+    tvaEnabled: r.tva_enabled ?? false,
   };
 }
 
-// ---- Sync helpers ----
-
-async function syncToSupabase<T>(
-  table: string,
-  items: T[],
-  toRow: (item: T, userId: string) => any,
-  userId: string,
-) {
-  // Delete all then upsert (simple full-sync approach)
+async function syncToSupabase<T>(table: string, items: T[], toRow: (item: T, userId: string) => any, userId: string) {
   const client = supabase as any;
   await client.from(table).delete().eq("user_id", userId);
   if (items.length > 0) {
@@ -149,11 +140,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activResetClients, setActivResetClientsState] = useState<ActivResetClient[]>([]);
   const [financeEntries, setFinanceEntriesState] = useState<FinanceEntry[]>([]);
   const [expenses, setExpensesState] = useState<Expense[]>([]);
-  const [portageEnabled, setPortageEnabledState] = useState(false);
+  const [portageMonths, setPortageMonthsState] = useState<Record<string, boolean>>({});
   const [versementsPerso, setVersementsPersoState] = useState<Record<string, number | null>>({});
   const [offres, setOffresState] = useState<Offre[]>([]);
 
-  // Auth listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
@@ -165,12 +155,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Load data when user changes
   useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+    if (!user) { setLoading(false); return; }
     loadAllData(user.id);
   }, [user]);
 
@@ -186,14 +172,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         supabase.from("app_settings").select("*").eq("user_id", userId).maybeSingle(),
       ]);
 
-      // If no offres exist (first login), seed them
       const loadedOffres = (oRes.data && oRes.data.length > 0) ? oRes.data.map(rowToOffre) : null;
-      
       if (!loadedOffres) {
-        // First time: seed from defaults + localStorage if available
-        const seedOffres = INITIAL_OFFRES;
-        setOffresState(seedOffres);
-        await syncToSupabase("offres", seedOffres, offreToRow, userId);
+        setOffresState(INITIAL_OFFRES);
+        await syncToSupabase("offres", INITIAL_OFFRES, offreToRow, userId);
       } else {
         setOffresState(loadedOffres);
       }
@@ -201,7 +183,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (pRes.data && pRes.data.length > 0) {
         setProspectsState(pRes.data.map(rowToProspect));
       } else {
-        // Seed from initial data
         setProspectsState(initialProspects);
         await syncToSupabase("prospects", initialProspects, prospectToRow, userId);
       }
@@ -223,19 +204,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setExpensesState((eRes.data ?? []).map(rowToExpense));
 
       if (sRes.data) {
-        setPortageEnabledState(sRes.data.portage_enabled ?? false);
+        setPortageMonthsState((sRes.data.portage_months as any) ?? {});
         setVersementsPersoState((sRes.data.versements_perso as any) ?? {});
       } else {
-        // Create default settings
-        await supabase.from("app_settings").insert({ user_id: userId, portage_enabled: false, versements_perso: {} });
+        await supabase.from("app_settings").insert({ user_id: userId, portage_enabled: false, versements_perso: {}, portage_months: {} });
       }
     } catch (err) {
-      console.error("Error loading data from Cloud:", err);
+      console.error("Error loading data:", err);
     }
     setLoading(false);
   };
 
-  // Wrapped setters that sync to Supabase
   const setProspects = useCallback((p: Prospect[]) => {
     setProspectsState(p);
     if (user) syncToSupabase("prospects", p, prospectToRow, user.id);
@@ -259,9 +238,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) syncToSupabase("expenses", e, expenseToRow, user.id);
   }, [user]);
 
-  const setPortageEnabled = useCallback((v: boolean) => {
-    setPortageEnabledState(v);
-    if (user) supabase.from("app_settings").update({ portage_enabled: v }).eq("user_id", user.id).then();
+  const setPortageMonths = useCallback((v: Record<string, boolean>) => {
+    setPortageMonthsState(v);
+    if (user) supabase.from("app_settings").update({ portage_months: v as any }).eq("user_id", user.id).then();
   }, [user]);
 
   const setVersementsPerso = useCallback((v: Record<string, number | null>) => {
@@ -274,13 +253,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) syncToSupabase("offres", o, offreToRow, user.id);
   }, [user]);
 
-
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, currentPage, prospects, activResetClients,
-      financeEntries, expenses, portageEnabled, versementsPerso, offres, loading,
+      financeEntries, expenses, portageMonths, versementsPerso, offres, loading,
       setCurrentPage, setProspects, setActivResetClients, setFinanceEntries,
-      setExpenses, setPortageEnabled, setVersementsPerso, setOffres,
+      setExpenses, setPortageMonths, setVersementsPerso, setOffres,
     }}>
       {children}
     </AppContext.Provider>
