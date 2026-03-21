@@ -477,17 +477,15 @@ export default function ActivitesPage() {
         ) : null;
       })()}
 
-      {/* Theme filter */}
-      <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
-        {(["ALL", ...EXPENSE_THEMES] as const).map(t => (
-          <button key={t} onClick={() => setExpenseThemeFilter(t)}
-            className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold whitespace-nowrap transition-all ${
-              expenseThemeFilter === t ? "text-foreground btn-primary" : "text-muted-foreground input-field"
-            }`}>
-            {t === "ALL" ? "Tous" : t}
-          </button>
-        ))}
-      </div>
+      {/* Total charges pro */}
+      {monthExpenses.length > 0 && (
+        <div className="flex justify-between items-center mb-4 px-1">
+          <span className="text-[11px] text-muted-foreground">Total charges pro</span>
+          <span className="text-[13px] font-bold text-destructive">
+            -{monthExpenses.reduce((s, e) => s + (e.amount * (e.proPct ?? 100) / 100), 0).toFixed(0)}€
+          </span>
+        </div>
+      )}
 
       {(() => {
         const filtered = expenseThemeFilter === "ALL" ? monthExpenses : monthExpenses.filter(e => (e.expenseTheme ?? "TOUS") === expenseThemeFilter);
