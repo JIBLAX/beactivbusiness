@@ -488,7 +488,7 @@ export default function ActivitesPage() {
       )}
 
       {(() => {
-        const filtered = expenseThemeFilter === "ALL" ? monthExpenses : monthExpenses.filter(e => (e.expenseTheme ?? "TOUS") === expenseThemeFilter);
+        const filtered = monthExpenses;
         return filtered.length > 0 ? (
         <div className="mb-6">
           <div className="space-y-1.5">
