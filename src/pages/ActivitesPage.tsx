@@ -545,12 +545,18 @@ export default function ActivitesPage() {
                   <div className="flex items-center gap-3 p-3 rounded-2xl stat-card">
                     <div className="flex-1 min-w-0">
                       <div className="text-[13px] font-medium text-foreground">{e.label}</div>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         <span className="text-[10px] text-muted-foreground">{e.category}</span>
                         {(e.proPct ?? 100) < 100 && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold"
                             style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
                             {e.proPct}% pro
+                          </span>
+                        )}
+                        {e.portagePct != null && e.portagePct > 0 && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold"
+                            style={{ background: "hsl(262 80% 65% / 0.1)", color: "hsl(262 80% 65%)" }}>
+                            {e.portagePct}% portage
                           </span>
                         )}
                       </div>
