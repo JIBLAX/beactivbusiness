@@ -271,7 +271,7 @@ export default function FinancesPage() {
           {[
             { label: "CA Micro", sub: "Déclaré URSSAF", value: declaredMicro, color: "hsl(152 55% 52%)" },
             ...(portageEnabled ? [{ label: "Portage JUMP", sub: "Charges gérées par JUMP", value: declaredPortage, color: "hsl(217 70% 60%)" }] : []),
-            { label: "URSSAF dû", sub: `${(TAUX_URSSAF * 100).toFixed(1)}% du CA Micro`, value: -urssaf, color: "hsl(0 62% 50%)" },
+            { label: "URSSAF dû", sub: "26.1% du CA Micro", value: -urssaf, color: "hsl(0 62% 50%)" },
           ].map(k => (
             <div key={k.label} className="rounded-2xl p-3 text-center" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
               <div className="value-lg text-[15px] leading-none mb-1" style={{ color: k.color }}>
