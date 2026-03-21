@@ -122,6 +122,41 @@ export default function FinancesPage() {
   const investPlus = gestionPerso * 0.15;
   const fondUrgence = beneficeNet > 0 ? gestionPerso * 0.10 : 0;
 
+  // TVA tracking
+  const tvaEntries = useMemo(() => monthEntries.filter(e => {
+    const offre = offres.find(o => o.name === e.offre);
+    return offre?.tvaEnabled;
+  }), [monthEntries, offres]);
+  const tvaCA = tvaEntries.reduce((s, e) => s + e.amount, 0);
+  const tvaCollectee = tvaCA * 0.20;
+
+  // Fiscal reminders
+  const currentYear = new Date().getFullYear();
+  const reminders = useMemo(() => getFiscalReminders(currentYear, urssafMode), [currentYear, urssafMode]);
+  const upcomingReminders = reminders.filter(r => getDaysUntil(r.date) >= 0).slice(0, 5);
+  const nextReminder = upcomingReminders[0];
+
+  // PDF export handler
+  const handleExportPDF = () => {
+    generateBilanPDF({
+      month: selectedMonth,
+      totalReel,
+      declaredMicro,
+      declaredPortage,
+      especesNonDeclarees,
+      urssaf,
+      totalDepenses,
+      beneficeNet,
+      gestionPerso,
+      restePerso,
+      entries: monthEntries,
+      expenses: monthExpenses,
+      portageEnabled: portageEnabled,
+      tvaAmount: tvaCollectee,
+      versements: monthVersements,
+    });
+  };
+
   return (
     <div className="px-4 pt-4 pb-24">
       {/* Month selector */}
