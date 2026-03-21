@@ -124,6 +124,7 @@ function rowToOffre(r: any): Offre {
     theme: r.theme ?? "PROGRAMMES",
     tvaEnabled: r.tva_enabled ?? false,
     portageEligible: r.portage_eligible ?? false,
+    maxInstallments: r.max_installments ?? undefined,
   };
 }
 
