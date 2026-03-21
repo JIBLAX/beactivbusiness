@@ -116,22 +116,21 @@ export default function FinancesPage() {
     return grouped;
   }, [monthEntries, offres]);
 
-  // When portage is ON for this month, Activ Reset entries are excluded from micro
-  const isActivReset = (e: FinanceEntry) => {
+  // Check if an entry's offre is eligible for portage
+  const isPortageEligible = (e: FinanceEntry) => {
     const o = offres.find(of => of.name === e.offre);
-    return e.offre && (e.offre.includes("ACTIV RESET") || e.offre.includes("ACTIV PROGRAM"));
+    return o?.portageEligible ?? false;
   };
 
   const declaredMicro = monthEntries.filter(e => {
-    if (portageEnabled && isActivReset(e)) return false;
+    if (portageEnabled && isPortageEligible(e)) return false;
     if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
-    // If portage is off, everything counts as micro
     if (!portageEnabled) return true;
     return e.type === "micro";
   }).reduce((s, e) => s + e.amount, 0);
 
   const declaredPortage = portageEnabled ? monthEntries.filter(e => {
-    if (isActivReset(e)) return true;
+    if (isPortageEligible(e)) return true;
     if (e.paymentMode === "especes") return e.cashDeclaration === "portage";
     return e.type === "portage";
   }).reduce((s, e) => s + e.amount, 0) : 0;
