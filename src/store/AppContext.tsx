@@ -79,6 +79,8 @@ function financeToRow(f: FinanceEntry, userId: string) {
     payment_mode: f.paymentMode ?? null, installment_group: f.installmentGroup ?? null,
     installment_index: f.installmentIndex ?? null, installment_total: f.installmentTotal ?? null,
     sap_hours: f.sapHours ?? null, cash_declaration: f.cashDeclaration ?? null,
+    discount_type: f.discountType ?? null, discount_value: f.discountValue ?? null,
+    original_amount: f.originalAmount ?? null,
   };
 }
 
@@ -90,6 +92,9 @@ function rowToFinance(r: any): FinanceEntry {
     installmentIndex: r.installment_index ?? undefined, installmentTotal: r.installment_total ?? undefined,
     sapHours: r.sap_hours != null ? Number(r.sap_hours) : undefined,
     cashDeclaration: r.cash_declaration ?? undefined,
+    discountType: r.discount_type ?? undefined,
+    discountValue: r.discount_value != null ? Number(r.discount_value) : undefined,
+    originalAmount: r.original_amount != null ? Number(r.original_amount) : undefined,
   };
 }
 

@@ -89,6 +89,8 @@ export default function ActivitesPage() {
   const [entrySapHours, setEntrySapHours] = useState(0);
   const [entryCashDeclaration, setEntryCashDeclaration] = useState<string>("micro");
   const [entryNbSessions, setEntryNbSessions] = useState(0);
+  const [entryDiscountType, setEntryDiscountType] = useState<"percent" | "euro" | "none">("none");
+  const [entryDiscountValue, setEntryDiscountValue] = useState(0);
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
   const editable = isEditable(selectedMonth);
@@ -139,7 +141,7 @@ export default function ActivitesPage() {
     setEntrySource("offre"); setEntryOffre(""); setEntryExterneLabel(""); setEntryClientName("");
     setEntryAmount(0); setEntryType("micro"); setEntryPaymentMode("cb");
     setEntryInstallments(1); setEntrySapHours(0); setEntryCashDeclaration("micro"); setAddTheme(null);
-    setEntryNbSessions(0);
+    setEntryNbSessions(0); setEntryDiscountType("none"); setEntryDiscountValue(0);
   };
 
   const openAddByTheme = (theme: OffreTheme) => {
@@ -198,7 +200,24 @@ export default function ActivitesPage() {
     const label = entrySource === "offre" ? entryOffre : entryExterneLabel;
     if (!label || !entryAmount) return;
     const groupId = "grp" + Date.now();
-    const installmentAmount = Math.round((entryAmount / entryInstallments) * 100) / 100;
+
+    // Calculate discount
+    let finalAmount = entryAmount;
+    let originalAmount: number | undefined;
+    let discountType: "percent" | "euro" | undefined;
+    let discountValue: number | undefined;
+    if (entryDiscountType !== "none" && entryDiscountValue > 0) {
+      originalAmount = entryAmount;
+      discountType = entryDiscountType;
+      discountValue = entryDiscountValue;
+      if (entryDiscountType === "percent") {
+        finalAmount = Math.round(entryAmount * (1 - entryDiscountValue / 100) * 100) / 100;
+      } else {
+        finalAmount = Math.max(0, entryAmount - entryDiscountValue);
+      }
+    }
+
+    const installmentAmount = Math.round((finalAmount / entryInstallments) * 100) / 100;
     const sessionsLabel = entryNbSessions > 0 ? ` (${entryNbSessions} séances)` : "";
     const newEntries: FinanceEntry[] = [];
     for (let i = 0; i < entryInstallments; i++) {
@@ -213,6 +232,7 @@ export default function ActivitesPage() {
         installmentTotal: entryInstallments > 1 ? entryInstallments : undefined,
         sapHours: entrySapHours > 0 ? (entryInstallments > 1 ? Math.round((entrySapHours / entryInstallments) * 10) / 10 : entrySapHours) : undefined,
         cashDeclaration: entryPaymentMode === "especes" ? entryCashDeclaration as any : undefined,
+        discountType, discountValue, originalAmount,
       });
     }
     setFinanceEntries([...financeEntries, ...newEntries]);
@@ -356,6 +376,11 @@ export default function ActivitesPage() {
                         <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
                           {e.clientName && <span>{e.clientName}</span>}
                           {e.paymentMode && <span className="badge-pill text-[8px] py-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>{paymentModeLabel(e.paymentMode)}</span>}
+                          {e.discountValue && e.discountType && (
+                            <span className="badge-pill text-[8px] py-0" style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
+                              -{e.discountValue}{e.discountType === "percent" ? "%" : "€"}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -610,6 +635,38 @@ export default function ActivitesPage() {
                 <label className="section-label mb-2 block">Montant €</label>
                 <input type="number" value={entryAmount || ""} onChange={e => setEntryAmount(Number(e.target.value))} placeholder="0"
                   className="w-full rounded-xl px-3 py-3 text-sm input-field" />
+              </div>
+
+              {/* Réduction */}
+              <div>
+                <label className="section-label mb-2 block">Réduction</label>
+                <div className="flex gap-2 mb-2">
+                  {([["none", "Aucune"], ["percent", "En %"], ["euro", "En €"]] as const).map(([val, lbl]) => (
+                    <button key={val} onClick={() => { setEntryDiscountType(val as any); if (val === "none") setEntryDiscountValue(0); }}
+                      className={`flex-1 py-2.5 rounded-xl text-[12px] font-semibold transition-all ${entryDiscountType === val ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+                {entryDiscountType !== "none" && (
+                  <div className="space-y-2">
+                    <input type="number" value={entryDiscountValue || ""} onChange={e => setEntryDiscountValue(Number(e.target.value))}
+                      placeholder={entryDiscountType === "percent" ? "Ex: 10" : "Ex: 50"}
+                      className="w-full rounded-xl px-3 py-3 text-sm input-field" />
+                    {entryDiscountValue > 0 && entryAmount > 0 && (
+                      <div className="rounded-xl p-3 text-center text-[12px]" style={{ background: "hsl(38 92% 55% / 0.08)", border: "1px solid hsl(38 92% 55% / 0.15)" }}>
+                        <span className="text-muted-foreground line-through mr-2">{entryAmount}€</span>
+                        <span className="text-warning font-bold">
+                          → {entryDiscountType === "percent"
+                            ? (Math.round(entryAmount * (1 - entryDiscountValue / 100) * 100) / 100).toFixed(2)
+                            : Math.max(0, entryAmount - entryDiscountValue).toFixed(2)
+                          }€
+                        </span>
+                        <span className="text-muted-foreground ml-1">(-{entryDiscountValue}{entryDiscountType === "percent" ? "%" : "€"})</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
