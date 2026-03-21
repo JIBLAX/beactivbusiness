@@ -250,7 +250,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) supabase.from("app_settings").update({ portage_months: v as any }).eq("user_id", user.id).then();
   }, [user]);
 
-  const setVersementsPerso = useCallback((v: Record<string, number | null>) => {
+  const setVersementsPerso = useCallback((v: Record<string, Record<string, number | null>>) => {
     setVersementsPersoState(v);
     if (user) supabase.from("app_settings").update({ versements_perso: v as any }).eq("user_id", user.id).then();
   }, [user]);
