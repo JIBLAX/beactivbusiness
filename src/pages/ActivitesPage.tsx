@@ -200,7 +200,24 @@ export default function ActivitesPage() {
     const label = entrySource === "offre" ? entryOffre : entryExterneLabel;
     if (!label || !entryAmount) return;
     const groupId = "grp" + Date.now();
-    const installmentAmount = Math.round((entryAmount / entryInstallments) * 100) / 100;
+
+    // Calculate discount
+    let finalAmount = entryAmount;
+    let originalAmount: number | undefined;
+    let discountType: "percent" | "euro" | undefined;
+    let discountValue: number | undefined;
+    if (entryDiscountType !== "none" && entryDiscountValue > 0) {
+      originalAmount = entryAmount;
+      discountType = entryDiscountType;
+      discountValue = entryDiscountValue;
+      if (entryDiscountType === "percent") {
+        finalAmount = Math.round(entryAmount * (1 - entryDiscountValue / 100) * 100) / 100;
+      } else {
+        finalAmount = Math.max(0, entryAmount - entryDiscountValue);
+      }
+    }
+
+    const installmentAmount = Math.round((finalAmount / entryInstallments) * 100) / 100;
     const sessionsLabel = entryNbSessions > 0 ? ` (${entryNbSessions} séances)` : "";
     const newEntries: FinanceEntry[] = [];
     for (let i = 0; i < entryInstallments; i++) {
@@ -215,6 +232,7 @@ export default function ActivitesPage() {
         installmentTotal: entryInstallments > 1 ? entryInstallments : undefined,
         sapHours: entrySapHours > 0 ? (entryInstallments > 1 ? Math.round((entrySapHours / entryInstallments) * 10) / 10 : entrySapHours) : undefined,
         cashDeclaration: entryPaymentMode === "especes" ? entryCashDeclaration as any : undefined,
+        discountType, discountValue, originalAmount,
       });
     }
     setFinanceEntries([...financeEntries, ...newEntries]);
