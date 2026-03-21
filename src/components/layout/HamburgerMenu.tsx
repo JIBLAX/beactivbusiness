@@ -20,7 +20,8 @@ const menuItems: { id: AppPage; icon: string; label: string; sub: string }[] = [
 ];
 
 export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
-  const { currentPage, setCurrentPage } = useApp();
+  const { currentPage, setCurrentPage, prospects, financeEntries, expenses, activResetClients, offres, setProspects, setFinanceEntries, setExpenses } = useApp();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navigate = (page: AppPage) => {
     setCurrentPage(page);
@@ -29,6 +30,35 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
 
   const handleLock = async () => {
     await supabase.auth.signOut();
+    onClose();
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel({ prospects, financeEntries, expenses, activResetClients, offres });
+    toast.success("Export Excel téléchargé");
+    onClose();
+  };
+
+  const handleExportCSV = () => {
+    exportToCSV({ prospects, financeEntries, expenses, activResetClients, offres });
+    toast.success("Export CSV téléchargé");
+    onClose();
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const data = await importFromFile(file);
+      let count = 0;
+      if (data.prospects) { setProspects(data.prospects); count++; }
+      if (data.financeEntries) { setFinanceEntries(data.financeEntries); count++; }
+      if (data.expenses) { setExpenses(data.expenses); count++; }
+      toast.success(`Import réussi (${count} table${count > 1 ? "s" : ""} importée${count > 1 ? "s" : ""})`);
+    } catch {
+      toast.error("Erreur lors de l'import");
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
     onClose();
   };
 
