@@ -18,6 +18,8 @@ interface AppState {
   versementsPerso: Record<string, Record<string, number | null>>;
   offres: Offre[];
   urssafMode: "mois" | "trimestre";
+  quarterEdits: Record<string, number>;
+  incrementQuarterEdit: (quarterKey: string) => void;
   loading: boolean;
   setCurrentPage: (p: AppPage) => void;
   setProspects: (p: Prospect[]) => void;
