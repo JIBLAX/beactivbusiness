@@ -15,7 +15,7 @@ interface AppState {
   financeEntries: FinanceEntry[];
   expenses: Expense[];
   portageMonths: Record<string, boolean>;
-  versementsPerso: Record<string, number | null>;
+  versementsPerso: Record<string, Record<string, number | null>>;
   offres: Offre[];
   urssafMode: "mois" | "trimestre";
   loading: boolean;
@@ -25,7 +25,7 @@ interface AppState {
   setFinanceEntries: (e: FinanceEntry[]) => void;
   setExpenses: (e: Expense[]) => void;
   setPortageMonths: (v: Record<string, boolean>) => void;
-  setVersementsPerso: (v: Record<string, number | null>) => void;
+  setVersementsPerso: (v: Record<string, Record<string, number | null>>) => void;
   setOffres: (o: Offre[]) => void;
   setUrssafMode: (m: "mois" | "trimestre") => void;
 }
@@ -146,7 +146,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [financeEntries, setFinanceEntriesState] = useState<FinanceEntry[]>([]);
   const [expenses, setExpensesState] = useState<Expense[]>([]);
   const [portageMonths, setPortageMonthsState] = useState<Record<string, boolean>>({});
-  const [versementsPerso, setVersementsPersoState] = useState<Record<string, number | null>>({});
+  const [versementsPerso, setVersementsPersoState] = useState<Record<string, Record<string, number | null>>>({});
   const [offres, setOffresState] = useState<Offre[]>([]);
   const [urssafMode, setUrssafModeState] = useState<"mois" | "trimestre">("trimestre");
 
@@ -250,7 +250,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) supabase.from("app_settings").update({ portage_months: v as any }).eq("user_id", user.id).then();
   }, [user]);
 
-  const setVersementsPerso = useCallback((v: Record<string, number | null>) => {
+  const setVersementsPerso = useCallback((v: Record<string, Record<string, number | null>>) => {
     setVersementsPersoState(v);
     if (user) supabase.from("app_settings").update({ versements_perso: v as any }).eq("user_id", user.id).then();
   }, [user]);

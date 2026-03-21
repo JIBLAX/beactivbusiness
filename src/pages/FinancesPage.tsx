@@ -97,7 +97,8 @@ export default function FinancesPage() {
   const beneficeNet = totalReel - urssaf - totalDepenses;
   const gestionPerso = calcGestionPerso(beneficeNet);
   const restePerso = beneficeNet - gestionPerso;
-  const versementReel = versementsPerso[selectedMonth] ?? null;
+  const monthVersements = versementsPerso[selectedMonth] ?? {};
+  const totalVerse = Object.values(monthVersements).reduce((s, v) => s + (v ?? 0), 0);
 
   const bureauExpenses = monthExpenses.filter(e => e.category === "LOCAUX & BUREAUX");
   const prorataAmount = bureauExpenses.reduce((s, e) => s + e.amount, 0) * PRORATA_BUREAU;
@@ -204,78 +205,92 @@ export default function FinancesPage() {
       </div>
 
       {/* Gestion Perso */}
-      <div className="card-elevated rounded-2xl mb-4 overflow-hidden">
-        <button onClick={() => setShowGestionDetail(!showGestionDetail)}
-          className="w-full p-4 flex items-center justify-between text-left">
-          <div>
-            <div className="section-label mb-1">Gestion Perso</div>
-            <div className="flex items-center gap-3">
+      {(() => {
+        const cats = [
+          { key: "fondsPro", label: "FONDS PRO", value: fondsPro, color: "hsl(217 70% 60%)", pct: "15%" },
+          { key: "plaisirs", label: "PLAISIRS", value: plaisirs, color: "hsl(38 92% 55%)", pct: "45%", sub: ["Cash", "Voyages", "Cadeaux"] },
+          { key: "epargne", label: "ÉPARGNE", value: epargne, color: "hsl(152 55% 52%)", pct: "15%" },
+          { key: "investPlus", label: "INVEST+", value: investPlus, color: "hsl(348 63% 45%)", pct: "15%" },
+          { key: "fondUrgence", label: "FOND D'URGENCE", value: fondUrgence, color: "hsl(0 62% 50%)", pct: "10%" },
+        ];
+        const updateCatVersement = (catKey: string, val: string) => {
+          if (!editable) return;
+          const updated = { ...monthVersements, [catKey]: val ? Number(val) : null };
+          setVersementsPerso({ ...versementsPerso, [selectedMonth]: updated });
+        };
+        return (
+          <div className="card-elevated rounded-2xl mb-4 overflow-hidden">
+            <button onClick={() => setShowGestionDetail(!showGestionDetail)}
+              className="w-full p-4 flex items-center justify-between text-left">
               <div>
-                <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Prévu</div>
-                <div className="value-lg text-[20px] text-warning">{gestionPerso.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
-              </div>
-              <div className="text-muted-foreground/30 text-lg">→</div>
-              <div>
-                <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Versé</div>
-                <div className={`value-lg text-[20px] ${versementReel != null ? (versementReel >= gestionPerso ? "text-success" : "text-warning") : "text-muted-foreground/40"}`}>
-                  {versementReel != null ? `${versementReel.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€` : "—"}
+                <div className="section-label mb-1">Gestion Perso</div>
+                <div className="flex items-center gap-3">
+                  <div>
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Prévu</div>
+                    <div className="value-lg text-[20px] text-warning">{gestionPerso.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
+                  </div>
+                  <div className="text-muted-foreground/30 text-lg">→</div>
+                  <div>
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Versé</div>
+                    <div className={`value-lg text-[20px] ${totalVerse > 0 ? (totalVerse >= gestionPerso ? "text-success" : "text-warning") : "text-muted-foreground/40"}`}>
+                      {totalVerse > 0 ? `${totalVerse.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€` : "—"}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Reste Perso</div>
-              <div className={`value-lg text-[16px] ${restePerso >= 0 ? "text-success" : "text-destructive"}`}>
-                {restePerso.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
-              </div>
-            </div>
-            <span className={`text-muted-foreground text-xs transition-transform ${showGestionDetail ? "rotate-180" : ""}`}>▾</span>
-          </div>
-        </button>
-
-        {showGestionDetail && (
-          <div className="px-4 pb-4 space-y-2 animate-fade-up" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.05)" }}>
-            {/* Versement réel input */}
-            <div className="pt-3 pb-2">
               <div className="flex items-center gap-3">
-                <input type="number" value={versementReel ?? ""} onChange={e => editable && setVersementsPerso({ ...versementsPerso, [selectedMonth]: e.target.value ? Number(e.target.value) : null })}
-                  placeholder="Montant réellement versé" disabled={!editable} className="flex-1 rounded-xl px-3 py-2.5 text-sm input-field disabled:opacity-40" />
-                {versementReel != null && gestionPerso > 0 && (
-                  <div className={`text-[11px] font-semibold ${versementReel >= gestionPerso ? "text-success" : "text-warning"}`}>
-                    {versementReel >= gestionPerso ? "✓ Objectif" : `${((versementReel / gestionPerso) * 100).toFixed(0)}%`}
+                <div className="text-right">
+                  <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Reste Perso</div>
+                  <div className={`value-lg text-[16px] ${restePerso >= 0 ? "text-success" : "text-destructive"}`}>
+                    {restePerso.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
                   </div>
-                )}
-              </div>
-            </div>
-            {[
-              { label: "FONDS PRO", value: fondsPro, color: "hsl(217 70% 60%)", pct: "15%" },
-              { label: "PLAISIRS", value: plaisirs, color: "hsl(38 92% 55%)", pct: "45%", sub: ["Cash", "Voyages", "Cadeaux"] },
-              { label: "ÉPARGNE", value: epargne, color: "hsl(152 55% 52%)", pct: "15%" },
-              { label: "INVEST+", value: investPlus, color: "hsl(348 63% 45%)", pct: "15%" },
-              { label: "FOND D'URGENCE", value: fondUrgence, color: "hsl(0 62% 50%)", pct: "10%" },
-            ].map(cat => (
-              <div key={cat.label} className="rounded-xl p-3" style={{ background: "hsl(0 0% 100% / 0.02)" }}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ background: cat.color }} />
-                    <span className="text-[12px] font-semibold text-foreground">{cat.label}</span>
-                    <span className="text-[10px] text-muted-foreground">{cat.pct}</span>
-                  </div>
-                  <span className="value-lg text-[13px]" style={{ color: cat.color }}>{cat.value.toFixed(0)}€</span>
                 </div>
-                {cat.sub && (
-                  <div className="flex gap-4 mt-1.5 ml-4">
-                    {cat.sub.map(s => (
-                      <span key={s} className="text-[10px] text-muted-foreground">{s}: {(plaisirs / 3).toFixed(0)}€</span>
-                    ))}
-                  </div>
-                )}
+                <span className={`text-muted-foreground text-xs transition-transform ${showGestionDetail ? "rotate-180" : ""}`}>▾</span>
               </div>
-            ))}
+            </button>
+
+            {showGestionDetail && (
+              <div className="px-4 pb-4 space-y-2 animate-fade-up" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.05)" }}>
+                <div className="pt-3" />
+                {cats.map(cat => {
+                  const verse = monthVersements[cat.key] ?? null;
+                  return (
+                    <div key={cat.key} className="rounded-xl p-3" style={{ background: "hsl(0 0% 100% / 0.02)" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ background: cat.color }} />
+                          <span className="text-[12px] font-semibold text-foreground">{cat.label}</span>
+                          <span className="text-[10px] text-muted-foreground">{cat.pct}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 flex items-center gap-2 rounded-lg px-2.5 py-1.5" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
+                          <span className="text-[9px] text-muted-foreground uppercase w-10 flex-shrink-0">Prévu</span>
+                          <span className="value-lg text-[13px] flex-1" style={{ color: cat.color }}>{cat.value.toFixed(0)}€</span>
+                        </div>
+                        <div className="flex-1 flex items-center gap-2 rounded-lg px-2.5 py-1.5" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
+                          <span className="text-[9px] text-muted-foreground uppercase w-10 flex-shrink-0">Versé</span>
+                          <input type="number" value={verse ?? ""} onChange={e => updateCatVersement(cat.key, e.target.value)}
+                            placeholder="—" disabled={!editable}
+                            className="w-full bg-transparent text-[13px] font-semibold text-foreground outline-none disabled:opacity-40"
+                            style={{ appearance: "textfield" }} />
+                        </div>
+                      </div>
+                      {cat.sub && (
+                        <div className="flex gap-4 mt-2 ml-4">
+                          {cat.sub.map(s => (
+                            <span key={s} className="text-[10px] text-muted-foreground">{s}: {(plaisirs / 3).toFixed(0)}€</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* Prorata Bureau */}
       {prorataAmount > 0 && (
