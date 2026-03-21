@@ -68,7 +68,7 @@ export default function OffresPage() {
         ...o, name: newOffreName, price: editPrice,
         duration: editIsAlaCarte ? undefined : editDuration,
         isAlaCarte: editIsAlaCarte, unitPrice: editUnitPrice, minQuantity: editMinQty,
-        theme: editTheme, tvaEnabled: editTva,
+        theme: editTheme, tvaEnabled: editTva, portageEligible: editPortage,
         priceHistory: priceChanged ? [...o.priceHistory, { price: editPrice, date: today }] : o.priceHistory,
       };
     }));
