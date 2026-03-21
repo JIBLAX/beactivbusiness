@@ -59,7 +59,7 @@ export default function ActivitesPage() {
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState<Partial<FinanceEntry>>({});
   const [editExpense, setEditExpense] = useState<Partial<Expense>>({});
-  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100 });
+  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100, portagePct: null });
 
   // Quick cours
   const [quickCoursData, setQuickCoursData] = useState<Record<string, number>>({});
@@ -244,10 +244,11 @@ export default function ActivitesPage() {
       label: newExpense.label || "", amount: Number(newExpense.amount) || 0,
       date: new Date().toISOString().split("T")[0],
       proPct: newExpense.proPct ?? 100,
+      portagePct: newExpense.portagePct ?? null,
     };
     setExpenses([...expenses, exp]);
     setShowAddExpense(false);
-    setNewExpense({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100 });
+    setNewExpense({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100, portagePct: null });
   };
 
   const startEditEntry = (e: FinanceEntry) => { setEditingEntryId(e.id); setEditEntry({ ...e }); };
@@ -477,13 +478,26 @@ export default function ActivitesPage() {
         ) : null;
       })()}
 
-      {/* Total charges pro */}
+      {/* Total charges pro + portage */}
       {monthExpenses.length > 0 && (
-        <div className="flex justify-between items-center mb-4 px-1">
-          <span className="text-[11px] text-muted-foreground">Total charges pro</span>
-          <span className="text-[13px] font-bold text-destructive">
-            -{monthExpenses.reduce((s, e) => s + (e.amount * (e.proPct ?? 100) / 100), 0).toFixed(0)}€
-          </span>
+        <div className="space-y-1 mb-4 px-1">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] text-muted-foreground">Total charges pro</span>
+            <span className="text-[13px] font-bold text-destructive">
+              -{monthExpenses.reduce((s, e) => s + (e.amount * (e.proPct ?? 100) / 100), 0).toFixed(0)}€
+            </span>
+          </div>
+          {monthExpenses.some(e => e.portagePct != null && e.portagePct > 0) && (
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] text-muted-foreground">↳ dont imputé portage</span>
+              <span className="text-[12px] font-semibold" style={{ color: "hsl(262 80% 65%)" }}>
+                -{monthExpenses.reduce((s, e) => {
+                  const proAmt = e.amount * (e.proPct ?? 100) / 100;
+                  return s + proAmt * (e.portagePct ?? 0) / 100;
+                }, 0).toFixed(0)}€
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -513,6 +527,15 @@ export default function ActivitesPage() {
                         <span className="text-[11px] font-semibold text-foreground w-10 text-right">{editExpense.proPct ?? 100}%</span>
                       </div>
                     </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block">% Portage <span className="text-muted-foreground">(optionnel)</span></label>
+                      <div className="flex items-center gap-2">
+                        <input type="range" min={0} max={100} step={5} value={editExpense.portagePct ?? 0}
+                          onChange={ev => setEditExpense(p => ({ ...p, portagePct: Number(ev.target.value) || null }))}
+                          className="flex-1" style={{ accentColor: "hsl(262 80% 65%)" }} />
+                        <span className="text-[11px] font-semibold w-10 text-right" style={{ color: "hsl(262 80% 65%)" }}>{editExpense.portagePct ?? 0}%</span>
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <button onClick={saveEditExpense} className="flex-1 py-2 rounded-xl text-xs font-semibold text-white btn-primary">✓</button>
                       <button onClick={() => setEditingExpenseId(null)} className="px-4 py-2 rounded-xl text-xs text-muted-foreground input-field">✕</button>
@@ -522,12 +545,18 @@ export default function ActivitesPage() {
                   <div className="flex items-center gap-3 p-3 rounded-2xl stat-card">
                     <div className="flex-1 min-w-0">
                       <div className="text-[13px] font-medium text-foreground">{e.label}</div>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         <span className="text-[10px] text-muted-foreground">{e.category}</span>
                         {(e.proPct ?? 100) < 100 && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold"
                             style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
                             {e.proPct}% pro
+                          </span>
+                        )}
+                        {e.portagePct != null && e.portagePct > 0 && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold"
+                            style={{ background: "hsl(262 80% 65% / 0.1)", color: "hsl(262 80% 65%)" }}>
+                            {e.portagePct}% portage
                           </span>
                         )}
                       </div>
@@ -814,6 +843,26 @@ export default function ActivitesPage() {
                   <span className="text-sm font-semibold text-foreground w-12 text-right">{newExpense.proPct ?? 100}%</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-1">Part déductible en charges pro</p>
+              </div>
+              <div>
+                <label className="section-label mb-2 block">% Portage <span className="text-muted-foreground text-[10px]">(optionnel)</span></label>
+                <div className="flex items-center gap-3">
+                  <input type="range" min={0} max={100} step={5} value={newExpense.portagePct ?? 0}
+                    onChange={e => setNewExpense(p => ({ ...p, portagePct: Number(e.target.value) || null }))}
+                    className="flex-1" style={{ accentColor: "hsl(262 80% 65%)" }} />
+                  <span className="text-sm font-semibold w-12 text-right" style={{ color: "hsl(262 80% 65%)" }}>{newExpense.portagePct ?? 0}%</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Part de la charge pro imputée au portage (JUMP)</p>
+                {(newExpense.proPct ?? 100) > 0 && (newExpense.portagePct ?? 0) > 0 && (newExpense.amount ?? 0) > 0 && (
+                  <div className="rounded-xl p-2.5 mt-2 text-center text-[11px]" style={{ background: "hsl(262 80% 65% / 0.08)", border: "1px solid hsl(262 80% 65% / 0.15)" }}>
+                    <span className="text-muted-foreground">Charge pro : </span>
+                    <span className="font-semibold text-foreground">{((newExpense.amount ?? 0) * (newExpense.proPct ?? 100) / 100).toFixed(0)}€</span>
+                    <span className="text-muted-foreground"> → portage : </span>
+                    <span className="font-bold" style={{ color: "hsl(262 80% 65%)" }}>
+                      {((newExpense.amount ?? 0) * (newExpense.proPct ?? 100) / 100 * (newExpense.portagePct ?? 0) / 100).toFixed(0)}€
+                    </span>
+                  </div>
+                )}
               </div>
               <button onClick={addExpense} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Ajouter la dépense

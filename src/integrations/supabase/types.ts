@@ -111,6 +111,7 @@ export type Database = {
           id: string
           label: string
           month: string
+          portage_pct: number | null
           pro_pct: number
           updated_at: string
           user_id: string
@@ -124,6 +125,7 @@ export type Database = {
           id: string
           label: string
           month: string
+          portage_pct?: number | null
           pro_pct?: number
           updated_at?: string
           user_id: string
@@ -137,6 +139,7 @@ export type Database = {
           id?: string
           label?: string
           month?: string
+          portage_pct?: number | null
           pro_pct?: number
           updated_at?: string
           user_id?: string
