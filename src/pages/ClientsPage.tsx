@@ -16,33 +16,31 @@ function getOffreType(offreName: string, offres: any[]): "programme" | "seance" 
   return "seance";
 }
 
-function getClientSessionCount(entries: any[], offreName: string, offres: any[]): { label: string; count: number } {
+function getClientMetrics(entries: any[], offreName: string, offres: any[]): { programmesLabel: string; programmesCount: number; seancesLabel: string; seancesCount: number } {
   const found = offres.find((o: any) => o.name === offreName);
-  if (!found) return { label: `${entries.length} entrées`, count: entries.length };
-  
+  if (!found) return { programmesLabel: "-", programmesCount: 0, seancesLabel: "-", seancesCount: 0 };
+
   if (found.theme === "PROGRAMMES") {
-    return { label: "1 programme", count: 1 };
+    // Programmes: count units, no séances
+    const count = entries.length > 0 ? entries.length : 1;
+    return { programmesLabel: `${count} unité${count > 1 ? "s" : ""}`, programmesCount: count, seancesLabel: "-", seancesCount: 0 };
   }
-  
-  // For JM COACHING with min_quantity (JM PASS types) — count sessions
+
+  // JM COACHING / COURS COLLECTIFS: count séances, no programmes
   if (found.minQuantity || found.unitPrice) {
-    // Each entry might represent multiple sessions based on amount / unitPrice
     const unitPrice = found.unitPrice || found.price;
     const totalSessions = entries.reduce((sum: number, e: any) => {
-      if (unitPrice > 0) {
-        return sum + Math.round(e.amount / unitPrice);
-      }
+      if (unitPrice > 0) return sum + Math.round(e.amount / unitPrice);
       return sum + 1;
     }, 0);
-    return { label: `${totalSessions} séance${totalSessions > 1 ? "s" : ""}`, count: totalSessions };
+    return { programmesLabel: "-", programmesCount: 0, seancesLabel: `${totalSessions} séance${totalSessions > 1 ? "s" : ""}`, seancesCount: totalSessions };
   }
-  
-  // For à la carte or one shot
+
   if (found.isAlaCarte) {
-    return { label: `${entries.length} séance${entries.length > 1 ? "s" : ""}`, count: entries.length };
+    return { programmesLabel: "-", programmesCount: 0, seancesLabel: `${entries.length} séance${entries.length > 1 ? "s" : ""}`, seancesCount: entries.length };
   }
-  
-  return { label: `${entries.length} séance${entries.length > 1 ? "s" : ""}`, count: entries.length };
+
+  return { programmesLabel: "-", programmesCount: 0, seancesLabel: `${entries.length} séance${entries.length > 1 ? "s" : ""}`, seancesCount: entries.length };
 }
 
 export default function ClientsPage() {
