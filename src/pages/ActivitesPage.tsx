@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import ClientAutocomplete from "@/components/ui/ClientAutocomplete";
 import { FinanceEntry, Expense, ExpenseCategory, EXPENSE_CATEGORIES, PAYMENT_MODES, CASH_DECLARATIONS, OffreTheme, OFFRE_THEMES } from "@/data/types";
+import { getMonthEditState, getSealedLabel, getQuarterForMonth } from "@/lib/quarterLock";
 import logoBeActiv from "@/assets/logo-beactiv.png";
 import logoCardioMouv from "@/assets/logo-cardiomouv.png";
 import logoJM from "@/assets/logo-jm.png";
@@ -24,13 +25,6 @@ function addMonthsOffset(month: string, offset: number): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function isEditable(month: string): boolean {
-  const [y, m] = month.split("-").map(Number);
-  const endOfMonth = new Date(y, m, 0);
-  const lockDate = new Date(endOfMonth);
-  lockDate.setDate(lockDate.getDate() + 30);
-  return new Date() <= lockDate;
-}
 
 function getAllMonths(): string[] {
   const start = new Date(2025, 8, 1);
@@ -52,7 +46,7 @@ const THEME_LOGOS: Record<string, string> = {
 };
 
 export default function ActivitesPage() {
-  const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths } = useApp();
+  const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths, quarterEdits, incrementQuarterEdit } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [activeTab, setActiveTab] = useState<"entrees" | "depenses">("entrees");
   const [showFabMenu, setShowFabMenu] = useState(false);
@@ -93,7 +87,9 @@ export default function ActivitesPage() {
   const [entryDiscountValue, setEntryDiscountValue] = useState(0);
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
-  const editable = isEditable(selectedMonth);
+  const editState = getMonthEditState(selectedMonth, quarterEdits);
+  const editable = editState.editable;
+  const sealedLabel = getSealedLabel(editState);
   const allMonths = useMemo(() => getAllMonths(), []);
   const activeOffres = offres.filter(o => o.active);
 
@@ -254,21 +250,30 @@ export default function ActivitesPage() {
   };
 
   const startEditEntry = (e: FinanceEntry) => { setEditingEntryId(e.id); setEditEntry({ ...e }); };
+  const trackSealedEdit = () => {
+    if (editState.sealed) {
+      const { key } = getQuarterForMonth(selectedMonth);
+      incrementQuarterEdit(key);
+    }
+  };
   const saveEditEntry = () => {
     if (!editingEntryId || !editEntry.label || !editEntry.amount) return;
     setFinanceEntries(financeEntries.map(e => e.id === editingEntryId ? { ...e, ...editEntry, amount: Number(editEntry.amount) } as FinanceEntry : e));
     setEditingEntryId(null);
+    trackSealedEdit();
   };
   const startEditExpense = (e: Expense) => { setEditingExpenseId(e.id); setEditExpense({ ...e }); };
   const saveEditExpense = () => {
     if (!editingExpenseId || !editExpense.label || !editExpense.amount) return;
     setExpenses(expenses.map(e => e.id === editingExpenseId ? { ...e, ...editExpense, amount: Number(editExpense.amount) } as Expense : e));
     setEditingExpenseId(null);
+    trackSealedEdit();
   };
-  const deleteEntry = (id: string) => setFinanceEntries(financeEntries.filter(e => e.id !== id));
-  const deleteExpense = (id: string) => setExpenses(expenses.filter(e => e.id !== id));
+  const deleteEntry = (id: string) => { setFinanceEntries(financeEntries.filter(e => e.id !== id)); trackSealedEdit(); };
+  const deleteExpense = (id: string) => { setExpenses(expenses.filter(e => e.id !== id)); trackSealedEdit(); };
   const updateCashDeclaration = (id: string, decl: string) => {
     setFinanceEntries(financeEntries.map(e => e.id === id ? { ...e, cashDeclaration: decl as any } : e));
+    trackSealedEdit();
   };
   const paymentModeLabel = (mode?: string) => PAYMENT_MODES.find(p => p.value === mode)?.label || "";
 
@@ -280,8 +285,11 @@ export default function ActivitesPage() {
           className="flex-1 rounded-2xl px-4 py-3 text-sm font-medium input-field appearance-none">
           {allMonths.map(m => <option key={m} value={m}>{formatMonth(m)}</option>)}
         </select>
-        {!editable && (
-          <div className="badge-pill" style={{ background: "hsl(0 62% 50% / 0.1)", color: "hsl(0 62% 60%)" }}>🔒 Scellé</div>
+        {editState.sealed && (
+          <div className="badge-pill" style={{ 
+            background: editState.editsRemaining > 0 ? "hsl(38 92% 55% / 0.1)" : "hsl(0 62% 50% / 0.1)", 
+            color: editState.editsRemaining > 0 ? "hsl(38 92% 55%)" : "hsl(0 62% 60%)" 
+          }}>{sealedLabel}</div>
         )}
       </div>
 

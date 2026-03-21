@@ -18,6 +18,8 @@ interface AppState {
   versementsPerso: Record<string, Record<string, number | null>>;
   offres: Offre[];
   urssafMode: "mois" | "trimestre";
+  quarterEdits: Record<string, number>;
+  incrementQuarterEdit: (quarterKey: string) => void;
   loading: boolean;
   setCurrentPage: (p: AppPage) => void;
   setProspects: (p: Prospect[]) => void;
@@ -28,6 +30,7 @@ interface AppState {
   setVersementsPerso: (v: Record<string, Record<string, number | null>>) => void;
   setOffres: (o: Offre[]) => void;
   setUrssafMode: (m: "mois" | "trimestre") => void;
+  setQuarterEdits: (q: Record<string, number>) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -154,6 +157,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [versementsPerso, setVersementsPersoState] = useState<Record<string, Record<string, number | null>>>({});
   const [offres, setOffresState] = useState<Offre[]>([]);
   const [urssafMode, setUrssafModeState] = useState<"mois" | "trimestre">("trimestre");
+  const [quarterEdits, setQuarterEditsState] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -218,6 +222,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setPortageMonthsState((sRes.data.portage_months as any) ?? {});
         setVersementsPersoState((sRes.data.versements_perso as any) ?? {});
         setUrssafModeState(((sRes.data as any).urssaf_mode as any) ?? "trimestre");
+        setQuarterEditsState(((sRes.data as any).quarter_edits as any) ?? {});
       } else {
         await supabase.from("app_settings").insert({ user_id: userId, portage_enabled: false, versements_perso: {}, portage_months: {}, urssaf_mode: "trimestre" } as any);
       }
@@ -270,12 +275,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) supabase.from("app_settings").update({ urssaf_mode: m } as any).eq("user_id", user.id).then();
   }, [user]);
 
+  const setQuarterEdits = useCallback((q: Record<string, number>) => {
+    setQuarterEditsState(q);
+    if (user) supabase.from("app_settings").update({ quarter_edits: q } as any).eq("user_id", user.id).then();
+  }, [user]);
+
+  const incrementQuarterEdit = useCallback((quarterKey: string) => {
+    setQuarterEditsState(prev => {
+      const updated = { ...prev, [quarterKey]: (prev[quarterKey] ?? 0) + 1 };
+      if (user) supabase.from("app_settings").update({ quarter_edits: updated } as any).eq("user_id", user.id).then();
+      return updated;
+    });
+  }, [user]);
+
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, currentPage, prospects, activResetClients,
-      financeEntries, expenses, portageMonths, versementsPerso, offres, urssafMode, loading,
+      financeEntries, expenses, portageMonths, versementsPerso, offres, urssafMode, quarterEdits, loading,
       setCurrentPage, setProspects, setActivResetClients, setFinanceEntries,
-      setExpenses, setPortageMonths, setVersementsPerso, setOffres, setUrssafMode,
+      setExpenses, setPortageMonths, setVersementsPerso, setOffres, setUrssafMode, setQuarterEdits, incrementQuarterEdit,
     }}>
       {children}
     </AppContext.Provider>

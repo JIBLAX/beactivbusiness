@@ -1,0 +1,1 @@
+ALTER TABLE public.app_settings ADD COLUMN quarter_edits jsonb DEFAULT '{}'::jsonb;

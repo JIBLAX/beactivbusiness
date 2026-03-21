@@ -3,6 +3,7 @@ import { useApp } from "@/store/AppContext";
 import { OFFRE_THEMES } from "@/data/types";
 import { generateBilanPDF } from "@/lib/pdfExport";
 import { getFiscalReminders, getDaysUntil, getStatusColor, getStatusLabel } from "@/lib/fiscalDates";
+import { getMonthEditState, getSealedLabel } from "@/lib/quarterLock";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -40,13 +41,6 @@ function getAllMonths(): string[] {
   return months;
 }
 
-function isEditable(month: string): boolean {
-  const [y, m] = month.split("-").map(Number);
-  const endOfMonth = new Date(y, m, 0);
-  const lockDate = new Date(endOfMonth);
-  lockDate.setDate(lockDate.getDate() + 30);
-  return new Date() <= lockDate;
-}
 
 function getQuarterMonths(year: number, quarter: number): string[] {
   const startMonth = (quarter - 1) * 3 + 1;
@@ -56,7 +50,7 @@ function getQuarterMonths(year: number, quarter: number): string[] {
 const PRORATA_BUREAU = 13 / 43;
 
 export default function FinancesPage() {
-  const { financeEntries, expenses, portageMonths, setPortageMonths, versementsPerso, setVersementsPerso, offres, prospects, urssafMode } = useApp();
+  const { financeEntries, expenses, portageMonths, setPortageMonths, versementsPerso, setVersementsPerso, offres, prospects, urssafMode, quarterEdits } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [showSapTable, setShowSapTable] = useState(false);
   const [showGestionDetail, setShowGestionDetail] = useState(false);
@@ -68,7 +62,9 @@ export default function FinancesPage() {
   const [sapQuarter, setSapQuarter] = useState(Math.ceil((new Date().getMonth() + 1) / 3));
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
-  const editable = isEditable(selectedMonth);
+  const editState = getMonthEditState(selectedMonth, quarterEdits);
+  const editable = editState.editable;
+  const sealedLabel = getSealedLabel(editState);
   const allMonths = useMemo(() => getAllMonths(), []);
 
   const sapClientNames = useMemo(() => new Set(prospects.filter(p => p.sapEnabled).map(p => p.name)), [prospects]);
@@ -164,8 +160,11 @@ export default function FinancesPage() {
           className="flex-1 rounded-2xl px-4 py-3 text-sm font-medium input-field appearance-none">
           {allMonths.map(m => <option key={m} value={m}>{formatMonth(m)}</option>)}
         </select>
-        {!editable && (
-          <div className="badge-pill" style={{ background: "hsl(0 62% 50% / 0.1)", color: "hsl(0 62% 60%)" }}>🔒 Scellé</div>
+        {editState.sealed && (
+          <div className="badge-pill" style={{ 
+            background: editState.editsRemaining > 0 ? "hsl(38 92% 55% / 0.1)" : "hsl(0 62% 50% / 0.1)", 
+            color: editState.editsRemaining > 0 ? "hsl(38 92% 55%)" : "hsl(0 62% 60%)" 
+          }}>{sealedLabel}</div>
         )}
       </div>
 
