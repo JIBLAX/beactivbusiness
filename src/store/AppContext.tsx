@@ -275,6 +275,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) supabase.from("app_settings").update({ urssaf_mode: m } as any).eq("user_id", user.id).then();
   }, [user]);
 
+  const setQuarterEdits = useCallback((q: Record<string, number>) => {
+    setQuarterEditsState(q);
+    if (user) supabase.from("app_settings").update({ quarter_edits: q } as any).eq("user_id", user.id).then();
+  }, [user]);
+
+  const incrementQuarterEdit = useCallback((quarterKey: string) => {
+    setQuarterEditsState(prev => {
+      const updated = { ...prev, [quarterKey]: (prev[quarterKey] ?? 0) + 1 };
+      if (user) supabase.from("app_settings").update({ quarter_edits: updated } as any).eq("user_id", user.id).then();
+      return updated;
+    });
+  }, [user]);
+
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, currentPage, prospects, activResetClients,
