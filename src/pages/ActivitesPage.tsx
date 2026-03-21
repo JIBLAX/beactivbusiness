@@ -376,6 +376,11 @@ export default function ActivitesPage() {
                         <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
                           {e.clientName && <span>{e.clientName}</span>}
                           {e.paymentMode && <span className="badge-pill text-[8px] py-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>{paymentModeLabel(e.paymentMode)}</span>}
+                          {e.discountValue && e.discountType && (
+                            <span className="badge-pill text-[8px] py-0" style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
+                              -{e.discountValue}{e.discountType === "percent" ? "%" : "€"}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
