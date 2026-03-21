@@ -100,9 +100,9 @@ export const CASH_DECLARATIONS = [
   { value: "non_declare", label: "Non déclaré" },
 ] as const;
 
-export type ExpenseTheme = "COURS COLLECTIFS" | "JM COACHING" | "PROGRAMMES" | "TOUS";
+export type ExpenseTheme = "COURS & COACHING" | "PROGRAMMES" | "TOUS";
 
-export const EXPENSE_THEMES: ExpenseTheme[] = ["TOUS", "COURS COLLECTIFS", "JM COACHING", "PROGRAMMES"];
+export const EXPENSE_THEMES: ExpenseTheme[] = ["TOUS", "COURS & COACHING", "PROGRAMMES"];
 
 export interface Expense {
   id: string;
