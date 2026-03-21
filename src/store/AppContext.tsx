@@ -145,6 +145,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [portageMonths, setPortageMonthsState] = useState<Record<string, boolean>>({});
   const [versementsPerso, setVersementsPersoState] = useState<Record<string, number | null>>({});
   const [offres, setOffresState] = useState<Offre[]>([]);
+  const [urssafMode, setUrssafModeState] = useState<"mois" | "trimestre">("trimestre");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
