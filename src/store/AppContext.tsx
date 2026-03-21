@@ -146,7 +146,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [financeEntries, setFinanceEntriesState] = useState<FinanceEntry[]>([]);
   const [expenses, setExpensesState] = useState<Expense[]>([]);
   const [portageMonths, setPortageMonthsState] = useState<Record<string, boolean>>({});
-  const [versementsPerso, setVersementsPersoState] = useState<Record<string, number | null>>({});
+  const [versementsPerso, setVersementsPersoState] = useState<Record<string, Record<string, number | null>>>({});
   const [offres, setOffresState] = useState<Offre[]>([]);
   const [urssafMode, setUrssafModeState] = useState<"mois" | "trimestre">("trimestre");
 
