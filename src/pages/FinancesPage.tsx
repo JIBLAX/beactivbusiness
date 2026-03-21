@@ -352,9 +352,10 @@ export default function FinancesPage() {
             style={{ background: "hsl(348 63% 30% / 0.15)" }}>💰</div>
         </div>
 
-        <div className={`grid gap-2 ${portageEnabled ? "grid-cols-3" : "grid-cols-2"}`}>
+        <div className={`grid gap-2 ${portageEnabled ? "grid-cols-2" : especesNonDeclarees > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
           {[
             { label: "CA Micro", sub: "Déclaré URSSAF", value: declaredMicro, color: "hsl(152 55% 52%)" },
+            ...(especesNonDeclarees > 0 ? [{ label: "Espèces", sub: "Non déclarées", value: especesNonDeclarees, color: "hsl(38 92% 55%)" }] : []),
             ...(portageEnabled ? [{ label: "Portage JUMP", sub: "Charges gérées par JUMP", value: declaredPortage, color: "hsl(217 70% 60%)" }] : []),
             { label: "URSSAF dû", sub: "26.1% du CA Micro", value: -urssaf, color: "hsl(0 62% 50%)" },
           ].map(k => (
