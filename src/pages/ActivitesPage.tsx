@@ -632,6 +632,38 @@ export default function ActivitesPage() {
                   className="w-full rounded-xl px-3 py-3 text-sm input-field" />
               </div>
 
+              {/* Réduction */}
+              <div>
+                <label className="section-label mb-2 block">Réduction</label>
+                <div className="flex gap-2 mb-2">
+                  {([["none", "Aucune"], ["percent", "En %"], ["euro", "En €"]] as const).map(([val, lbl]) => (
+                    <button key={val} onClick={() => { setEntryDiscountType(val as any); if (val === "none") setEntryDiscountValue(0); }}
+                      className={`flex-1 py-2.5 rounded-xl text-[12px] font-semibold transition-all ${entryDiscountType === val ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+                {entryDiscountType !== "none" && (
+                  <div className="space-y-2">
+                    <input type="number" value={entryDiscountValue || ""} onChange={e => setEntryDiscountValue(Number(e.target.value))}
+                      placeholder={entryDiscountType === "percent" ? "Ex: 10" : "Ex: 50"}
+                      className="w-full rounded-xl px-3 py-3 text-sm input-field" />
+                    {entryDiscountValue > 0 && entryAmount > 0 && (
+                      <div className="rounded-xl p-3 text-center text-[12px]" style={{ background: "hsl(38 92% 55% / 0.08)", border: "1px solid hsl(38 92% 55% / 0.15)" }}>
+                        <span className="text-muted-foreground line-through mr-2">{entryAmount}€</span>
+                        <span className="text-warning font-bold">
+                          → {entryDiscountType === "percent"
+                            ? (Math.round(entryAmount * (1 - entryDiscountValue / 100) * 100) / 100).toFixed(2)
+                            : Math.max(0, entryAmount - entryDiscountValue).toFixed(2)
+                          }€
+                        </span>
+                        <span className="text-muted-foreground ml-1">(-{entryDiscountValue}{entryDiscountType === "percent" ? "%" : "€"})</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="section-label mb-2 block">Heures SAP</label>
                 <input type="number" value={entrySapHours || ""} onChange={e => setEntrySapHours(Number(e.target.value))} placeholder="0"
