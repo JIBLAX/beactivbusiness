@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import { OFFRE_THEMES } from "@/data/types";
+import { generateBilanPDF } from "@/lib/pdfExport";
+import { getFiscalReminders, getDaysUntil, getStatusColor, getStatusLabel } from "@/lib/fiscalDates";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -54,10 +56,12 @@ function getQuarterMonths(year: number, quarter: number): string[] {
 const PRORATA_BUREAU = 13 / 43;
 
 export default function FinancesPage() {
-  const { financeEntries, expenses, portageMonths, setPortageMonths, versementsPerso, setVersementsPerso, offres, prospects } = useApp();
+  const { financeEntries, expenses, portageMonths, setPortageMonths, versementsPerso, setVersementsPerso, offres, prospects, urssafMode } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [showSapTable, setShowSapTable] = useState(false);
   const [showGestionDetail, setShowGestionDetail] = useState(false);
+  const [showTva, setShowTva] = useState(false);
+  const [showReminders, setShowReminders] = useState(false);
 
   const currentYear = new Date().getFullYear();
   const [sapYear, setSapYear] = useState(currentYear);
@@ -117,6 +121,40 @@ export default function FinancesPage() {
   const epargne = gestionPerso * 0.15;
   const investPlus = gestionPerso * 0.15;
   const fondUrgence = beneficeNet > 0 ? gestionPerso * 0.10 : 0;
+
+  // TVA tracking
+  const tvaEntries = useMemo(() => monthEntries.filter(e => {
+    const offre = offres.find(o => o.name === e.offre);
+    return offre?.tvaEnabled;
+  }), [monthEntries, offres]);
+  const tvaCA = tvaEntries.reduce((s, e) => s + e.amount, 0);
+  const tvaCollectee = tvaCA * 0.20;
+
+  // Fiscal reminders
+  const reminders = useMemo(() => getFiscalReminders(currentYear, urssafMode), [currentYear, urssafMode]);
+  const upcomingReminders = reminders.filter(r => getDaysUntil(r.date) >= 0).slice(0, 5);
+  const nextReminder = upcomingReminders[0];
+
+  // PDF export handler
+  const handleExportPDF = () => {
+    generateBilanPDF({
+      month: selectedMonth,
+      totalReel,
+      declaredMicro,
+      declaredPortage,
+      especesNonDeclarees,
+      urssaf,
+      totalDepenses,
+      beneficeNet,
+      gestionPerso,
+      restePerso,
+      entries: monthEntries,
+      expenses: monthExpenses,
+      portageEnabled: portageEnabled,
+      tvaAmount: tvaCollectee,
+      versements: monthVersements,
+    });
+  };
 
   return (
     <div className="px-4 pt-4 pb-24">
@@ -356,6 +394,130 @@ export default function FinancesPage() {
           </div>
         )}
       </div>
+
+      {/* TVA Tracking */}
+      <div className="card-elevated rounded-2xl mb-4 overflow-hidden">
+        <button onClick={() => setShowTva(!showTva)}
+          className="w-full p-4 flex items-center justify-between text-left">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: "hsl(38 92% 55% / 0.1)" }}>🧾</div>
+            <div>
+              <div className="text-[13px] font-semibold text-foreground">Suivi TVA</div>
+              <div className="text-[10px] text-muted-foreground">
+                {tvaCollectee > 0 ? `${tvaCollectee.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€ collectée ce mois` : "Aucune TVA ce mois"}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {tvaCollectee > 0 && (
+              <span className="text-[13px] font-semibold" style={{ color: "hsl(38 92% 55%)" }}>
+                {tvaCollectee.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
+              </span>
+            )}
+            <span className={`text-muted-foreground text-xs transition-transform ${showTva ? "rotate-180" : ""}`}>▾</span>
+          </div>
+        </button>
+
+        {showTva && (
+          <div className="px-4 pb-4 animate-fade-up" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.05)" }}>
+            {tvaEntries.length > 0 ? (
+              <>
+                <div className="pt-3 space-y-2">
+                  {tvaEntries.map(e => (
+                    <div key={e.id} className="flex items-center justify-between rounded-xl p-2.5" style={{ background: "hsl(0 0% 100% / 0.02)" }}>
+                      <div>
+                        <div className="text-[12px] font-medium text-foreground">{e.clientName || e.label}</div>
+                        <div className="text-[10px] text-muted-foreground">{e.offre}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[12px] font-semibold text-foreground">{e.amount.toLocaleString("fr-FR")}€ HT</div>
+                        <div className="text-[10px] font-medium" style={{ color: "hsl(38 92% 55%)" }}>+{(e.amount * 0.20).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€ TVA</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 rounded-xl p-3 flex items-center justify-between" style={{ background: "hsl(38 92% 55% / 0.08)", border: "1px solid hsl(38 92% 55% / 0.15)" }}>
+                  <span className="text-[11px] font-semibold text-foreground">TVA à reverser</span>
+                  <span className="text-[15px] font-bold" style={{ color: "hsl(38 92% 55%)" }}>{tvaCollectee.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</span>
+                </div>
+              </>
+            ) : (
+              <div className="pt-3 text-center text-[12px] text-muted-foreground py-6">
+                Aucune entrée avec TVA activée ce mois
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Fiscal Reminders */}
+      <div className="card-elevated rounded-2xl mb-4 overflow-hidden">
+        <button onClick={() => setShowReminders(!showReminders)}
+          className="w-full p-4 flex items-center justify-between text-left">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: "hsl(152 55% 52% / 0.1)" }}>📅</div>
+            <div>
+              <div className="text-[13px] font-semibold text-foreground">Échéances Fiscales</div>
+              <div className="text-[10px] text-muted-foreground">
+                {nextReminder ? `Prochain : ${nextReminder.label}` : "Aucune échéance à venir"}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {nextReminder && (
+              <span className="text-[11px] font-semibold" style={{ color: getStatusColor(getDaysUntil(nextReminder.date)) }}>
+                {getStatusLabel(getDaysUntil(nextReminder.date))}
+              </span>
+            )}
+            <span className={`text-muted-foreground text-xs transition-transform ${showReminders ? "rotate-180" : ""}`}>▾</span>
+          </div>
+        </button>
+
+        {showReminders && (
+          <div className="px-4 pb-4 animate-fade-up space-y-2" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.05)" }}>
+            <div className="pt-3" />
+            {upcomingReminders.map(r => {
+              const days = getDaysUntil(r.date);
+              const color = getStatusColor(days);
+              return (
+                <a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-xl p-3 transition-all hover:scale-[1.01]"
+                  style={{ background: "hsl(0 0% 100% / 0.02)", border: "1px solid hsl(0 0% 100% / 0.04)" }}>
+                  <div className="text-xl">{r.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[12px] font-semibold text-foreground">{r.label}</div>
+                    <div className="text-[10px] text-muted-foreground">{r.description}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      {new Date(r.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-[11px] font-bold" style={{ color }}>{getStatusLabel(days)}</span>
+                    <span className="text-[9px] text-muted-foreground/60">↗ Accéder</span>
+                  </div>
+                </a>
+              );
+            })}
+            {reminders.filter(r => getDaysUntil(r.date) < 0).length > 0 && (
+              <div className="text-[10px] text-muted-foreground text-center pt-2">
+                {reminders.filter(r => getDaysUntil(r.date) < 0).length} échéance(s) passée(s) masquée(s)
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Export PDF */}
+      <button onClick={handleExportPDF}
+        className="w-full rounded-2xl p-4 flex items-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.99] mb-6"
+        style={{ background: "linear-gradient(135deg, hsl(348 63% 30%), hsl(348 63% 22%))", border: "1px solid hsl(348 63% 40% / 0.3)" }}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: "hsl(0 0% 100% / 0.1)" }}>📄</div>
+        <div className="flex-1 text-left">
+          <div className="text-[13px] font-semibold text-white">Exporter Bilan PDF</div>
+          <div className="text-[10px] text-white/60">{formatMonth(selectedMonth)} — Télécharger le récap</div>
+        </div>
+        <span className="text-white/40 text-sm">↓</span>
+      </button>
     </div>
   );
 }
