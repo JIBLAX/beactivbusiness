@@ -478,13 +478,26 @@ export default function ActivitesPage() {
         ) : null;
       })()}
 
-      {/* Total charges pro */}
+      {/* Total charges pro + portage */}
       {monthExpenses.length > 0 && (
-        <div className="flex justify-between items-center mb-4 px-1">
-          <span className="text-[11px] text-muted-foreground">Total charges pro</span>
-          <span className="text-[13px] font-bold text-destructive">
-            -{monthExpenses.reduce((s, e) => s + (e.amount * (e.proPct ?? 100) / 100), 0).toFixed(0)}€
-          </span>
+        <div className="space-y-1 mb-4 px-1">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] text-muted-foreground">Total charges pro</span>
+            <span className="text-[13px] font-bold text-destructive">
+              -{monthExpenses.reduce((s, e) => s + (e.amount * (e.proPct ?? 100) / 100), 0).toFixed(0)}€
+            </span>
+          </div>
+          {monthExpenses.some(e => e.portagePct != null && e.portagePct > 0) && (
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] text-muted-foreground">↳ dont imputé portage</span>
+              <span className="text-[12px] font-semibold" style={{ color: "hsl(262 80% 65%)" }}>
+                -{monthExpenses.reduce((s, e) => {
+                  const proAmt = e.amount * (e.proPct ?? 100) / 100;
+                  return s + proAmt * (e.portagePct ?? 0) / 100;
+                }, 0).toFixed(0)}€
+              </span>
+            </div>
+          )}
         </div>
       )}
 
