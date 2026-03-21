@@ -67,6 +67,7 @@ export type Database = {
           created_at: string
           id: string
           portage_enabled: boolean | null
+          portage_months: Json | null
           updated_at: string
           user_id: string
           versements_perso: Json | null
@@ -75,6 +76,7 @@ export type Database = {
           created_at?: string
           id?: string
           portage_enabled?: boolean | null
+          portage_months?: Json | null
           updated_at?: string
           user_id: string
           versements_perso?: Json | null
@@ -83,6 +85,7 @@ export type Database = {
           created_at?: string
           id?: string
           portage_enabled?: boolean | null
+          portage_months?: Json | null
           updated_at?: string
           user_id?: string
           versements_perso?: Json | null
@@ -194,6 +197,7 @@ export type Database = {
           price: number
           price_history: Json
           theme: string | null
+          tva_enabled: boolean | null
           unit_price: number | null
           updated_at: string
           user_id: string
@@ -209,6 +213,7 @@ export type Database = {
           price?: number
           price_history?: Json
           theme?: string | null
+          tva_enabled?: boolean | null
           unit_price?: number | null
           updated_at?: string
           user_id: string
@@ -224,6 +229,7 @@ export type Database = {
           price?: number
           price_history?: Json
           theme?: string | null
+          tva_enabled?: boolean | null
           unit_price?: number | null
           updated_at?: string
           user_id?: string
