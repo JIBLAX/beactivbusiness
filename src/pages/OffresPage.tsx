@@ -170,6 +170,17 @@ export default function OffresPage() {
             <span className="text-[12px] text-muted-foreground">Éligible Portage JUMP</span>
             <ToggleSwitch checked={editPortage} onChange={() => setEditPortage(!editPortage)} />
           </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] text-muted-foreground">Paiement en plusieurs fois</span>
+            <ToggleSwitch checked={!!editMaxInstallments && editMaxInstallments > 1} onChange={() => setEditMaxInstallments(editMaxInstallments && editMaxInstallments > 1 ? undefined : 3)} />
+          </div>
+          {editMaxInstallments && editMaxInstallments > 1 && (
+            <div>
+              <label className="section-label mb-1 block">Nombre de fois max</label>
+              <input type="number" value={editMaxInstallments} onChange={e => setEditMaxInstallments(Number(e.target.value) || undefined)}
+                min={2} max={12} className="w-full rounded-xl px-3 py-2 text-sm input-field" />
+            </div>
+          )}
           <div className="flex gap-2 pt-1">
             <button onClick={saveEdit} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white btn-primary">✓ Sauvegarder</button>
             <button onClick={() => setEditingId(null)} className="px-4 py-2.5 rounded-xl text-sm text-muted-foreground input-field">✕</button>
