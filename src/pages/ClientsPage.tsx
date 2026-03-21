@@ -283,7 +283,46 @@ export default function ClientsPage() {
           <h1 className="font-display text-[22px] font-bold text-foreground">Clients</h1>
           <p className="text-[12px] text-muted-foreground mt-0.5">{clients.length} clients actifs</p>
         </div>
+        <button onClick={() => setShowAddClient(true)}
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-xl font-bold btn-primary">+</button>
       </div>
+
+      {/* Add client modal */}
+      {showAddClient && (
+        <div className="card-elevated rounded-2xl p-4 mb-4 animate-fade-up">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[14px] font-semibold text-foreground">Nouveau client</div>
+            <button onClick={() => setShowAddClient(false)} className="text-muted-foreground text-lg">×</button>
+          </div>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              {(["F", "H"] as const).map(s => (
+                <button key={s} onClick={() => setNewClient(p => ({ ...p, sex: s }))}
+                  className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${newClient.sex === s ? "btn-primary text-white" : "input-field text-muted-foreground"}`}>
+                  {s === "F" ? "♀ Femme" : "♂ Homme"}
+                </button>
+              ))}
+            </div>
+            <input value={newClient.name || ""} onChange={e => setNewClient(p => ({ ...p, name: e.target.value }))}
+              placeholder="Nom complet *" className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
+            <select value={newClient.offre || ""} onChange={e => setNewClient(p => ({ ...p, offre: e.target.value }))}
+              className="w-full rounded-xl px-3 py-2.5 text-sm input-field appearance-none">
+              <option value="">Offre souscrite *</option>
+              {offres.filter(o => o.active).map(o => <option key={o.id} value={o.name}>{o.name}</option>)}
+            </select>
+            <div className="grid grid-cols-2 gap-2">
+              <input value={newClient.contact || ""} onChange={e => setNewClient(p => ({ ...p, contact: e.target.value }))}
+                placeholder="Téléphone" className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
+              <input type="number" value={newClient.age || ""} onChange={e => setNewClient(p => ({ ...p, age: Number(e.target.value) || undefined }))}
+                placeholder="Âge" className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
+            </div>
+            <input value={newClient.objectif || ""} onChange={e => setNewClient(p => ({ ...p, objectif: e.target.value }))}
+              placeholder="Objectif" className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
+            <button onClick={addNewClient}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white btn-primary">✓ Ajouter le client</button>
+          </div>
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-2 mb-5">
