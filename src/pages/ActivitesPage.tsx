@@ -844,6 +844,26 @@ export default function ActivitesPage() {
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-1">Part déductible en charges pro</p>
               </div>
+              <div>
+                <label className="section-label mb-2 block">% Portage <span className="text-muted-foreground text-[10px]">(optionnel)</span></label>
+                <div className="flex items-center gap-3">
+                  <input type="range" min={0} max={100} step={5} value={newExpense.portagePct ?? 0}
+                    onChange={e => setNewExpense(p => ({ ...p, portagePct: Number(e.target.value) || null }))}
+                    className="flex-1" style={{ accentColor: "hsl(262 80% 65%)" }} />
+                  <span className="text-sm font-semibold w-12 text-right" style={{ color: "hsl(262 80% 65%)" }}>{newExpense.portagePct ?? 0}%</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Part de la charge pro imputée au portage (JUMP)</p>
+                {(newExpense.proPct ?? 100) > 0 && (newExpense.portagePct ?? 0) > 0 && (newExpense.amount ?? 0) > 0 && (
+                  <div className="rounded-xl p-2.5 mt-2 text-center text-[11px]" style={{ background: "hsl(262 80% 65% / 0.08)", border: "1px solid hsl(262 80% 65% / 0.15)" }}>
+                    <span className="text-muted-foreground">Charge pro : </span>
+                    <span className="font-semibold text-foreground">{((newExpense.amount ?? 0) * (newExpense.proPct ?? 100) / 100).toFixed(0)}€</span>
+                    <span className="text-muted-foreground"> → portage : </span>
+                    <span className="font-bold" style={{ color: "hsl(262 80% 65%)" }}>
+                      {((newExpense.amount ?? 0) * (newExpense.proPct ?? 100) / 100 * (newExpense.portagePct ?? 0) / 100).toFixed(0)}€
+                    </span>
+                  </div>
+                )}
+              </div>
               <button onClick={addExpense} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Ajouter la dépense
               </button>
