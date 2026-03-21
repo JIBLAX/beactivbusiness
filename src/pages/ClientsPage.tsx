@@ -50,6 +50,8 @@ export default function ClientsPage() {
   const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Prospect>>({});
+  const [showAddClient, setShowAddClient] = useState(false);
+  const [newClient, setNewClient] = useState<Partial<Prospect>>({ sex: "F", closing: "OUI", statut: "CLIENT" });
 
   const clients = useMemo(() => prospects.filter(p => p.closing === "OUI" && p.offre && p.offre !== "-"), [prospects]);
 
