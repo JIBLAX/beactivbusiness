@@ -59,7 +59,7 @@ export default function ActivitesPage() {
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState<Partial<FinanceEntry>>({});
   const [editExpense, setEditExpense] = useState<Partial<Expense>>({});
-  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100 });
+  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100, portagePct: null });
 
   // Quick cours
   const [quickCoursData, setQuickCoursData] = useState<Record<string, number>>({});
