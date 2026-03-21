@@ -56,10 +56,12 @@ function getQuarterMonths(year: number, quarter: number): string[] {
 const PRORATA_BUREAU = 13 / 43;
 
 export default function FinancesPage() {
-  const { financeEntries, expenses, portageMonths, setPortageMonths, versementsPerso, setVersementsPerso, offres, prospects } = useApp();
+  const { financeEntries, expenses, portageMonths, setPortageMonths, versementsPerso, setVersementsPerso, offres, prospects, urssafMode } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [showSapTable, setShowSapTable] = useState(false);
   const [showGestionDetail, setShowGestionDetail] = useState(false);
+  const [showTva, setShowTva] = useState(false);
+  const [showReminders, setShowReminders] = useState(false);
 
   const currentYear = new Date().getFullYear();
   const [sapYear, setSapYear] = useState(currentYear);
