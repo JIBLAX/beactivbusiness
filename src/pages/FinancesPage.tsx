@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import { OFFRE_THEMES } from "@/data/types";
+import { generateBilanPDF } from "@/lib/pdfExport";
+import { getFiscalReminders, getDaysUntil, getStatusColor, getStatusLabel } from "@/lib/fiscalDates";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
