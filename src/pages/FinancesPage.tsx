@@ -40,12 +40,15 @@ function isEditable(month: string): boolean {
   return new Date() <= lockDate;
 }
 
-function getRolling12Months(): string[] {
+function getAllMonths(): string[] {
+  const start = new Date(2025, 8, 1); // September 2025
   const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth() + 3, 1); // 3 months ahead
   const months: string[] = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+  const d = new Date(start);
+  while (d <= end) {
     months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    d.setMonth(d.getMonth() + 1);
   }
   return months;
 }
@@ -107,7 +110,7 @@ export default function FinancesPage() {
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
   const editable = isEditable(selectedMonth);
-  const rolling12 = useMemo(() => getRolling12Months(), []);
+  const allMonths = useMemo(() => getAllMonths(), []);
   const activeOffres = offres.filter(o => o.active);
 
   const sapClientNames = useMemo(() => new Set(prospects.filter(p => p.sapEnabled).map(p => p.name)), [prospects]);
@@ -328,7 +331,7 @@ export default function FinancesPage() {
       <div className="flex items-center gap-2 mb-5">
         <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}
           className="flex-1 rounded-2xl px-4 py-3 text-sm font-medium input-field appearance-none">
-          {rolling12.map(m => <option key={m} value={m}>{formatMonth(m)}</option>)}
+          {allMonths.map(m => <option key={m} value={m}>{formatMonth(m)}</option>)}
         </select>
         {!editable && (
           <div className="badge-pill" style={{ background: "hsl(0 62% 50% / 0.1)", color: "hsl(0 62% 60%)" }}>
