@@ -125,14 +125,16 @@ export default function FinancesPage() {
   const declaredMicro = monthEntries.filter(e => {
     if (portageEnabled && isActivReset(e)) return false;
     if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
+    // If portage is off, everything counts as micro
+    if (!portageEnabled) return true;
     return e.type === "micro";
   }).reduce((s, e) => s + e.amount, 0);
 
-  const declaredPortage = monthEntries.filter(e => {
-    if (portageEnabled && isActivReset(e)) return true;
+  const declaredPortage = portageEnabled ? monthEntries.filter(e => {
+    if (isActivReset(e)) return true;
     if (e.paymentMode === "especes") return e.cashDeclaration === "portage";
     return e.type === "portage";
-  }).reduce((s, e) => s + e.amount, 0);
+  }).reduce((s, e) => s + e.amount, 0) : 0;
 
   const totalReel = monthEntries.reduce((s, e) => s + e.amount, 0);
   const totalDepenses = monthExpenses.reduce((s, e) => s + e.amount, 0);
