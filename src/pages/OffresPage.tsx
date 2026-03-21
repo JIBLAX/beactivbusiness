@@ -94,12 +94,13 @@ export default function OffresPage() {
       priceHistory: [{ price: newPrice, date: today }],
       duration: newIsAlaCarte ? undefined : newDuration,
       isAlaCarte: newIsAlaCarte, unitPrice: newUnitPrice, minQuantity: newMinQty,
-      theme: newTheme, tvaEnabled: newTva,
+      theme: newTheme, tvaEnabled: newTva, portageEligible: newPortage,
     };
     setOffres([...offres, offre]);
     setShowAdd(false);
     setNewName(""); setNewPrice(0); setNewDuration({ value: 1, unit: "mois" });
-    setNewIsAlaCarte(false); setNewUnitPrice(undefined); setNewMinQty(undefined); setNewTheme("PROGRAMMES"); setNewTva(false);
+    setNewIsAlaCarte(false); setNewUnitPrice(undefined); setNewMinQty(undefined);
+    setNewTheme("PROGRAMMES"); setNewTva(false); setNewPortage(false);
   };
 
   const activeCount = offres.filter(o => o.active).length;
