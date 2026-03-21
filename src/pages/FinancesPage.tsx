@@ -893,6 +893,125 @@ export default function FinancesPage() {
           </div>
         </div>
       )}
+
+      {/* QUICK COURS COLLECTIFS SHEET */}
+      {showQuickCours && (
+        <div className="fixed inset-0 z-[200] flex items-end" onClick={() => setShowQuickCours(false)}
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+          <div className="w-full max-h-[85dvh] rounded-t-3xl overflow-y-auto pb-8 animate-fade-up" onClick={e => e.stopPropagation()}
+            style={{ background: "hsl(0 0% 6%)", borderTop: "1px solid hsl(0 0% 100% / 0.08)" }}>
+            <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1" style={{ background: "hsl(0 0% 20%)" }} />
+            <div className="flex items-center justify-between px-5 pt-3 pb-3">
+              <h2 className="font-display text-[17px] font-bold text-foreground">🏃 Cours Collectifs</h2>
+              <button onClick={() => setShowQuickCours(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm text-muted-foreground"
+                style={{ background: "hsl(0 0% 100% / 0.05)" }}>✕</button>
+            </div>
+            <div className="px-5 space-y-3">
+              <p className="text-[11px] text-muted-foreground">Entrez le nombre vendu pour chaque offre ce mois</p>
+              {activeOffres.filter(o => o.theme === "COURS COLLECTIFS").map(o => (
+                <div key={o.id} className="rounded-2xl p-4 flex items-center justify-between" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+                  <div className="flex-1 min-w-0 mr-3">
+                    <div className="text-[13px] font-semibold text-foreground">{o.name}</div>
+                    <div className="text-[11px] text-muted-foreground">{o.price}€ / unité</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setQuickCoursData(p => ({ ...p, [o.name]: Math.max(0, (p[o.name] || 0) - 1) }))}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold input-field">−</button>
+                    <div className="w-10 text-center value-lg text-[18px] text-foreground">{quickCoursData[o.name] || 0}</div>
+                    <button onClick={() => setQuickCoursData(p => ({ ...p, [o.name]: (p[o.name] || 0) + 1 }))}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold input-field">+</button>
+                  </div>
+                  {(quickCoursData[o.name] || 0) > 0 && (
+                    <div className="ml-3 value-lg text-[13px] text-success min-w-[50px] text-right">
+                      {(o.price * (quickCoursData[o.name] || 0)).toFixed(0)}€
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div>
+                <label className="section-label mb-2 block">Mode paiement</label>
+                <select value={quickCoursPayment} onChange={e => setQuickCoursPayment(e.target.value)}
+                  className="w-full rounded-xl px-3 py-3 text-sm input-field">
+                  {PAYMENT_MODES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </select>
+              </div>
+              {(() => {
+                const total = Object.entries(quickCoursData).reduce((s, [name, qty]) => {
+                  const o = offres.find(of => of.name === name);
+                  return s + (o ? o.price * qty : 0);
+                }, 0);
+                return total > 0 ? (
+                  <div className="rounded-2xl p-4 text-center" style={{ background: "hsl(152 55% 42% / 0.08)", border: "1px solid hsl(152 55% 42% / 0.2)" }}>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total cours collectifs</div>
+                    <div className="value-lg text-[24px] text-success">{total.toFixed(0)}€</div>
+                  </div>
+                ) : null;
+              })()}
+              <button onClick={addQuickCours} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
+                Ajouter les entrées
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD EXTRA SESSIONS SHEET */}
+      {showAddSessions && (
+        <div className="fixed inset-0 z-[200] flex items-end" onClick={() => setShowAddSessions(false)}
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+          <div className="w-full max-h-[80dvh] rounded-t-3xl overflow-y-auto pb-8 animate-fade-up" onClick={e => e.stopPropagation()}
+            style={{ background: "hsl(0 0% 6%)", borderTop: "1px solid hsl(0 0% 100% / 0.08)" }}>
+            <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1" style={{ background: "hsl(0 0% 20%)" }} />
+            <div className="flex items-center justify-between px-5 pt-3 pb-3">
+              <h2 className="font-display text-[17px] font-bold text-foreground">💪 Séances supplémentaires</h2>
+              <button onClick={() => setShowAddSessions(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm text-muted-foreground"
+                style={{ background: "hsl(0 0% 100% / 0.05)" }}>✕</button>
+            </div>
+            <div className="px-5 space-y-4">
+              <p className="text-[11px] text-muted-foreground">Ajoutez des séances en plus du minimum inclus dans le PASS du client</p>
+              <div>
+                <label className="section-label mb-2 block">Offre JM PASS</label>
+                <select value={extraSessionsOffre} onChange={e => setExtraSessionsOffre(e.target.value)}
+                  className="w-full rounded-xl px-3 py-3 text-sm input-field">
+                  <option value="">— Sélectionner —</option>
+                  {activeOffres.filter(o => o.theme === "JM COACHING" && o.unitPrice && o.minQuantity).map(o => (
+                    <option key={o.id} value={o.name}>{o.name} — {o.unitPrice}€/séance</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="section-label mb-2 block">Client</label>
+                <ClientAutocomplete value={extraSessionsClient} onChange={v => setExtraSessionsClient(v)} />
+              </div>
+              <div>
+                <label className="section-label mb-2 block">Nombre de séances supp.</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => extraSessionsCount > 1 && setExtraSessionsCount(extraSessionsCount - 1)}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold input-field">−</button>
+                  <div className="flex-1 text-center">
+                    <div className="value-lg text-[24px] text-foreground">{extraSessionsCount}</div>
+                  </div>
+                  <button onClick={() => setExtraSessionsCount(extraSessionsCount + 1)}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold input-field">+</button>
+                </div>
+              </div>
+              {extraSessionsOffre && extraSessionsCount > 0 && (() => {
+                const found = offres.find(o => o.name === extraSessionsOffre);
+                const total = (found?.unitPrice || 0) * extraSessionsCount;
+                return (
+                  <div className="rounded-2xl p-4 text-center" style={{ background: "hsl(38 92% 55% / 0.08)", border: "1px solid hsl(38 92% 55% / 0.2)" }}>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total séances supplémentaires</div>
+                    <div className="value-lg text-[20px] text-warning">{extraSessionsCount} × {found?.unitPrice}€ = {total}€</div>
+                  </div>
+                );
+              })()}
+              <button onClick={addExtraSessions} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
+                Ajouter les séances
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
