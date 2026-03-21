@@ -17,6 +17,7 @@ interface AppState {
   portageMonths: Record<string, boolean>;
   versementsPerso: Record<string, number | null>;
   offres: Offre[];
+  urssafMode: "mois" | "trimestre";
   loading: boolean;
   setCurrentPage: (p: AppPage) => void;
   setProspects: (p: Prospect[]) => void;
@@ -26,6 +27,7 @@ interface AppState {
   setPortageMonths: (v: Record<string, boolean>) => void;
   setVersementsPerso: (v: Record<string, number | null>) => void;
   setOffres: (o: Offre[]) => void;
+  setUrssafMode: (m: "mois" | "trimestre") => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
