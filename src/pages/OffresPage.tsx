@@ -98,6 +98,7 @@ export default function OffresPage() {
       duration: newIsAlaCarte ? undefined : newDuration,
       isAlaCarte: newIsAlaCarte, unitPrice: newUnitPrice, minQuantity: newMinQty,
       theme: newTheme, tvaEnabled: newTva, portageEligible: newPortage,
+      maxInstallments: newMaxInstallments,
     };
     setOffres([...offres, offre]);
     setShowAdd(false);
