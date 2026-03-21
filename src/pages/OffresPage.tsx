@@ -335,6 +335,17 @@ export default function OffresPage() {
                 <span className="text-[12px] text-muted-foreground">Éligible Portage JUMP</span>
                 <ToggleSwitch checked={newPortage} onChange={() => setNewPortage(!newPortage)} />
               </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-[12px] text-muted-foreground">Paiement en plusieurs fois</span>
+                <ToggleSwitch checked={!!newMaxInstallments && newMaxInstallments > 1} onChange={() => setNewMaxInstallments(newMaxInstallments && newMaxInstallments > 1 ? undefined : 3)} />
+              </div>
+              {newMaxInstallments && newMaxInstallments > 1 && (
+                <div>
+                  <label className="section-label mb-2 block">Nombre de fois max</label>
+                  <input type="number" value={newMaxInstallments} onChange={e => setNewMaxInstallments(Number(e.target.value) || undefined)}
+                    min={2} max={12} className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
+                </div>
+              )}
               <button onClick={addOffre} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Créer l'offre
               </button>
