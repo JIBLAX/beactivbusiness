@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import ClientAutocomplete from "@/components/ui/ClientAutocomplete";
-import { FinanceEntry, Expense, ExpenseCategory, EXPENSE_CATEGORIES, PAYMENT_MODES, CASH_DECLARATIONS, OffreTheme, OFFRE_THEMES, ExpenseTheme, EXPENSE_THEMES } from "@/data/types";
+import { FinanceEntry, Expense, ExpenseCategory, EXPENSE_CATEGORIES, PAYMENT_MODES, CASH_DECLARATIONS, OffreTheme, OFFRE_THEMES } from "@/data/types";
 import { getMonthEditState, getSealedLabel, getQuarterForMonth } from "@/lib/quarterLock";
 import logoBeActiv from "@/assets/logo-beactiv.png";
 import logoCardioMouv from "@/assets/logo-cardiomouv.png";
