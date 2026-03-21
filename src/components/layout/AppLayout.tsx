@@ -64,33 +64,6 @@ export default function AppLayout() {
         </div>
       </div>
 
-      {/* Threshold indicators */}
-      {(microDanger || tvaDanger) && (
-        <div className="px-4 py-2 flex gap-2" style={{ background: "hsl(0 0% 4%)", borderBottom: "1px solid hsl(0 0% 100% / 0.04)" }}>
-          {tvaDanger && (
-            <div className="flex-1">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[9px] font-semibold text-warning uppercase tracking-wider">TVA {SEUIL_TVA.toLocaleString()}€</span>
-                <span className="text-[9px] font-bold text-warning">{tvaPct.toFixed(0)}%</span>
-              </div>
-              <div className="h-1 rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
-                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${tvaPct}%`, background: `hsl(38 92% 55%)` }} />
-              </div>
-            </div>
-          )}
-          {microDanger && (
-            <div className="flex-1">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[9px] font-semibold text-destructive uppercase tracking-wider">MICRO {(SEUIL_MICRO/1000).toFixed(0)}K€</span>
-                <span className="text-[9px] font-bold text-destructive">{microPct.toFixed(0)}%</span>
-              </div>
-              <div className="h-1 rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
-                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${microPct}%`, background: `hsl(0 62% 50%)` }} />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
