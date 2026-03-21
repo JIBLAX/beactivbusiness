@@ -25,13 +25,6 @@ function addMonthsOffset(month: string, offset: number): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function isEditable(month: string): boolean {
-  const [y, m] = month.split("-").map(Number);
-  const endOfMonth = new Date(y, m, 0);
-  const lockDate = new Date(endOfMonth);
-  lockDate.setDate(lockDate.getDate() + 30);
-  return new Date() <= lockDate;
-}
 
 function getAllMonths(): string[] {
   const start = new Date(2025, 8, 1);
