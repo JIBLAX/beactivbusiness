@@ -108,8 +108,7 @@ export default function ClientsPage() {
     const sapHours = getClientSapHours(selectedClient.name);
     const sapTotal = getClientSapTotal(selectedClient.name);
     const duration = formatDurationFromOffre(selectedClient.offre, offres);
-    const sessionInfo = getSessionInfo(selectedClient);
-    const offreType = getOffreType(selectedClient.offre, offres);
+    const metrics = getMetrics(selectedClient);
 
     return (
       <div className="px-4 pt-4 pb-24">
