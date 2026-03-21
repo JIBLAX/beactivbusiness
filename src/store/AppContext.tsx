@@ -103,11 +103,11 @@ function rowToFinance(r: any): FinanceEntry {
 }
 
 function expenseToRow(e: Expense, userId: string) {
-  return { id: e.id, user_id: userId, month: e.month, category: e.category, label: e.label, amount: e.amount, date: e.date };
+  return { id: e.id, user_id: userId, month: e.month, category: e.category, label: e.label, amount: e.amount, date: e.date, expense_theme: e.expenseTheme ?? "TOUS" };
 }
 
 function rowToExpense(r: any): Expense {
-  return { id: r.id, month: r.month, category: r.category, label: r.label, amount: Number(r.amount), date: r.date };
+  return { id: r.id, month: r.month, category: r.category, label: r.label, amount: Number(r.amount), date: r.date, expenseTheme: r.expense_theme ?? "TOUS" };
 }
 
 function offreToRow(o: Offre, userId: string) {
