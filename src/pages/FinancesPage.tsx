@@ -289,11 +289,16 @@ export default function FinancesPage() {
         )}
       </div>
 
-      {/* Portage switch for THIS month */}
+      {/* Portage JUMP switch for THIS month */}
       <div className="card-elevated rounded-2xl p-4 mb-3 flex items-center justify-between">
         <div>
           <div className="text-[13px] font-semibold text-foreground">Portage JUMP</div>
-          <div className="text-[10px] text-muted-foreground">Activer pour {formatMonth(selectedMonth)}</div>
+          <div className="text-[10px] text-muted-foreground">
+            {portageEnabled 
+              ? "Actif — Activ Reset/Program exclus de la déclaration URSSAF"
+              : `Activer pour ${formatMonth(selectedMonth)}`
+            }
+          </div>
         </div>
         <button onClick={() => editable && setPortageMonths({ ...portageMonths, [selectedMonth]: !portageEnabled })}
           className={`w-12 h-7 rounded-full transition-all relative ${!editable ? "opacity-40" : ""}`}
