@@ -257,6 +257,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) syncToSupabase("offres", o, offreToRow, user.id);
   }, [user]);
 
+  const setUrssafMode = useCallback((m: "mois" | "trimestre") => {
+    setUrssafModeState(m);
+    if (user) supabase.from("app_settings").update({ urssaf_mode: m } as any).eq("user_id", user.id).then();
+  }, [user]);
+
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, currentPage, prospects, activResetClients,
