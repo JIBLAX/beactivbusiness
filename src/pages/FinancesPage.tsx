@@ -283,7 +283,7 @@ export default function FinancesPage() {
         </div>
         {portageEnabled && (
           <div className="mt-3 px-3 py-2 rounded-xl text-[10px] text-muted-foreground" style={{ background: "hsl(217 70% 60% / 0.08)", border: "1px solid hsl(217 70% 60% / 0.15)" }}>
-            ℹ️ Les revenus <strong className="text-foreground">Activ Reset / Program</strong> passent par <strong className="text-foreground">JUMP</strong> ce mois — charges sociales déduites par JUMP, <strong className="text-foreground">non déclarés à l'URSSAF</strong>.
+            ℹ️ Les offres marquées <strong className="text-foreground">Portage</strong> passent par <strong className="text-foreground">JUMP</strong> ce mois — charges sociales gérées par JUMP, <strong className="text-foreground">non déclarées à l'URSSAF</strong>.
           </div>
         )}
       </div>

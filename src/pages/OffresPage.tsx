@@ -179,6 +179,7 @@ export default function OffresPage() {
                 {o.unitPrice && <span className="text-[10px] text-muted-foreground">{o.unitPrice}€/séance</span>}
                 {o.minQuantity && <span className="text-[10px] text-muted-foreground">min. {o.minQuantity}</span>}
                 {o.tvaEnabled && <span className="badge-pill text-[9px]" style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>TVA</span>}
+                {o.portageEligible && <span className="badge-pill text-[9px]" style={{ background: "hsl(217 70% 60% / 0.1)", color: "hsl(217 70% 60%)" }}>PORTAGE</span>}
               </div>
             </div>
             <div className="value-lg text-[18px]" style={{ color: "hsl(348 63% 45%)" }}>{o.price}€</div>
