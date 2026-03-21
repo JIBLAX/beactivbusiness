@@ -20,7 +20,7 @@ export default function ActivResetPage() {
   const selected = selectedId ? activResetClients.find(c => c.id === selectedId) : null;
 
   // Alerts
-  const alerts = activResetClients.flatMap(c => {
+  const alerts = activResetClients.filter(c => !c.archived).flatMap(c => {
     if (c.currentPhase >= c.phases.length) return [];
     const phase = c.phases[c.currentPhase];
     const days = getDaysRemaining(phase);
