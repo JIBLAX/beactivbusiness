@@ -182,9 +182,7 @@ export default function FinancesPage() {
         setEntryAmount(found.price);
         setEntryNbSessions(0);
       }
-      // Default installments to 1, max based on offre config
       setEntryInstallments(1);
-    }
     }
   };
 
@@ -849,17 +847,25 @@ export default function FinancesPage() {
                 </div>
               )}
 
-              <div>
-                <label className="section-label mb-2 block">Paiement</label>
-                <div className="flex gap-2">
-                  {[1, 2, 3].map(n => (
-                    <button key={n} onClick={() => setEntryInstallments(n)}
-                      className={`flex-1 py-2.5 rounded-xl text-[12px] font-semibold transition-all ${entryInstallments === n ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
-                      {n === 1 ? "Comptant" : `${n}×`}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {(() => {
+                const selectedOffre = offres.find(o => o.name === entryOffre);
+                const maxInst = selectedOffre?.maxInstallments && selectedOffre.maxInstallments > 1 ? selectedOffre.maxInstallments : 1;
+                if (maxInst <= 1) return null;
+                const options = Array.from({ length: maxInst }, (_, i) => i + 1);
+                return (
+                  <div>
+                    <label className="section-label mb-2 block">Paiement</label>
+                    <div className="flex gap-2">
+                      {options.map(n => (
+                        <button key={n} onClick={() => setEntryInstallments(n)}
+                          className={`flex-1 py-2.5 rounded-xl text-[12px] font-semibold transition-all ${entryInstallments === n ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
+                          {n === 1 ? "Comptant" : `${n}×`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <button onClick={addEntry} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
                 Ajouter l'entrée
