@@ -175,7 +175,6 @@ export default function FinancesPage() {
     setEntryOffre(offreName);
     const found = offres.find(o => o.name === offreName);
     if (found) {
-      // For JM PASS type offres with unitPrice and minQuantity, default to min sessions
       if (found.unitPrice && found.minQuantity) {
         setEntryNbSessions(found.minQuantity);
         setEntryAmount(found.unitPrice * found.minQuantity);
@@ -183,6 +182,9 @@ export default function FinancesPage() {
         setEntryAmount(found.price);
         setEntryNbSessions(0);
       }
+      // Default installments to 1, max based on offre config
+      setEntryInstallments(1);
+    }
     }
   };
 
