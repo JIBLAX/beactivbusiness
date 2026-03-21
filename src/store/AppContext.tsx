@@ -108,7 +108,7 @@ function offreToRow(o: Offre, userId: string) {
     duration: o.duration ? JSON.parse(JSON.stringify(o.duration)) : null,
     unit_price: o.unitPrice ?? null, min_quantity: o.minQuantity ?? null,
     is_ala_carte: o.isAlaCarte ?? false, theme: o.theme ?? "PROGRAMMES",
-    tva_enabled: o.tvaEnabled ?? false,
+    tva_enabled: o.tvaEnabled ?? false, portage_eligible: o.portageEligible ?? false,
   };
 }
 
