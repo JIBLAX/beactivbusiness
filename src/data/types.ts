@@ -80,7 +80,10 @@ export interface FinanceEntry {
   installmentIndex?: number;
   installmentTotal?: number;
   sapHours?: number;
-  cashDeclaration?: "micro" | "portage" | "non_declare"; // pour espèces uniquement
+  cashDeclaration?: "micro" | "portage" | "non_declare";
+  discountType?: "percent" | "euro";
+  discountValue?: number;
+  originalAmount?: number;
 }
 
 export const PAYMENT_MODES = [
