@@ -549,7 +549,7 @@ export default function ActivitesPage() {
         </div>
       ) : (
         <div className="rounded-2xl p-6 text-center stat-card mb-6" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
-          <div className="text-muted-foreground text-[11px]">Aucune dépense{expenseThemeFilter !== "ALL" ? ` pour ${expenseThemeFilter}` : ""} ce mois</div>
+          <div className="text-muted-foreground text-[11px]">Aucune dépense ce mois</div>
         </div>
       );
       })()}
