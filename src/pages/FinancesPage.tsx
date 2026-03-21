@@ -3,6 +3,7 @@ import { useApp } from "@/store/AppContext";
 import { OFFRE_THEMES } from "@/data/types";
 import { generateBilanPDF } from "@/lib/pdfExport";
 import { getFiscalReminders, getDaysUntil, getStatusColor, getStatusLabel } from "@/lib/fiscalDates";
+import { getMonthEditState, getSealedLabel } from "@/lib/quarterLock";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
