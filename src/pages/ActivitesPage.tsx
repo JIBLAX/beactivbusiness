@@ -243,11 +243,11 @@ export default function ActivitesPage() {
       category: newExpense.category as ExpenseCategory,
       label: newExpense.label || "", amount: Number(newExpense.amount) || 0,
       date: new Date().toISOString().split("T")[0],
-      expenseTheme: (newExpense.expenseTheme as any) || "TOUS",
+      proPct: newExpense.proPct ?? 100,
     };
     setExpenses([...expenses, exp]);
     setShowAddExpense(false);
-    setNewExpense({ category: "LOCAUX & BUREAUX", amount: 0, expenseTheme: "TOUS" });
+    setNewExpense({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100 });
   };
 
   const startEditEntry = (e: FinanceEntry) => { setEditingEntryId(e.id); setEditEntry({ ...e }); };
