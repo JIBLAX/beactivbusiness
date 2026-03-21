@@ -252,9 +252,11 @@ export default function OffresPage() {
         const themeOffers = offres.filter(o => (o.theme || "PROGRAMMES") === theme);
         if (themeOffers.length === 0) return null;
         return (
-          <div key={theme} className="mb-5">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm">{THEME_ICONS[theme]}</span>
+          <div key={theme} className="mb-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+                <img src={THEME_LOGOS[theme]} alt={theme} className="w-full h-full object-cover" />
+              </div>
               <div className="section-label flex-1" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.05)", paddingBottom: "6px" }}>{theme}</div>
             </div>
             <div className="space-y-2">
