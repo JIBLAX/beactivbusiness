@@ -1,0 +1,1 @@
+ALTER TABLE public.finance_entries ADD COLUMN discount_type text DEFAULT NULL, ADD COLUMN discount_value numeric DEFAULT NULL, ADD COLUMN original_amount numeric DEFAULT NULL;

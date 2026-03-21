@@ -137,6 +137,8 @@ export type Database = {
           cash_declaration: string | null
           client_name: string | null
           created_at: string
+          discount_type: string | null
+          discount_value: number | null
           id: string
           installment_group: string | null
           installment_index: number | null
@@ -144,6 +146,7 @@ export type Database = {
           label: string
           month: string
           offre: string | null
+          original_amount: number | null
           payment_mode: string | null
           sap_hours: number | null
           type: string
@@ -155,6 +158,8 @@ export type Database = {
           cash_declaration?: string | null
           client_name?: string | null
           created_at?: string
+          discount_type?: string | null
+          discount_value?: number | null
           id: string
           installment_group?: string | null
           installment_index?: number | null
@@ -162,6 +167,7 @@ export type Database = {
           label: string
           month: string
           offre?: string | null
+          original_amount?: number | null
           payment_mode?: string | null
           sap_hours?: number | null
           type?: string
@@ -173,6 +179,8 @@ export type Database = {
           cash_declaration?: string | null
           client_name?: string | null
           created_at?: string
+          discount_type?: string | null
+          discount_value?: number | null
           id?: string
           installment_group?: string | null
           installment_index?: number | null
@@ -180,6 +188,7 @@ export type Database = {
           label?: string
           month?: string
           offre?: string | null
+          original_amount?: number | null
           payment_mode?: string | null
           sap_hours?: number | null
           type?: string
