@@ -32,6 +32,7 @@ export default function OffresPage() {
   const [editTheme, setEditTheme] = useState<OffreTheme>("PROGRAMMES");
   const [editTva, setEditTva] = useState(false);
   const [editPortage, setEditPortage] = useState(false);
+  const [editMaxInstallments, setEditMaxInstallments] = useState<number | undefined>();
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState(0);
