@@ -505,14 +505,12 @@ export default function ActivitesPage() {
                     <input type="number" value={editExpense.amount || ""} onChange={ev => setEditExpense(p => ({ ...p, amount: Number(ev.target.value) }))}
                       className="w-full rounded-xl px-3 py-2 text-sm input-field" />
                     <div>
-                      <label className="text-[10px] text-muted-foreground mb-1 block">Activité liée</label>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {EXPENSE_THEMES.map(t => (
-                          <button key={t} onClick={() => setEditExpense(p => ({ ...p, expenseTheme: t }))}
-                            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${(editExpense.expenseTheme ?? "TOUS") === t ? "text-foreground btn-primary" : "text-muted-foreground input-field"}`}>
-                            {t}
-                          </button>
-                        ))}
+                      <label className="text-[10px] text-muted-foreground mb-1 block">% Pro</label>
+                      <div className="flex items-center gap-2">
+                        <input type="range" min={0} max={100} step={5} value={editExpense.proPct ?? 100}
+                          onChange={ev => setEditExpense(p => ({ ...p, proPct: Number(ev.target.value) }))}
+                          className="flex-1 accent-primary" />
+                        <span className="text-[11px] font-semibold text-foreground w-10 text-right">{editExpense.proPct ?? 100}%</span>
                       </div>
                     </div>
                     <div className="flex gap-2">
