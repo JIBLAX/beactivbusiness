@@ -320,7 +320,11 @@ export default function ActivitesPage() {
           <div key={theme} className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm">{THEME_ICONS[theme]}</span>
+                {THEME_LOGOS[theme] ? (
+                  <div className="w-6 h-6 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+                    <img src={THEME_LOGOS[theme]} alt={theme} className="w-full h-full object-cover" />
+                  </div>
+                ) : <span className="text-sm">📄</span>}
                 <span className="text-[12px] font-bold text-foreground">{theme}</span>
                 <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{entries.length}</span>
               </div>
