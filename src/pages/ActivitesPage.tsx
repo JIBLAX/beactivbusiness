@@ -524,10 +524,10 @@ export default function ActivitesPage() {
                       <div className="text-[13px] font-medium text-foreground">{e.label}</div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] text-muted-foreground">{e.category}</span>
-                        {e.expenseTheme && e.expenseTheme !== "TOUS" && (
+                        {(e.proPct ?? 100) < 100 && (
                           <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold"
                             style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
-                            {e.expenseTheme}
+                            {e.proPct}% pro
                           </span>
                         )}
                       </div>
