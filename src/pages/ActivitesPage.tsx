@@ -87,7 +87,9 @@ export default function ActivitesPage() {
   const [entryDiscountValue, setEntryDiscountValue] = useState(0);
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
-  const editable = isEditable(selectedMonth);
+  const editState = getMonthEditState(selectedMonth, quarterEdits);
+  const editable = editState.editable;
+  const sealedLabel = getSealedLabel(editState);
   const allMonths = useMemo(() => getAllMonths(), []);
   const activeOffres = offres.filter(o => o.active);
 
