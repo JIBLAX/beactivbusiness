@@ -8,30 +8,17 @@ import OffresPage from "@/pages/OffresPage";
 import ClientsPage from "@/pages/ClientsPage";
 import ActivResetPage from "@/pages/ActivResetPage";
 
-const SEUIL_MICRO = 77700;
-const SEUIL_TVA = 36800;
-
 export default function AppLayout() {
   const { currentPage, financeEntries } = useApp();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth();
 
   const yearlyCA = useMemo(() => {
     return financeEntries
       .filter(e => e.month.startsWith(String(currentYear)))
       .reduce((s, e) => s + e.amount, 0);
   }, [financeEntries, currentYear]);
-
-  // Projection: average monthly CA * remaining months
-  const monthsPassed = currentMonth + 1;
-  const avgMonthlyCA = monthsPassed > 0 ? yearlyCA / monthsPassed : 0;
-  const projectedCA = avgMonthlyCA * 12;
-  const microPct = Math.min((projectedCA / SEUIL_MICRO) * 100, 100);
-  const tvaPct = Math.min((projectedCA / SEUIL_TVA) * 100, 100);
-  const microDanger = projectedCA > SEUIL_MICRO * 0.8;
-  const tvaDanger = projectedCA > SEUIL_TVA * 0.8;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col h-[100dvh] bg-background">
