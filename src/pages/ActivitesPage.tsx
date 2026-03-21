@@ -2,6 +2,9 @@ import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import ClientAutocomplete from "@/components/ui/ClientAutocomplete";
 import { FinanceEntry, Expense, ExpenseCategory, EXPENSE_CATEGORIES, PAYMENT_MODES, CASH_DECLARATIONS, OffreTheme, OFFRE_THEMES } from "@/data/types";
+import logoBeActiv from "@/assets/logo-beactiv.png";
+import logoCardioMouv from "@/assets/logo-cardiomouv.png";
+import logoJM from "@/assets/logo-jm.png";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -42,10 +45,10 @@ function getAllMonths(): string[] {
   return months;
 }
 
-const THEME_ICONS: Record<string, string> = {
-  "COURS COLLECTIFS": "🏃",
-  "JM COACHING": "💪",
-  "PROGRAMMES": "📋",
+const THEME_LOGOS: Record<string, string> = {
+  "COURS COLLECTIFS": logoCardioMouv,
+  "JM COACHING": logoJM,
+  "PROGRAMMES": logoBeActiv,
 };
 
 export default function ActivitesPage() {
@@ -317,7 +320,11 @@ export default function ActivitesPage() {
           <div key={theme} className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm">{THEME_ICONS[theme]}</span>
+                {THEME_LOGOS[theme] ? (
+                  <div className="w-6 h-6 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+                    <img src={THEME_LOGOS[theme]} alt={theme} className="w-full h-full object-cover" />
+                  </div>
+                ) : <span className="text-sm">📄</span>}
                 <span className="text-[12px] font-bold text-foreground">{theme}</span>
                 <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{entries.length}</span>
               </div>
@@ -513,7 +520,12 @@ export default function ActivitesPage() {
             <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1" style={{ background: "hsl(0 0% 20%)" }} />
             <div className="flex items-center justify-between px-5 pt-3 pb-3">
               <h2 className="font-display text-[17px] font-bold text-foreground">
-                {addTheme ? `${THEME_ICONS[addTheme]} ${addTheme}` : "Nouvelle entrée"}
+                {addTheme ? (
+                  <span className="flex items-center gap-2">
+                    {THEME_LOGOS[addTheme] && <img src={THEME_LOGOS[addTheme]} alt={addTheme} className="w-6 h-6 rounded-lg object-cover" />}
+                    {addTheme}
+                  </span>
+                ) : "Nouvelle entrée"}
               </h2>
               <button onClick={() => setShowAddEntry(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-sm text-muted-foreground"
                 style={{ background: "hsl(0 0% 100% / 0.05)" }}>✕</button>
