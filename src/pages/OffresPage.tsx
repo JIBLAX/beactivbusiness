@@ -51,7 +51,7 @@ export default function OffresPage() {
     setEditDuration(o.duration); setEditIsAlaCarte(o.isAlaCarte || false);
     setEditUnitPrice(o.unitPrice); setEditMinQty(o.minQuantity);
     setEditTheme(o.theme || "PROGRAMMES"); setEditTva(o.tvaEnabled || false);
-    setEditPortage(o.portageEligible || false);
+    setEditPortage(o.portageEligible || false); setEditMaxInstallments(o.maxInstallments);
   };
 
   const saveEdit = () => {
