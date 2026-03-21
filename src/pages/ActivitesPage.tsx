@@ -45,10 +45,10 @@ function getAllMonths(): string[] {
   return months;
 }
 
-const THEME_ICONS: Record<string, string> = {
-  "COURS COLLECTIFS": "🏃",
-  "JM COACHING": "💪",
-  "PROGRAMMES": "📋",
+const THEME_LOGOS: Record<string, string> = {
+  "COURS COLLECTIFS": logoCardioMouv,
+  "JM COACHING": logoJM,
+  "PROGRAMMES": logoBeActiv,
 };
 
 export default function ActivitesPage() {
