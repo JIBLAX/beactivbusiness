@@ -244,10 +244,11 @@ export default function ActivitesPage() {
       label: newExpense.label || "", amount: Number(newExpense.amount) || 0,
       date: new Date().toISOString().split("T")[0],
       proPct: newExpense.proPct ?? 100,
+      portagePct: newExpense.portagePct ?? null,
     };
     setExpenses([...expenses, exp]);
     setShowAddExpense(false);
-    setNewExpense({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100 });
+    setNewExpense({ category: "LOCAUX & BUREAUX", amount: 0, proPct: 100, portagePct: null });
   };
 
   const startEditEntry = (e: FinanceEntry) => { setEditingEntryId(e.id); setEditEntry({ ...e }); };
