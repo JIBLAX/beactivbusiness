@@ -110,21 +110,22 @@ export default function ClientsPage() {
   };
 
   const isolateClient = (clientId: string) => {
-    setProspects(prospects.map(p => {
-      if (p.id !== clientId) return p;
-      return { ...p, groupType: null, groupId: null, isGroupLeader: false };
-    }));
-    // If group has only 1 member left, dissolve
     const client = prospects.find(p => p.id === clientId);
+    let updated = prospects.map(p => {
+      if (p.id !== clientId) return p;
+      return { ...p, groupType: null as any, groupId: null as any, isGroupLeader: false };
+    });
+    // If group has only 1 member left, dissolve
     if (client?.groupId) {
-      const remaining = prospects.filter(p => p.groupId === client.groupId && p.id !== clientId);
+      const remaining = updated.filter(p => p.groupId === client.groupId);
       if (remaining.length <= 1) {
-        setProspects(prev => prev.map(p => {
-          if (p.groupId === client.groupId) return { ...p, groupType: null, groupId: null, isGroupLeader: false };
+        updated = updated.map(p => {
+          if (p.groupId === client.groupId) return { ...p, groupType: null as any, groupId: null as any, isGroupLeader: false };
           return p;
-        }));
+        });
       }
     }
+    setProspects(updated);
   };
 
   // Structure methods
