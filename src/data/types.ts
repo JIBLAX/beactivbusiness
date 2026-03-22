@@ -21,7 +21,37 @@ export interface Prospect {
   bilanValidated?: boolean;
   age?: number;
   sapEnabled?: boolean;
+  groupType?: "duo" | "trio" | "small_group" | null;
+  groupId?: string | null;
+  isGroupLeader?: boolean;
 }
+
+export type StructureType = "association" | "entreprise" | "école" | "collectivité" | "salle de sport";
+export type StructureFrequency = "ponctuel" | "mensuel" | "trimestriel" | "annuel";
+
+export interface Structure {
+  id: string;
+  name: string;
+  contactName: string;
+  phone: string;
+  email: string;
+  city: string;
+  structureType: StructureType;
+  peopleCount: number;
+  offre: string;
+  amount: number;
+  frequency: StructureFrequency;
+  notes: string;
+  active: boolean;
+}
+
+export const STRUCTURE_TYPES: StructureType[] = ["association", "entreprise", "école", "collectivité", "salle de sport"];
+export const STRUCTURE_FREQUENCIES: { value: StructureFrequency; label: string }[] = [
+  { value: "ponctuel", label: "Ponctuel" },
+  { value: "mensuel", label: "Mensuel" },
+  { value: "trimestriel", label: "Trimestriel" },
+  { value: "annuel", label: "Annuel" },
+];
 
 export type AppPage = "prospects" | "clients" | "activreset" | "finances" | "stats" | "offres" | "activites";
 

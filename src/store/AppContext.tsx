@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { Prospect, ActivResetClient, FinanceEntry, Expense, AppPage, Offre, INITIAL_OFFRES } from "@/data/types";
+import { Prospect, ActivResetClient, FinanceEntry, Expense, AppPage, Offre, INITIAL_OFFRES, Structure } from "@/data/types";
 import { initialProspects } from "@/data/prospects";
 import { initialActivResetClients } from "@/data/activResetClients";
 import { seedFinanceEntries } from "@/data/seedFinances";
@@ -17,6 +17,7 @@ interface AppState {
   portageMonths: Record<string, boolean>;
   versementsPerso: Record<string, Record<string, number | null>>;
   offres: Offre[];
+  structures: Structure[];
   urssafMode: "mois" | "trimestre";
   quarterEdits: Record<string, number>;
   incrementQuarterEdit: (quarterKey: string) => void;
@@ -29,6 +30,7 @@ interface AppState {
   setPortageMonths: (v: Record<string, boolean>) => void;
   setVersementsPerso: (v: Record<string, Record<string, number | null>>) => void;
   setOffres: (o: Offre[]) => void;
+  setStructures: (s: Structure[]) => void;
   setUrssafMode: (m: "mois" | "trimestre") => void;
   setQuarterEdits: (q: Record<string, number>) => void;
 }
@@ -43,6 +45,7 @@ function prospectToRow(p: Prospect, userId: string) {
     notes: p.notes, profile: p.profile, prix_reel: p.prixReel ?? 0, note_bilan: p.noteBilan ?? 0,
     note_profil: p.noteProfil ?? 0, bilan_validated: p.bilanValidated ?? false,
     age: p.age ?? null, sap_enabled: p.sapEnabled ?? false,
+    group_type: p.groupType ?? null, group_id: p.groupId ?? null, is_group_leader: p.isGroupLeader ?? false,
   };
 }
 
@@ -55,6 +58,7 @@ function rowToProspect(r: any): Prospect {
     prixReel: Number(r.prix_reel) || 0, noteBilan: Number(r.note_bilan) || 0,
     noteProfil: Number(r.note_profil) || 0, bilanValidated: r.bilan_validated ?? false,
     age: r.age ?? undefined, sapEnabled: r.sap_enabled ?? false,
+    groupType: r.group_type ?? null, groupId: r.group_id ?? null, isGroupLeader: r.is_group_leader ?? false,
   };
 }
 
@@ -137,6 +141,23 @@ function rowToOffre(r: any): Offre {
   };
 }
 
+function structureToRow(s: Structure, userId: string) {
+  return {
+    id: s.id, user_id: userId, name: s.name, contact_name: s.contactName, phone: s.phone,
+    email: s.email, city: s.city, structure_type: s.structureType, people_count: s.peopleCount,
+    offre: s.offre, amount: s.amount, frequency: s.frequency, notes: s.notes, active: s.active,
+  };
+}
+
+function rowToStructure(r: any): Structure {
+  return {
+    id: r.id, name: r.name, contactName: r.contact_name ?? "", phone: r.phone ?? "",
+    email: r.email ?? "", city: r.city ?? "", structureType: r.structure_type ?? "entreprise",
+    peopleCount: r.people_count ?? 1, offre: r.offre ?? "", amount: Number(r.amount) || 0,
+    frequency: r.frequency ?? "ponctuel", notes: r.notes ?? "", active: r.active ?? true,
+  };
+}
+
 async function syncToSupabase<T>(table: string, items: T[], toRow: (item: T, userId: string) => any, userId: string) {
   const client = supabase as any;
   await client.from(table).delete().eq("user_id", userId);
@@ -157,6 +178,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [portageMonths, setPortageMonthsState] = useState<Record<string, boolean>>({});
   const [versementsPerso, setVersementsPersoState] = useState<Record<string, Record<string, number | null>>>({});
   const [offres, setOffresState] = useState<Offre[]>([]);
+  const [structures, setStructuresState] = useState<Structure[]>([]);
   const [urssafMode, setUrssafModeState] = useState<"mois" | "trimestre">("trimestre");
   const [quarterEdits, setQuarterEditsState] = useState<Record<string, number>>({});
 
@@ -179,13 +201,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadAllData = async (userId: string) => {
     setLoading(true);
     try {
-      const [pRes, arRes, fRes, eRes, oRes, sRes] = await Promise.all([
+      const [pRes, arRes, fRes, eRes, oRes, sRes, stRes] = await Promise.all([
         supabase.from("prospects").select("*").eq("user_id", userId),
         supabase.from("activ_reset_clients").select("*").eq("user_id", userId),
         supabase.from("finance_entries").select("*").eq("user_id", userId),
         supabase.from("expenses").select("*").eq("user_id", userId),
         supabase.from("offres").select("*").eq("user_id", userId),
         supabase.from("app_settings").select("*").eq("user_id", userId).maybeSingle(),
+        (supabase as any).from("structures").select("*").eq("user_id", userId),
       ]);
 
       const loadedOffres = (oRes.data && oRes.data.length > 0) ? oRes.data.map(rowToOffre) : null;
@@ -218,6 +241,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       setExpensesState((eRes.data ?? []).map(rowToExpense));
+      setStructuresState((stRes.data ?? []).map(rowToStructure));
 
       if (sRes.data) {
         setPortageMonthsState((sRes.data.portage_months as any) ?? {});
@@ -271,6 +295,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) syncToSupabase("offres", o, offreToRow, user.id);
   }, [user]);
 
+  const setStructures = useCallback((s: Structure[]) => {
+    setStructuresState(s);
+    if (user) syncToSupabase("structures", s, structureToRow, user.id);
+  }, [user]);
+
   const setUrssafMode = useCallback((m: "mois" | "trimestre") => {
     setUrssafModeState(m);
     if (user) supabase.from("app_settings").update({ urssaf_mode: m } as any).eq("user_id", user.id).then();
@@ -292,9 +321,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, currentPage, prospects, activResetClients,
-      financeEntries, expenses, portageMonths, versementsPerso, offres, urssafMode, quarterEdits, loading,
+      financeEntries, expenses, portageMonths, versementsPerso, offres, structures, urssafMode, quarterEdits, loading,
       setCurrentPage, setProspects, setActivResetClients, setFinanceEntries,
-      setExpenses, setPortageMonths, setVersementsPerso, setOffres, setUrssafMode, setQuarterEdits, incrementQuarterEdit,
+      setExpenses, setPortageMonths, setVersementsPerso, setOffres, setStructures, setUrssafMode, setQuarterEdits, incrementQuarterEdit,
     }}>
       {children}
     </AppContext.Provider>

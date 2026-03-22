@@ -6,26 +6,26 @@
 
 @layer base {
   :root {
-    --background: 240 6% 3%;
-    --foreground: 0 0% 97%;
+    --background: 240 5% 8%;
+    --foreground: 0 0% 95%;
 
-    --card: 240 5% 6%;
-    --card-foreground: 0 0% 97%;
+    --card: 240 4% 12%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 240 5% 7%;
-    --popover-foreground: 0 0% 97%;
+    --popover: 240 4% 13%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 348 63% 30%;
+    --primary: 348 63% 34%;
     --primary-foreground: 0 0% 98%;
-    --primary-glow: 348 63% 42%;
+    --primary-glow: 348 63% 46%;
 
-    --secondary: 240 4% 10%;
-    --secondary-foreground: 0 0% 97%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 240 4% 12%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 240 4% 18%;
+    --muted-foreground: 240 4% 52%;
 
-    --accent: 348 45% 20%;
+    --accent: 348 45% 24%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 72% 51%;
@@ -40,31 +40,31 @@
     --info: 217 70% 58%;
     --info-foreground: 0 0% 100%;
 
-    --border: 240 5% 11%;
-    --input: 240 5% 11%;
-    --ring: 348 63% 30%;
+    --border: 240 4% 18%;
+    --input: 240 4% 18%;
+    --ring: 348 63% 34%;
 
     --radius: 1rem;
 
     --beige: 30 50% 93%;
     --beige2: 32 35% 76%;
-    --bordeaux: 348 63% 30%;
-    --bordeaux2: 348 63% 38%;
-    --bordeaux3: 348 55% 48%;
+    --bordeaux: 348 63% 34%;
+    --bordeaux2: 348 63% 42%;
+    --bordeaux3: 348 55% 52%;
 
-    --glass: 0 0% 100% / 0.03;
-    --glass-border: 0 0% 100% / 0.06;
-    --surface1: 240 6% 5%;
-    --surface2: 240 5% 8%;
-    --surface3: 0 0% 100% / 0.03;
+    --glass: 0 0% 100% / 0.04;
+    --glass-border: 0 0% 100% / 0.08;
+    --surface1: 240 5% 11%;
+    --surface2: 240 4% 14%;
+    --surface3: 0 0% 100% / 0.04;
 
-    --gradient-hero: linear-gradient(160deg, hsl(240 6% 9%) 0%, hsl(348 40% 8%) 40%, hsl(240 6% 4%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(348 63% 38%), hsl(348 63% 24%));
-    --gradient-card: linear-gradient(160deg, hsl(240 5% 8%) 0%, hsl(240 5% 5%) 100%);
-    --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.3), 0 4px 16px hsl(0 0% 0% / 0.12);
-    --shadow-elevated: 0 2px 4px hsl(0 0% 0% / 0.3), 0 8px 32px hsl(0 0% 0% / 0.16);
-    --shadow-hero: 0 4px 12px hsl(0 0% 0% / 0.25), 0 20px 60px hsl(0 0% 0% / 0.2);
-    --shadow-glow: 0 0 40px hsl(348 63% 30% / 0.15);
+    --gradient-hero: linear-gradient(160deg, hsl(240 5% 14%) 0%, hsl(348 35% 13%) 40%, hsl(240 5% 9%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(348 63% 42%), hsl(348 63% 28%));
+    --gradient-card: linear-gradient(160deg, hsl(240 4% 14%) 0%, hsl(240 4% 11%) 100%);
+    --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.2), 0 4px 16px hsl(0 0% 0% / 0.08);
+    --shadow-elevated: 0 2px 4px hsl(0 0% 0% / 0.2), 0 8px 32px hsl(0 0% 0% / 0.12);
+    --shadow-hero: 0 4px 12px hsl(0 0% 0% / 0.15), 0 20px 60px hsl(0 0% 0% / 0.12);
+    --shadow-glow: 0 0 40px hsl(348 63% 34% / 0.12);
   }
 }
 
@@ -92,8 +92,8 @@
 
   /* ── Premium Glass Card ── */
   .glass-card {
-    background: hsl(0 0% 100% / 0.025);
-    border: 1px solid hsl(0 0% 100% / 0.05);
+    background: hsl(0 0% 100% / 0.035);
+    border: 1px solid hsl(0 0% 100% / 0.07);
     backdrop-filter: blur(24px) saturate(1.2);
     -webkit-backdrop-filter: blur(24px) saturate(1.2);
   }
@@ -101,7 +101,7 @@
   /* ── Elevated Card (used for list items, sections) ── */
   .card-elevated {
     background: var(--gradient-card);
-    border: 1px solid hsl(0 0% 100% / 0.05);
+    border: 1px solid hsl(0 0% 100% / 0.07);
     box-shadow: var(--shadow-card);
   }
 
@@ -128,8 +128,8 @@
 
   /* ── Stat Card (KPI cards, mini stat blocks) ── */
   .stat-card {
-    background: hsl(240 5% 7%);
-    border: 1px solid hsl(0 0% 100% / 0.04);
+    background: hsl(240 4% 13%);
+    border: 1px solid hsl(0 0% 100% / 0.06);
     box-shadow: var(--shadow-card);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -164,11 +164,11 @@
 
   /* ── Input Field ── */
   .input-field {
-    background: hsl(240 5% 7%);
-    border: 1px solid hsl(0 0% 100% / 0.06);
-    color: hsl(0 0% 97%);
+    background: hsl(240 4% 13%);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    color: hsl(0 0% 95%);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: inset 0 1px 2px hsl(0 0% 0% / 0.2);
+    box-shadow: inset 0 1px 2px hsl(0 0% 0% / 0.15);
   }
 
   .input-field:focus {
@@ -250,7 +250,7 @@
   .topbar-blur {
     backdrop-filter: blur(20px) saturate(1.4);
     -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    background: hsl(240 6% 3% / 0.85);
+    background: hsl(240 5% 8% / 0.88);
   }
 }
 
