@@ -295,6 +295,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) syncToSupabase("offres", o, offreToRow, user.id);
   }, [user]);
 
+  const setStructures = useCallback((s: Structure[]) => {
+    setStructuresState(s);
+    if (user) syncToSupabase("structures", s, structureToRow, user.id);
+  }, [user]);
+
   const setUrssafMode = useCallback((m: "mois" | "trimestre") => {
     setUrssafModeState(m);
     if (user) supabase.from("app_settings").update({ urssaf_mode: m } as any).eq("user_id", user.id).then();
