@@ -58,6 +58,7 @@ function rowToProspect(r: any): Prospect {
     prixReel: Number(r.prix_reel) || 0, noteBilan: Number(r.note_bilan) || 0,
     noteProfil: Number(r.note_profil) || 0, bilanValidated: r.bilan_validated ?? false,
     age: r.age ?? undefined, sapEnabled: r.sap_enabled ?? false,
+    groupType: r.group_type ?? null, groupId: r.group_id ?? null, isGroupLeader: r.is_group_leader ?? false,
   };
 }
 
