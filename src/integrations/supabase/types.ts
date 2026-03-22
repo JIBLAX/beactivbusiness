@@ -277,8 +277,11 @@ export type Database = {
           contact: string | null
           created_at: string
           date: string | null
+          group_id: string | null
+          group_type: string | null
           heure: string | null
           id: string
+          is_group_leader: boolean | null
           name: string
           note_bilan: number | null
           note_profil: number | null
@@ -304,8 +307,11 @@ export type Database = {
           contact?: string | null
           created_at?: string
           date?: string | null
+          group_id?: string | null
+          group_type?: string | null
           heure?: string | null
           id: string
+          is_group_leader?: boolean | null
           name: string
           note_bilan?: number | null
           note_profil?: number | null
@@ -331,8 +337,11 @@ export type Database = {
           contact?: string | null
           created_at?: string
           date?: string | null
+          group_id?: string | null
+          group_type?: string | null
           heure?: string | null
           id?: string
+          is_group_leader?: boolean | null
           name?: string
           note_bilan?: number | null
           note_profil?: number | null
@@ -348,6 +357,63 @@ export type Database = {
           source?: string | null
           statut?: string | null
           type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      structures: {
+        Row: {
+          active: boolean | null
+          amount: number | null
+          city: string | null
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          frequency: string | null
+          id: string
+          name: string
+          notes: string | null
+          offre: string | null
+          people_count: number | null
+          phone: string | null
+          structure_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          amount?: number | null
+          city?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          frequency?: string | null
+          id: string
+          name: string
+          notes?: string | null
+          offre?: string | null
+          people_count?: number | null
+          phone?: string | null
+          structure_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          amount?: number | null
+          city?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          frequency?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          offre?: string | null
+          people_count?: number | null
+          phone?: string | null
+          structure_type?: string | null
           updated_at?: string
           user_id?: string
         }
