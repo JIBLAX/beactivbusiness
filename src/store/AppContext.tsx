@@ -17,6 +17,7 @@ interface AppState {
   portageMonths: Record<string, boolean>;
   versementsPerso: Record<string, Record<string, number | null>>;
   offres: Offre[];
+  structures: Structure[];
   urssafMode: "mois" | "trimestre";
   quarterEdits: Record<string, number>;
   incrementQuarterEdit: (quarterKey: string) => void;
@@ -29,6 +30,7 @@ interface AppState {
   setPortageMonths: (v: Record<string, boolean>) => void;
   setVersementsPerso: (v: Record<string, Record<string, number | null>>) => void;
   setOffres: (o: Offre[]) => void;
+  setStructures: (s: Structure[]) => void;
   setUrssafMode: (m: "mois" | "trimestre") => void;
   setQuarterEdits: (q: Record<string, number>) => void;
 }
