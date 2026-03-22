@@ -241,6 +241,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       setExpensesState((eRes.data ?? []).map(rowToExpense));
+      setStructuresState((stRes.data ?? []).map(rowToStructure));
 
       if (sRes.data) {
         setPortageMonthsState((sRes.data.portage_months as any) ?? {});
