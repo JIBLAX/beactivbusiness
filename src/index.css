@@ -128,8 +128,8 @@
 
   /* ── Stat Card (KPI cards, mini stat blocks) ── */
   .stat-card {
-    background: hsl(240 5% 7%);
-    border: 1px solid hsl(0 0% 100% / 0.04);
+    background: hsl(240 4% 13%);
+    border: 1px solid hsl(0 0% 100% / 0.06);
     box-shadow: var(--shadow-card);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
