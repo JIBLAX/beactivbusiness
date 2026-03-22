@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { Prospect, ActivResetClient, FinanceEntry, Expense, AppPage, Offre, INITIAL_OFFRES } from "@/data/types";
+import { Prospect, ActivResetClient, FinanceEntry, Expense, AppPage, Offre, INITIAL_OFFRES, Structure } from "@/data/types";
 import { initialProspects } from "@/data/prospects";
 import { initialActivResetClients } from "@/data/activResetClients";
 import { seedFinanceEntries } from "@/data/seedFinances";
