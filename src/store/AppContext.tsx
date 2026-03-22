@@ -201,13 +201,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadAllData = async (userId: string) => {
     setLoading(true);
     try {
-      const [pRes, arRes, fRes, eRes, oRes, sRes] = await Promise.all([
+      const [pRes, arRes, fRes, eRes, oRes, sRes, stRes] = await Promise.all([
         supabase.from("prospects").select("*").eq("user_id", userId),
         supabase.from("activ_reset_clients").select("*").eq("user_id", userId),
         supabase.from("finance_entries").select("*").eq("user_id", userId),
         supabase.from("expenses").select("*").eq("user_id", userId),
         supabase.from("offres").select("*").eq("user_id", userId),
         supabase.from("app_settings").select("*").eq("user_id", userId).maybeSingle(),
+        (supabase as any).from("structures").select("*").eq("user_id", userId),
       ]);
 
       const loadedOffres = (oRes.data && oRes.data.length > 0) ? oRes.data.map(rowToOffre) : null;
