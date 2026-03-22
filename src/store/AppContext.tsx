@@ -45,6 +45,7 @@ function prospectToRow(p: Prospect, userId: string) {
     notes: p.notes, profile: p.profile, prix_reel: p.prixReel ?? 0, note_bilan: p.noteBilan ?? 0,
     note_profil: p.noteProfil ?? 0, bilan_validated: p.bilanValidated ?? false,
     age: p.age ?? null, sap_enabled: p.sapEnabled ?? false,
+    group_type: p.groupType ?? null, group_id: p.groupId ?? null, is_group_leader: p.isGroupLeader ?? false,
   };
 }
 
