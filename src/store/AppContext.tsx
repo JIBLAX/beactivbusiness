@@ -141,6 +141,23 @@ function rowToOffre(r: any): Offre {
   };
 }
 
+function structureToRow(s: Structure, userId: string) {
+  return {
+    id: s.id, user_id: userId, name: s.name, contact_name: s.contactName, phone: s.phone,
+    email: s.email, city: s.city, structure_type: s.structureType, people_count: s.peopleCount,
+    offre: s.offre, amount: s.amount, frequency: s.frequency, notes: s.notes, active: s.active,
+  };
+}
+
+function rowToStructure(r: any): Structure {
+  return {
+    id: r.id, name: r.name, contactName: r.contact_name ?? "", phone: r.phone ?? "",
+    email: r.email ?? "", city: r.city ?? "", structureType: r.structure_type ?? "entreprise",
+    peopleCount: r.people_count ?? 1, offre: r.offre ?? "", amount: Number(r.amount) || 0,
+    frequency: r.frequency ?? "ponctuel", notes: r.notes ?? "", active: r.active ?? true,
+  };
+}
+
 async function syncToSupabase<T>(table: string, items: T[], toRow: (item: T, userId: string) => any, userId: string) {
   const client = supabase as any;
   await client.from(table).delete().eq("user_id", userId);
