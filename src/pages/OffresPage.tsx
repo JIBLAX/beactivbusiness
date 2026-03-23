@@ -25,6 +25,7 @@ const THEME_LOGOS: Record<string, string> = {
 
 export default function OffresPage() {
   const { offres, setOffres, prospects, setProspects, activResetClients, setActivResetClients, financeEntries, setFinanceEntries } = useApp();
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState(0);
   const [editName, setEditName] = useState("");
@@ -247,9 +248,17 @@ export default function OffresPage() {
           <div className="text-[8px] text-muted-foreground uppercase tracking-wider">actives</div>
         </div>
       </div>
+      {/* Search bar */}
+      <div className="mb-4">
+        <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+          placeholder="🔍 Rechercher une offre..."
+          className="w-full rounded-xl px-4 py-2.5 text-[13px] input-field" />
+      </div>
 
       {OFFRE_THEMES.map(theme => {
-        const themeOffers = offres.filter(o => (o.theme || "PROGRAMMES") === theme);
+        const allThemeOffers = offres.filter(o => (o.theme || "PROGRAMMES") === theme);
+        const sq = searchQuery.toLowerCase();
+        const themeOffers = sq ? allThemeOffers.filter(o => o.name.toLowerCase().includes(sq)) : allThemeOffers;
         if (themeOffers.length === 0) return null;
         return (
           <div key={theme} className="mb-6">

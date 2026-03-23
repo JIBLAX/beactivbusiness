@@ -39,6 +39,7 @@ const GROUP_MAX: Record<string, number> = { duo: 2, trio: 3, small_group: 6 };
 
 export default function ClientsPage() {
   const { prospects, setProspects, financeEntries, offres, structures, setStructures } = useApp();
+  const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState<"particuliers" | "structures">("particuliers");
   const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
   const [editing, setEditing] = useState(false);
@@ -61,7 +62,9 @@ export default function ClientsPage() {
 
   const [showArchived, setShowArchived] = useState(false);
   const allClients = useMemo(() => prospects.filter(p => p.closing === "OUI" && p.offre && p.offre !== "-"), [prospects]);
-  const clients = useMemo(() => allClients.filter(c => c.statut !== "ARCHIVÉ"), [allClients]);
+  const activeClients = useMemo(() => allClients.filter(c => c.statut !== "ARCHIVÉ"), [allClients]);
+  const q = searchQuery.toLowerCase();
+  const clients = useMemo(() => activeClients.filter(c => !q || c.name.toLowerCase().includes(q) || (c.offre || "").toLowerCase().includes(q) || (c.contact || "").includes(q)), [activeClients, q]);
   const archivedClients = useMemo(() => allClients.filter(c => c.statut === "ARCHIVÉ"), [allClients]);
   const getClientEntries = (name: string) => financeEntries.filter(e => e.clientName === name);
   const getClientTotal = (name: string) => getClientEntries(name).reduce((s, e) => s + e.amount, 0);
@@ -546,6 +549,13 @@ export default function ClientsPage() {
         ))}
       </div>
 
+      {/* Search bar */}
+      <div className="mb-4">
+        <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+          placeholder="🔍 Rechercher un client ou une offre..."
+          className="w-full rounded-xl px-4 py-2.5 text-[13px] input-field" />
+      </div>
+
       {/* ── GROUP SETUP MODAL ── */}
       {showGroupSetup && (
         <div className="card-elevated rounded-2xl p-4 mb-4 animate-fade-up">
@@ -770,7 +780,7 @@ export default function ClientsPage() {
       {tab === "structures" && (
         <>
           <div className="space-y-2">
-            {structures.filter(s => s.active).map(s => (
+            {structures.filter(s => s.active && (!q || s.name.toLowerCase().includes(q) || (s.city || "").toLowerCase().includes(q) || (s.offre || "").toLowerCase().includes(q))).map(s => (
               <button key={s.id} onClick={() => setSelectedStructure(s)}
                 className="w-full text-left card-elevated rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
