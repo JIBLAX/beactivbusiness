@@ -248,9 +248,17 @@ export default function OffresPage() {
           <div className="text-[8px] text-muted-foreground uppercase tracking-wider">actives</div>
         </div>
       </div>
+      {/* Search bar */}
+      <div className="mb-4">
+        <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+          placeholder="🔍 Rechercher une offre..."
+          className="w-full rounded-xl px-4 py-2.5 text-[13px] input-field" />
+      </div>
 
       {OFFRE_THEMES.map(theme => {
-        const themeOffers = offres.filter(o => (o.theme || "PROGRAMMES") === theme);
+        const allThemeOffers = offres.filter(o => (o.theme || "PROGRAMMES") === theme);
+        const sq = searchQuery.toLowerCase();
+        const themeOffers = sq ? allThemeOffers.filter(o => o.name.toLowerCase().includes(sq)) : allThemeOffers;
         if (themeOffers.length === 0) return null;
         return (
           <div key={theme} className="mb-6">
