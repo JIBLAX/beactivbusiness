@@ -62,7 +62,9 @@ export default function ClientsPage() {
 
   const [showArchived, setShowArchived] = useState(false);
   const allClients = useMemo(() => prospects.filter(p => p.closing === "OUI" && p.offre && p.offre !== "-"), [prospects]);
-  const clients = useMemo(() => allClients.filter(c => c.statut !== "ARCHIVÉ"), [allClients]);
+  const activeClients = useMemo(() => allClients.filter(c => c.statut !== "ARCHIVÉ"), [allClients]);
+  const q = searchQuery.toLowerCase();
+  const clients = useMemo(() => activeClients.filter(c => !q || c.name.toLowerCase().includes(q) || (c.offre || "").toLowerCase().includes(q) || (c.contact || "").includes(q)), [activeClients, q]);
   const archivedClients = useMemo(() => allClients.filter(c => c.statut === "ARCHIVÉ"), [allClients]);
   const getClientEntries = (name: string) => financeEntries.filter(e => e.clientName === name);
   const getClientTotal = (name: string) => getClientEntries(name).reduce((s, e) => s + e.amount, 0);
