@@ -348,11 +348,35 @@ export default function ClientsPage() {
         )}
 
         {selectedClient.notes && (
-          <div className="card-elevated rounded-2xl p-4">
+          <div className="card-elevated rounded-2xl p-4 mb-4">
             <div className="section-label mb-2">Notes</div>
             <div className="text-[13px] text-muted-foreground leading-relaxed">{selectedClient.notes}</div>
           </div>
         )}
+
+        {/* Archive / Réactiver */}
+        <div className="card-elevated rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <div className="text-[12px] font-semibold text-foreground">
+              {selectedClient.statut === "ARCHIVÉ" ? "Client archivé" : "Archiver ce client"}
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              {selectedClient.statut === "ARCHIVÉ" ? "Ce client est masqué de la liste active" : "Masquer de la liste active"}
+            </div>
+          </div>
+          <button onClick={() => {
+            const newStatut = selectedClient.statut === "ARCHIVÉ" ? "CLIENT" : "ARCHIVÉ";
+            setProspects(prospects.map(p => p.id === selectedClient.id ? { ...p, statut: newStatut } : p));
+            setSelectedClient({ ...selectedClient, statut: newStatut });
+          }}
+            className="text-[11px] px-4 py-2 rounded-xl font-semibold transition-all"
+            style={selectedClient.statut === "ARCHIVÉ"
+              ? { background: "hsl(160 60% 45% / 0.15)", color: "hsl(160 60% 50%)" }
+              : { background: "hsl(0 60% 40% / 0.15)", color: "hsl(0 60% 60%)" }
+            }>
+            {selectedClient.statut === "ARCHIVÉ" ? "✓ Réactiver" : "Archiver"}
+          </button>
+        </div>
       </div>
     );
   }
