@@ -27,6 +27,8 @@ const TAUX_URSSAF = 0.261;
 
 export default function StatsPage() {
   const { financeEntries, expenses, prospects, offres, portageMonths, urssafMode, setUrssafMode } = useApp();
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const [showWrapped, setShowWrapped] = useState(false);
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth();
 
