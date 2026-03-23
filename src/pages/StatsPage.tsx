@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/store/AppContext";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import AnnualWrapped from "@/components/stats/AnnualWrapped";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 const QUARTERS = [
