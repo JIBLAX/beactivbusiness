@@ -25,6 +25,7 @@ const THEME_LOGOS: Record<string, string> = {
 
 export default function OffresPage() {
   const { offres, setOffres, prospects, setProspects, activResetClients, setActivResetClients, financeEntries, setFinanceEntries } = useApp();
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState(0);
   const [editName, setEditName] = useState("");

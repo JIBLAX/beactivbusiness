@@ -39,6 +39,7 @@ const GROUP_MAX: Record<string, number> = { duo: 2, trio: 3, small_group: 6 };
 
 export default function ClientsPage() {
   const { prospects, setProspects, financeEntries, offres, structures, setStructures } = useApp();
+  const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState<"particuliers" | "structures">("particuliers");
   const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
   const [editing, setEditing] = useState(false);
