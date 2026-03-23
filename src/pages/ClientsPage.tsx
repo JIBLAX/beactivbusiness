@@ -727,6 +727,39 @@ export default function ClientsPage() {
               <div className="text-sm">Aucun client pour l'instant</div>
             </div>
           )}
+
+          {/* Archived clients */}
+          {archivedClients.length > 0 && (
+            <div className="mt-6">
+              <button onClick={() => setShowArchived(!showArchived)}
+                className="flex items-center gap-2 mb-3 w-full">
+                <span className="section-label">Archivés ({archivedClients.length})</span>
+                <span className={`text-muted-foreground text-xs transition-transform ${showArchived ? "rotate-180" : ""}`}>▾</span>
+              </button>
+              {showArchived && (
+                <div className="space-y-2 opacity-50">
+                  {archivedClients.map(c => (
+                    <div key={c.id} className="card-elevated rounded-2xl p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+                          style={{ background: c.sex === "F" ? "hsl(330 60% 50% / 0.12)" : "hsl(210 60% 50% / 0.12)", color: c.sex === "F" ? "hsl(330 60% 60%)" : "hsl(210 60% 60%)" }}>
+                          {c.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="text-[13px] font-medium text-foreground">{c.name}</div>
+                          <div className="text-[10px] text-muted-foreground">{getClientTotal(c.name)}€ total</div>
+                        </div>
+                      </div>
+                      <button onClick={() => setProspects(prospects.map(p => p.id === c.id ? { ...p, statut: "CLIENT" } : p))}
+                        className="text-[10px] px-3 py-1.5 rounded-lg" style={{ background: "hsl(160 60% 45% / 0.15)", color: "hsl(160 60% 50%)" }}>
+                        Réactiver
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 

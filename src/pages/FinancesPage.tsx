@@ -345,7 +345,9 @@ export default function FinancesPage() {
             <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: "hsl(217 70% 60% / 0.1)" }}>📋</div>
             <div>
               <div className="text-[13px] font-semibold text-foreground">NOVA SAP</div>
-              <div className="text-[10px] text-muted-foreground">Déclarations SAP</div>
+              <div className="text-[10px] text-muted-foreground">
+                {sapClientNames.size} client{sapClientNames.size > 1 ? "s" : ""} SAP · Déclarations
+              </div>
             </div>
           </div>
           <span className={`text-muted-foreground text-xs transition-transform ${showSapTable ? "rotate-180" : ""}`}>▾</span>
