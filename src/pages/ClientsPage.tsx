@@ -711,11 +711,9 @@ export default function ClientsPage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{c.offre}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="value-lg text-[14px] text-success">{getClientTotal(c.name).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
-                    <div className="text-[10px] text-muted-foreground">{infoLabel}</div>
                   </div>
                   <span className="text-muted-foreground text-xs">›</span>
                 </button>
