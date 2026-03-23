@@ -549,6 +549,13 @@ export default function ClientsPage() {
         ))}
       </div>
 
+      {/* Search bar */}
+      <div className="mb-4">
+        <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+          placeholder="🔍 Rechercher un client ou une offre..."
+          className="w-full rounded-xl px-4 py-2.5 text-[13px] input-field" />
+      </div>
+
       {/* ── GROUP SETUP MODAL ── */}
       {showGroupSetup && (
         <div className="card-elevated rounded-2xl p-4 mb-4 animate-fade-up">
