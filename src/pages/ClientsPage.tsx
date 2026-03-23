@@ -59,7 +59,10 @@ export default function ClientsPage() {
   const [groupLeader, setGroupLeader] = useState<string>("");
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
 
-  const clients = useMemo(() => prospects.filter(p => p.closing === "OUI" && p.offre && p.offre !== "-"), [prospects]);
+  const [showArchived, setShowArchived] = useState(false);
+  const allClients = useMemo(() => prospects.filter(p => p.closing === "OUI" && p.offre && p.offre !== "-"), [prospects]);
+  const clients = useMemo(() => allClients.filter(c => c.statut !== "ARCHIVÉ"), [allClients]);
+  const archivedClients = useMemo(() => allClients.filter(c => c.statut === "ARCHIVÉ"), [allClients]);
   const getClientEntries = (name: string) => financeEntries.filter(e => e.clientName === name);
   const getClientTotal = (name: string) => getClientEntries(name).reduce((s, e) => s + e.amount, 0);
   const getClientSapHours = (name: string) => getClientEntries(name).reduce((s, e) => s + (e.sapHours || 0), 0);
@@ -348,11 +351,35 @@ export default function ClientsPage() {
         )}
 
         {selectedClient.notes && (
-          <div className="card-elevated rounded-2xl p-4">
+          <div className="card-elevated rounded-2xl p-4 mb-4">
             <div className="section-label mb-2">Notes</div>
             <div className="text-[13px] text-muted-foreground leading-relaxed">{selectedClient.notes}</div>
           </div>
         )}
+
+        {/* Archive / Réactiver */}
+        <div className="card-elevated rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <div className="text-[12px] font-semibold text-foreground">
+              {selectedClient.statut === "ARCHIVÉ" ? "Client archivé" : "Archiver ce client"}
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              {selectedClient.statut === "ARCHIVÉ" ? "Ce client est masqué de la liste active" : "Masquer de la liste active"}
+            </div>
+          </div>
+          <button onClick={() => {
+            const newStatut = selectedClient.statut === "ARCHIVÉ" ? "CLIENT" : "ARCHIVÉ";
+            setProspects(prospects.map(p => p.id === selectedClient.id ? { ...p, statut: newStatut } : p));
+            setSelectedClient({ ...selectedClient, statut: newStatut });
+          }}
+            className="text-[11px] px-4 py-2 rounded-xl font-semibold transition-all"
+            style={selectedClient.statut === "ARCHIVÉ"
+              ? { background: "hsl(160 60% 45% / 0.15)", color: "hsl(160 60% 50%)" }
+              : { background: "hsl(0 60% 40% / 0.15)", color: "hsl(0 60% 60%)" }
+            }>
+            {selectedClient.statut === "ARCHIVÉ" ? "✓ Réactiver" : "Archiver"}
+          </button>
+        </div>
       </div>
     );
   }
@@ -687,11 +714,9 @@ export default function ClientsPage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{c.offre}</div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="value-lg text-[14px] text-success">{getClientTotal(c.name).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
-                    <div className="text-[10px] text-muted-foreground">{infoLabel}</div>
                   </div>
                   <span className="text-muted-foreground text-xs">›</span>
                 </button>
@@ -703,6 +728,39 @@ export default function ClientsPage() {
             <div className="text-center py-16 text-muted-foreground">
               <div className="text-4xl mb-3">👤</div>
               <div className="text-sm">Aucun client pour l'instant</div>
+            </div>
+          )}
+
+          {/* Archived clients */}
+          {archivedClients.length > 0 && (
+            <div className="mt-6">
+              <button onClick={() => setShowArchived(!showArchived)}
+                className="flex items-center gap-2 mb-3 w-full">
+                <span className="section-label">Archivés ({archivedClients.length})</span>
+                <span className={`text-muted-foreground text-xs transition-transform ${showArchived ? "rotate-180" : ""}`}>▾</span>
+              </button>
+              {showArchived && (
+                <div className="space-y-2 opacity-50">
+                  {archivedClients.map(c => (
+                    <div key={c.id} className="card-elevated rounded-2xl p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+                          style={{ background: c.sex === "F" ? "hsl(330 60% 50% / 0.12)" : "hsl(210 60% 50% / 0.12)", color: c.sex === "F" ? "hsl(330 60% 60%)" : "hsl(210 60% 60%)" }}>
+                          {c.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="text-[13px] font-medium text-foreground">{c.name}</div>
+                          <div className="text-[10px] text-muted-foreground">{getClientTotal(c.name)}€ total</div>
+                        </div>
+                      </div>
+                      <button onClick={() => setProspects(prospects.map(p => p.id === c.id ? { ...p, statut: "CLIENT" } : p))}
+                        className="text-[10px] px-3 py-1.5 rounded-lg" style={{ background: "hsl(160 60% 45% / 0.15)", color: "hsl(160 60% 50%)" }}>
+                        Réactiver
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </>
