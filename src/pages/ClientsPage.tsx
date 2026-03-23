@@ -780,7 +780,7 @@ export default function ClientsPage() {
       {tab === "structures" && (
         <>
           <div className="space-y-2">
-            {structures.filter(s => s.active).map(s => (
+            {structures.filter(s => s.active && (!q || s.name.toLowerCase().includes(q) || (s.city || "").toLowerCase().includes(q) || (s.offre || "").toLowerCase().includes(q))).map(s => (
               <button key={s.id} onClick={() => setSelectedStructure(s)}
                 className="w-full text-left card-elevated rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
