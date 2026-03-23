@@ -35,8 +35,20 @@ export default function StatsPage() {
   const yearEntries = useMemo(() => financeEntries.filter(e => e.month.startsWith(String(currentYear))), [financeEntries, currentYear]);
   const yearExpenses = useMemo(() => expenses.filter(e => e.month.startsWith(String(currentYear))), [expenses, currentYear]);
 
-  const yearlyCA = yearEntries.reduce((s, e) => s + e.amount, 0);
-  const yearlyExpenses = yearExpenses.reduce((s, e) => s + e.amount, 0);
+  // Filtered entries for month filter
+  const filteredEntries = useMemo(() => {
+    if (selectedMonth === null) return yearEntries;
+    const mk = `${currentYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
+    return yearEntries.filter(e => e.month === mk);
+  }, [yearEntries, selectedMonth, currentYear]);
+  const filteredExpenses = useMemo(() => {
+    if (selectedMonth === null) return yearExpenses;
+    const mk = `${currentYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
+    return yearExpenses.filter(e => e.month === mk);
+  }, [yearExpenses, selectedMonth, currentYear]);
+
+  const yearlyCA = filteredEntries.reduce((s, e) => s + e.amount, 0);
+  const yearlyExpenses = filteredExpenses.reduce((s, e) => s + e.amount, 0);
 
   // Micro CA (excluding portage-eligible entries when portage is active for that month)
   const getMicroCA = (entries: typeof financeEntries) => {
