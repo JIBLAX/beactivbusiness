@@ -59,7 +59,10 @@ export default function ClientsPage() {
   const [groupLeader, setGroupLeader] = useState<string>("");
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
 
-  const clients = useMemo(() => prospects.filter(p => p.closing === "OUI" && p.offre && p.offre !== "-"), [prospects]);
+  const [showArchived, setShowArchived] = useState(false);
+  const allClients = useMemo(() => prospects.filter(p => p.closing === "OUI" && p.offre && p.offre !== "-"), [prospects]);
+  const clients = useMemo(() => allClients.filter(c => c.statut !== "ARCHIVÉ"), [allClients]);
+  const archivedClients = useMemo(() => allClients.filter(c => c.statut === "ARCHIVÉ"), [allClients]);
   const getClientEntries = (name: string) => financeEntries.filter(e => e.clientName === name);
   const getClientTotal = (name: string) => getClientEntries(name).reduce((s, e) => s + e.amount, 0);
   const getClientSapHours = (name: string) => getClientEntries(name).reduce((s, e) => s + (e.sapHours || 0), 0);
