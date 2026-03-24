@@ -93,16 +93,17 @@ export default function OffresPage() {
   const toggleActive = (id: string) => setOffres(offres.map(o => o.id === id ? { ...o, active: !o.active } : o));
   const deleteOffre = (id: string) => { setOffres(offres.filter(o => o.id !== id)); setConfirmDeleteId(null); };
 
-  const addOffre = () => {
+  const addOffre = (asDraft = false) => {
     if (!newName) return;
     const today = new Date().toISOString().split("T")[0];
     const offre: Offre = {
-      id: "o" + Date.now(), name: newName.toUpperCase(), price: newPrice, active: true,
+      id: "o" + Date.now(), name: newName.toUpperCase(), price: newPrice, active: !asDraft,
       priceHistory: [{ price: newPrice, date: today }],
       duration: newIsAlaCarte ? undefined : newDuration,
       isAlaCarte: newIsAlaCarte, unitPrice: newUnitPrice, minQuantity: newMinQty,
       theme: newTheme, tvaEnabled: newTva, portageEligible: newPortage,
       maxInstallments: newMaxInstallments,
+      isDraft: asDraft,
     };
     setOffres([...offres, offre]);
     setShowAdd(false);
