@@ -219,6 +219,7 @@ export type Database = {
           duration: Json | null
           id: string
           is_ala_carte: boolean | null
+          is_draft: boolean | null
           max_installments: number | null
           min_quantity: number | null
           name: string
@@ -237,6 +238,7 @@ export type Database = {
           duration?: Json | null
           id: string
           is_ala_carte?: boolean | null
+          is_draft?: boolean | null
           max_installments?: number | null
           min_quantity?: number | null
           name: string
@@ -255,6 +257,7 @@ export type Database = {
           duration?: Json | null
           id?: string
           is_ala_carte?: boolean | null
+          is_draft?: boolean | null
           max_installments?: number | null
           min_quantity?: number | null
           name?: string
