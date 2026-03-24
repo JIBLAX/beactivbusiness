@@ -227,6 +227,12 @@ export default function OffresPage() {
               </span>
             </div>
             <div className="flex items-center gap-3">
+              {o.isDraft && (
+                <button onClick={() => setOffres(offres.map(x => x.id === o.id ? { ...x, isDraft: false, active: true } : x))}
+                  className="badge-pill text-[10px] cursor-pointer" style={{ background: "hsl(152 55% 45% / 0.15)", color: "hsl(152 55% 55%)" }}>
+                  ✓ Valider
+                </button>
+              )}
               <button onClick={() => startEdit(o)} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">Modifier</button>
               {confirmDeleteId === o.id ? (
                 <div className="flex gap-1 items-center">
