@@ -195,8 +195,12 @@ export default function OffresPage() {
       ) : (
         <>
           <div className="flex items-start justify-between mb-2">
-            <div className="flex-1 pr-3">
-              <div className="text-[14px] font-semibold text-foreground leading-tight">{o.name}</div>
+              <div className="flex items-center gap-2 flex-1 pr-3">
+                {o.isDraft && (
+                  <span className="badge-pill text-[9px] flex-shrink-0" style={{ background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 60%)" }}>BROUILLON</span>
+                )}
+                <div className="text-[14px] font-semibold text-foreground leading-tight">{o.name}</div>
+              </div>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {o.duration ? (
                   <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 70%)" }}>
