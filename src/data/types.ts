@@ -224,7 +224,8 @@ export interface Offre {
   theme?: OffreTheme;
   tvaEnabled?: boolean;
   portageEligible?: boolean;
-  maxInstallments?: number; // ex: 3 = payable en 1, 2 ou 3 fois
+  maxInstallments?: number;
+  isDraft?: boolean;
 }
 
 export const INITIAL_OFFRES: Offre[] = [
