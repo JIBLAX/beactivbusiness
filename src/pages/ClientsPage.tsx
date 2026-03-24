@@ -693,9 +693,9 @@ export default function ClientsPage() {
         <>
           <div className="grid grid-cols-3 gap-2 mb-5">
             {[
-              { label: "Total", value: clients.length, color: "text-foreground" },
-              { label: "Femmes", value: clients.filter(c => c.sex === "F").length, color: "text-pink-400" },
-              { label: "Hommes", value: clients.filter(c => c.sex === "H").length, color: "text-blue-400" },
+              { label: "Total", value: allClients.length, color: "text-foreground" },
+              { label: "Actifs", value: activeClients.length, color: "text-success" },
+              { label: "Inactifs", value: archivedClients.length, color: "text-muted-foreground" },
             ].map(k => (
               <div key={k.label} className="stat-card rounded-2xl p-3 text-center">
                 <div className={`value-lg text-[24px] ${k.color}`}>{k.value}</div>

@@ -93,16 +93,17 @@ export default function OffresPage() {
   const toggleActive = (id: string) => setOffres(offres.map(o => o.id === id ? { ...o, active: !o.active } : o));
   const deleteOffre = (id: string) => { setOffres(offres.filter(o => o.id !== id)); setConfirmDeleteId(null); };
 
-  const addOffre = () => {
+  const addOffre = (asDraft = false) => {
     if (!newName) return;
     const today = new Date().toISOString().split("T")[0];
     const offre: Offre = {
-      id: "o" + Date.now(), name: newName.toUpperCase(), price: newPrice, active: true,
+      id: "o" + Date.now(), name: newName.toUpperCase(), price: newPrice, active: !asDraft,
       priceHistory: [{ price: newPrice, date: today }],
       duration: newIsAlaCarte ? undefined : newDuration,
       isAlaCarte: newIsAlaCarte, unitPrice: newUnitPrice, minQuantity: newMinQty,
       theme: newTheme, tvaEnabled: newTva, portageEligible: newPortage,
       maxInstallments: newMaxInstallments,
+      isDraft: asDraft,
     };
     setOffres([...offres, offre]);
     setShowAdd(false);
@@ -123,7 +124,8 @@ export default function OffresPage() {
   );
 
   const renderOffreCard = (o: Offre) => (
-    <div key={o.id} className={`card-elevated rounded-2xl p-4 transition-all ${!o.active ? "opacity-35" : ""}`}>
+    <div key={o.id} className={`card-elevated rounded-2xl p-4 transition-all ${!o.active ? "opacity-35" : ""} ${o.isDraft ? "border-l-4" : ""}`}
+      style={o.isDraft ? { borderLeftColor: "hsl(38 92% 55%)" } : {}}>
       {editingId === o.id ? (
         <div className="space-y-3">
           <input value={editName} onChange={e => setEditName(e.target.value)}
@@ -192,9 +194,14 @@ export default function OffresPage() {
         </div>
       ) : (
         <>
-          <div className="flex items-start justify-between mb-2">
+           <div className="flex items-start justify-between mb-2">
             <div className="flex-1 pr-3">
-              <div className="text-[14px] font-semibold text-foreground leading-tight">{o.name}</div>
+              <div className="flex items-center gap-2">
+                {o.isDraft && (
+                  <span className="badge-pill text-[9px] flex-shrink-0" style={{ background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 60%)" }}>BROUILLON</span>
+                )}
+                <div className="text-[14px] font-semibold text-foreground leading-tight">{o.name}</div>
+              </div>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {o.duration ? (
                   <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 70%)" }}>
@@ -220,6 +227,12 @@ export default function OffresPage() {
               </span>
             </div>
             <div className="flex items-center gap-3">
+              {o.isDraft && (
+                <button onClick={() => setOffres(offres.map(x => x.id === o.id ? { ...x, isDraft: false, active: true } : x))}
+                  className="badge-pill text-[10px] cursor-pointer" style={{ background: "hsl(152 55% 45% / 0.15)", color: "hsl(152 55% 55%)" }}>
+                  ✓ Valider
+                </button>
+              )}
               <button onClick={() => startEdit(o)} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">Modifier</button>
               {confirmDeleteId === o.id ? (
                 <div className="flex gap-1 items-center">
@@ -360,9 +373,15 @@ export default function OffresPage() {
                     min={2} max={12} className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
                 </div>
               )}
-              <button onClick={addOffre} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
-                Créer l'offre
-              </button>
+              <div className="flex gap-2 mt-2">
+                <button onClick={() => addOffre(false)} className="flex-1 py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary">
+                  ✓ Créer l'offre
+                </button>
+                <button onClick={() => addOffre(true)} className="px-4 py-3.5 rounded-2xl font-semibold text-sm text-muted-foreground"
+                  style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 60%)" }}>
+                  📝 Brouillon
+                </button>
+              </div>
             </div>
           </div>
         </div>
