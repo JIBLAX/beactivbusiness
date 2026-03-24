@@ -139,6 +139,7 @@ function rowToOffre(r: any): Offre {
     tvaEnabled: r.tva_enabled ?? false,
     portageEligible: r.portage_eligible ?? false,
     maxInstallments: r.max_installments ?? undefined,
+    isDraft: r.is_draft ?? false,
   };
 }
 
