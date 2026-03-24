@@ -51,7 +51,7 @@ const PRORATA_BUREAU = 13 / 43;
 
 export default function FinancesPage() {
   const { financeEntries, expenses, portageMonths, setPortageMonths, versementsPerso, setVersementsPerso, offres, prospects, urssafMode, quarterEdits } = useApp();
-  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  const selectedMonth = getCurrentMonth();
   const [showSapTable, setShowSapTable] = useState(false);
   const [showGestionDetail, setShowGestionDetail] = useState(false);
   const [showTva, setShowTva] = useState(false);
@@ -65,7 +65,6 @@ export default function FinancesPage() {
   const editState = getMonthEditState(selectedMonth, quarterEdits);
   const editable = editState.editable;
   const sealedLabel = getSealedLabel(editState);
-  const allMonths = useMemo(() => getAllMonths(), []);
 
   const sapClientNames = useMemo(() => new Set(prospects.filter(p => p.sapEnabled).map(p => p.name)), [prospects]);
 
@@ -154,16 +153,16 @@ export default function FinancesPage() {
 
   return (
     <div className="px-4 pt-4 pb-24">
-      {/* Month selector */}
+      {/* Month header */}
       <div className="flex items-center gap-2 mb-5">
-        <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}
-          className="flex-1 rounded-2xl px-4 py-3 text-sm font-medium input-field appearance-none">
-          {allMonths.map(m => <option key={m} value={m}>{formatMonth(m)}</option>)}
-        </select>
+        <div className="flex-1 rounded-2xl px-4 py-3 text-sm font-semibold text-foreground"
+          style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+          {formatMonth(selectedMonth)}
+        </div>
         {editState.sealed && (
-          <div className="badge-pill" style={{ 
-            background: editState.editsRemaining > 0 ? "hsl(38 92% 55% / 0.1)" : "hsl(0 62% 50% / 0.1)", 
-            color: editState.editsRemaining > 0 ? "hsl(38 92% 55%)" : "hsl(0 62% 60%)" 
+          <div className="badge-pill" style={{
+            background: editState.editsRemaining > 0 ? "hsl(38 92% 55% / 0.1)" : "hsl(0 62% 50% / 0.1)",
+            color: editState.editsRemaining > 0 ? "hsl(38 92% 55%)" : "hsl(0 62% 60%)"
           }}>{sealedLabel}</div>
         )}
       </div>

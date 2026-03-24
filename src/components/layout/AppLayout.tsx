@@ -58,9 +58,9 @@ export default function AppLayout() {
 
         {/* CA badge */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="rounded-2xl px-3.5 py-1.5" 
-            style={{ 
-              background: "hsl(0 0% 100% / 0.03)", 
+          <button onClick={() => setCurrentPage("stats")} className="rounded-2xl px-3.5 py-1.5 text-left transition-opacity active:opacity-70"
+            style={{
+              background: "hsl(0 0% 100% / 0.03)",
               border: "1px solid hsl(0 0% 100% / 0.05)",
               boxShadow: "inset 0 1px 0 hsl(0 0% 100% / 0.03)"
             }}>
@@ -70,7 +70,7 @@ export default function AppLayout() {
             <div className="text-[8px] text-muted-foreground font-medium mt-0.5 text-center tracking-widest">
               CA {currentYear}
             </div>
-          </div>
+          </button>
 
           {/* Menu button */}
           <button onClick={() => setMenuOpen(true)}

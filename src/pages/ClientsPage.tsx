@@ -310,6 +310,12 @@ export default function ClientsPage() {
                   <div className="text-[12px] font-medium text-foreground">{sapHours}h — {sapTotal}€</div>
                 </div>
               )}
+              {selectedClient.profile && (
+                <div className="stat-card rounded-xl p-3">
+                  <div className="text-[10px] text-muted-foreground">Profil bilan</div>
+                  <div className="text-[12px] font-semibold text-foreground">{selectedClient.profile}</div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -718,6 +724,9 @@ export default function ClientsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[14px] font-semibold text-foreground">{c.name}</span>
+                      {c.id?.startsWith("bcrm_") && (
+                        <span className="badge-pill text-[8px] py-0.5 px-1.5" style={{ background: "hsl(200 70% 40% / 0.2)", color: "hsl(200 70% 60%)" }}>CRM</span>
+                      )}
                       {c.groupType && (
                         <span className="badge-pill text-[8px] py-0.5 px-1.5" style={{ background: "hsl(270 50% 40% / 0.2)", color: "hsl(270 50% 65%)" }}>
                           {GROUP_LABELS[c.groupType]}{c.isGroupLeader ? " 👑" : ""}
