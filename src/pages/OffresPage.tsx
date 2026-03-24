@@ -124,7 +124,8 @@ export default function OffresPage() {
   );
 
   const renderOffreCard = (o: Offre) => (
-    <div key={o.id} className={`card-elevated rounded-2xl p-4 transition-all ${!o.active ? "opacity-35" : ""}`}>
+    <div key={o.id} className={`card-elevated rounded-2xl p-4 transition-all ${!o.active ? "opacity-35" : ""} ${o.isDraft ? "border-l-4" : ""}`}
+      style={o.isDraft ? { borderLeftColor: "hsl(38 92% 55%)" } : {}}>
       {editingId === o.id ? (
         <div className="space-y-3">
           <input value={editName} onChange={e => setEditName(e.target.value)}
