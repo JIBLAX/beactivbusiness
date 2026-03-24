@@ -40,9 +40,9 @@ function getAllMonths(): string[] {
 }
 
 const THEME_LOGOS: Record<string, string> = {
-  "COURS COLLECTIFS": logoCardioMouv,
-  "JM COACHING": logoJM,
-  "PROGRAMMES": logoBeActiv,
+  "COLLECTIF": logoCardioMouv,
+  "ACTION": logoJM,
+  "TRANSFORMATION": logoBeActiv,
 };
 
 export default function ActivitesPage() {
@@ -141,8 +141,8 @@ export default function ActivitesPage() {
   };
 
   const openAddByTheme = (theme: OffreTheme) => {
-    if (theme === "COURS COLLECTIFS") {
-      const coursOffres = activeOffres.filter(o => o.theme === "COURS COLLECTIFS");
+    if (theme === "COLLECTIF") {
+      const coursOffres = activeOffres.filter(o => o.theme === "COLLECTIF");
       const initial: Record<string, number> = {};
       coursOffres.forEach(o => initial[o.name] = 0);
       setQuickCoursData(initial);
@@ -602,7 +602,7 @@ export default function ActivitesPage() {
                 {[
                   { label: "💰 Entrée", action: () => { setShowFabMenu(false); resetEntryForm(); setShowAddEntry(true); } },
                   { label: "💳 Dépense", action: () => { setShowFabMenu(false); setShowAddExpense(true); } },
-                  { label: "🏃 Cours collectifs", action: () => { setShowFabMenu(false); openAddByTheme("COURS COLLECTIFS"); } },
+                  { label: "🏃 Cours collectifs", action: () => { setShowFabMenu(false); openAddByTheme("COLLECTIF"); } },
                 ].map(item => (
                   <button key={item.label} onClick={item.action}
                     className="flex items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-semibold text-foreground"
@@ -886,7 +886,7 @@ export default function ActivitesPage() {
             </div>
             <div className="px-5 space-y-3">
               <p className="text-[11px] text-muted-foreground">Entrez le nombre vendu pour chaque offre ce mois</p>
-              {activeOffres.filter(o => o.theme === "COURS COLLECTIFS").map(o => (
+              {activeOffres.filter(o => o.theme === "COLLECTIF").map(o => (
                 <div key={o.id} className="rounded-2xl p-4 flex items-center justify-between" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
                   <div className="flex-1 min-w-0 mr-3">
                     <div className="text-[13px] font-semibold text-foreground">{o.name}</div>
@@ -952,7 +952,7 @@ export default function ActivitesPage() {
                 <select value={extraSessionsOffre} onChange={e => setExtraSessionsOffre(e.target.value)}
                   className="w-full rounded-xl px-3 py-3 text-sm input-field">
                   <option value="">— Sélectionner —</option>
-                  {activeOffres.filter(o => o.theme === "JM COACHING" && o.unitPrice && o.minQuantity).map(o => (
+                  {activeOffres.filter(o => o.theme === "ACTION" && o.unitPrice && o.minQuantity).map(o => (
                     <option key={o.id} value={o.name}>{o.name} — {o.unitPrice}€/séance</option>
                   ))}
                 </select>

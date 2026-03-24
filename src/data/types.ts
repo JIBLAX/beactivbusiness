@@ -202,9 +202,9 @@ export const SOURCES = [
 
 export const OBJECTIFS = ["FATLOSS", "SCULPT", "HEALTH", "STRONG", "AUTRE"];
 
-export type OffreTheme = "COURS COLLECTIFS" | "JM COACHING" | "PROGRAMMES";
+export type OffreTheme = "COLLECTIF" | "ACTION" | "TRANSFORMATION";
 
-export const OFFRE_THEMES: OffreTheme[] = ["COURS COLLECTIFS", "JM COACHING", "PROGRAMMES"];
+export const OFFRE_THEMES: OffreTheme[] = ["COLLECTIF", "ACTION", "TRANSFORMATION"];
 
 export interface OffreDuration {
   value: number;
@@ -229,16 +229,16 @@ export interface Offre {
 }
 
 export const INITIAL_OFFRES: Offre[] = [
-  { id: "o1", name: "ACTIV RESET ONLINE", price: 525, active: true, priceHistory: [{ price: 525, date: "2026-01-01" }], duration: { value: 12, unit: "semaines" }, theme: "PROGRAMMES" },
-  { id: "o2", name: "ACTIV RESET HYBRIDE", price: 1350, active: true, priceHistory: [{ price: 1350, date: "2026-01-01" }], duration: { value: 12, unit: "semaines" }, theme: "PROGRAMMES" },
-  { id: "o3", name: "ACTIV PROGRAM ESSENTIEL", price: 160, active: true, priceHistory: [{ price: 160, date: "2026-01-01" }], duration: { value: 8, unit: "semaines" }, theme: "PROGRAMMES" },
-  { id: "o4", name: "JM PASS", price: 240, active: true, priceHistory: [{ price: 240, date: "2026-01-01" }], duration: { value: 1, unit: "mois" }, unitPrice: 60, minQuantity: 4, theme: "JM COACHING" },
-  { id: "o5", name: "JM PASS COACHING", price: 250, active: true, priceHistory: [{ price: 250, date: "2026-01-01" }], duration: { value: 1, unit: "mois" }, unitPrice: 62.5, minQuantity: 4, theme: "JM COACHING" },
-  { id: "o6", name: "JM PASS COACHING +", price: 240, active: true, priceHistory: [{ price: 240, date: "2026-01-01" }], duration: { value: 3, unit: "mois" }, unitPrice: 60, minQuantity: 4, theme: "JM COACHING" },
-  { id: "o7", name: "COACHING À LA CARTE", price: 65, active: true, priceHistory: [{ price: 65, date: "2026-01-01" }], isAlaCarte: true, theme: "JM COACHING" },
-  { id: "o8", name: "CARDIO MOUV STRUCTURE", price: 115, active: true, priceHistory: [{ price: 115, date: "2026-01-01" }], duration: { value: 1, unit: "mois" }, theme: "COURS COLLECTIFS" },
-  { id: "o9", name: "CARDIO MOUV ONE SHOT", price: 15, active: true, priceHistory: [{ price: 15, date: "2026-01-01" }], isAlaCarte: true, theme: "COURS COLLECTIFS" },
-  { id: "o10", name: "CARDIO MOUV PASS 4", price: 45, active: true, priceHistory: [{ price: 45, date: "2026-01-01" }], duration: { value: 4, unit: "semaines" }, theme: "COURS COLLECTIFS" },
-  { id: "o11", name: "CARDIO MOUV PACK 10", price: 130, active: true, priceHistory: [{ price: 130, date: "2026-01-01" }], duration: { value: 5, unit: "mois" }, theme: "COURS COLLECTIFS" },
-  { id: "o12", name: "ACTIV TRAINING ONE SHOT", price: 10, active: true, priceHistory: [{ price: 10, date: "2026-01-01" }], isAlaCarte: true, theme: "COURS COLLECTIFS" },
+  { id: "o1", name: "ACTIV RESET ONLINE", price: 525, active: true, priceHistory: [{ price: 525, date: "2026-01-01" }], duration: { value: 12, unit: "semaines" }, theme: "TRANSFORMATION" },
+  { id: "o2", name: "ACTIV RESET HYBRIDE", price: 1350, active: true, priceHistory: [{ price: 1350, date: "2026-01-01" }], duration: { value: 12, unit: "semaines" }, theme: "TRANSFORMATION" },
+  { id: "o3", name: "ACTIV PROGRAM ESSENTIEL", price: 160, active: true, priceHistory: [{ price: 160, date: "2026-01-01" }], duration: { value: 8, unit: "semaines" }, theme: "TRANSFORMATION" },
+  { id: "o4", name: "JM PASS", price: 240, active: true, priceHistory: [{ price: 240, date: "2026-01-01" }], duration: { value: 1, unit: "mois" }, unitPrice: 60, minQuantity: 4, theme: "ACTION" },
+  { id: "o5", name: "JM PASS COACHING", price: 250, active: true, priceHistory: [{ price: 250, date: "2026-01-01" }], duration: { value: 1, unit: "mois" }, unitPrice: 62.5, minQuantity: 4, theme: "ACTION" },
+  { id: "o6", name: "JM PASS COACHING +", price: 240, active: true, priceHistory: [{ price: 240, date: "2026-01-01" }], duration: { value: 3, unit: "mois" }, unitPrice: 60, minQuantity: 4, theme: "ACTION" },
+  { id: "o7", name: "COACHING À LA CARTE", price: 65, active: true, priceHistory: [{ price: 65, date: "2026-01-01" }], isAlaCarte: true, theme: "ACTION" },
+  { id: "o8", name: "CARDIO MOUV STRUCTURE", price: 115, active: true, priceHistory: [{ price: 115, date: "2026-01-01" }], duration: { value: 1, unit: "mois" }, theme: "COLLECTIF" },
+  { id: "o9", name: "CARDIO MOUV ONE SHOT", price: 15, active: true, priceHistory: [{ price: 15, date: "2026-01-01" }], isAlaCarte: true, theme: "COLLECTIF" },
+  { id: "o10", name: "CARDIO MOUV PASS 4", price: 45, active: true, priceHistory: [{ price: 45, date: "2026-01-01" }], duration: { value: 4, unit: "semaines" }, theme: "COLLECTIF" },
+  { id: "o11", name: "CARDIO MOUV PACK 10", price: 130, active: true, priceHistory: [{ price: 130, date: "2026-01-01" }], duration: { value: 5, unit: "mois" }, theme: "COLLECTIF" },
+  { id: "o12", name: "ACTIV TRAINING ONE SHOT", price: 10, active: true, priceHistory: [{ price: 10, date: "2026-01-01" }], isAlaCarte: true, theme: "COLLECTIF" },
 ];

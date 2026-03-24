@@ -13,13 +13,13 @@ function formatDurationFromOffre(offre: string, offres: any[]): string {
 function getOffreType(offreName: string, offres: any[]): "programme" | "seance" {
   const found = offres.find((o: any) => o.name === offreName);
   if (!found) return "seance";
-  return found.theme === "PROGRAMMES" ? "programme" : "seance";
+  return found.theme === "TRANSFORMATION" ? "programme" : "seance";
 }
 
 function getClientMetrics(entries: any[], offreName: string, offres: any[]) {
   const found = offres.find((o: any) => o.name === offreName);
   if (!found) return { programmesLabel: "-", programmesCount: 0, seancesLabel: "-", seancesCount: 0 };
-  if (found.theme === "PROGRAMMES") {
+  if (found.theme === "TRANSFORMATION") {
     const groups = new Set<string>();
     let standalone = 0;
     entries.forEach((e: any) => { if (e.installmentGroup) groups.add(e.installmentGroup); else standalone++; });

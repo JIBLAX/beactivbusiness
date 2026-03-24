@@ -153,25 +153,21 @@ export default function FinancesPage() {
 
   return (
     <div className="px-4 pt-4 pb-24">
-      {/* Month header */}
-      <div className="flex items-center gap-2 mb-5">
-        <div className="flex-1 rounded-2xl px-4 py-3 text-sm font-semibold text-foreground"
-          style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
-          {formatMonth(selectedMonth)}
-        </div>
-        {editState.sealed && (
+      {/* Sealed badge only */}
+      {editState.sealed && (
+        <div className="flex justify-end mb-3">
           <div className="badge-pill" style={{
             background: editState.editsRemaining > 0 ? "hsl(38 92% 55% / 0.1)" : "hsl(0 62% 50% / 0.1)",
             color: editState.editsRemaining > 0 ? "hsl(38 92% 55%)" : "hsl(0 62% 60%)"
           }}>{sealedLabel}</div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Revenue hero card */}
       <div className="card-hero rounded-3xl p-5 mb-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="section-label mb-1">Revenus {formatMonth(selectedMonth)}</div>
+            <div className="section-label mb-1">REVENUS <span className="text-white font-bold">{formatMonth(selectedMonth).toUpperCase()}</span></div>
             <div className="value-lg text-[36px] text-foreground leading-none">{totalReel.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
           </div>
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
