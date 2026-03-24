@@ -362,9 +362,15 @@ export default function OffresPage() {
                     min={2} max={12} className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
                 </div>
               )}
-              <button onClick={addOffre} className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary mt-2">
-                Créer l'offre
-              </button>
+              <div className="flex gap-2 mt-2">
+                <button onClick={() => addOffre(false)} className="flex-1 py-3.5 rounded-2xl font-semibold text-sm text-white btn-primary">
+                  ✓ Créer l'offre
+                </button>
+                <button onClick={() => addOffre(true)} className="px-4 py-3.5 rounded-2xl font-semibold text-sm text-muted-foreground"
+                  style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 60%)" }}>
+                  📝 Brouillon
+                </button>
+              </div>
             </div>
           </div>
         </div>
