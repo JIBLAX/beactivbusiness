@@ -194,8 +194,9 @@ export default function OffresPage() {
         </div>
       ) : (
         <>
-          <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center gap-2 flex-1 pr-3">
+           <div className="flex items-start justify-between mb-2">
+            <div className="flex-1 pr-3">
+              <div className="flex items-center gap-2">
                 {o.isDraft && (
                   <span className="badge-pill text-[9px] flex-shrink-0" style={{ background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 60%)" }}>BROUILLON</span>
                 )}
