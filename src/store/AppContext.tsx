@@ -123,6 +123,7 @@ function offreToRow(o: Offre, userId: string) {
     is_ala_carte: o.isAlaCarte ?? false, theme: o.theme ?? "PROGRAMMES",
     tva_enabled: o.tvaEnabled ?? false, portage_eligible: o.portageEligible ?? false,
     max_installments: o.maxInstallments ?? null,
+    is_draft: o.isDraft ?? false,
   };
 }
 
