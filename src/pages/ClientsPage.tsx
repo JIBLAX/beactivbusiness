@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/store/AppContext";
 import { Prospect, Structure, STRUCTURE_TYPES, STRUCTURE_FREQUENCIES, StructureType, StructureFrequency } from "@/data/types";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ── helpers ── */
 function formatDurationFromOffre(offre: string, offres: any[]): string {
@@ -102,14 +103,22 @@ export default function ClientsPage() {
 
   const createGroup = () => {
     if (!groupLeader || groupMembers.length === 0) return;
-    const gId = "grp" + Date.now();
+    const gId = "grp_" + Date.now();
     const max = GROUP_MAX[groupType];
     const members = groupMembers.slice(0, max - 1);
+    const affectedIds = [groupLeader, ...members];
     setProspects(prospects.map(p => {
       if (p.id === groupLeader) return { ...p, groupType: groupType, groupId: gId, isGroupLeader: true };
       if (members.includes(p.id)) return { ...p, groupType: groupType, groupId: gId, isGroupLeader: false };
       return p;
     }));
+    // Sync groupId to shared be_activ_clients table for CRM clients
+    const crmIds = affectedIds
+      .filter(id => id.startsWith("bcrm_"))
+      .map(id => id.replace("bcrm_", ""));
+    if (crmIds.length > 0) {
+      (supabase as any).from("be_activ_clients").update({ group_id: gId }).in("id", crmIds);
+    }
     setShowGroupSetup(false);
     setGroupMembers([]);
     setGroupLeader("");
@@ -122,9 +131,11 @@ export default function ClientsPage() {
       return { ...p, groupType: null as any, groupId: null as any, isGroupLeader: false };
     });
     // If group has only 1 member left, dissolve
+    let dissolvedIds: string[] = [];
     if (client?.groupId) {
       const remaining = updated.filter(p => p.groupId === client.groupId);
       if (remaining.length <= 1) {
+        dissolvedIds = remaining.map(p => p.id);
         updated = updated.map(p => {
           if (p.groupId === client.groupId) return { ...p, groupType: null as any, groupId: null as any, isGroupLeader: false };
           return p;
@@ -132,6 +143,13 @@ export default function ClientsPage() {
       }
     }
     setProspects(updated);
+    // Sync group_id removal to be_activ_clients
+    const toClear = [clientId, ...dissolvedIds]
+      .filter(id => id.startsWith("bcrm_"))
+      .map(id => id.replace("bcrm_", ""));
+    if (toClear.length > 0) {
+      (supabase as any).from("be_activ_clients").update({ group_id: null }).in("id", toClear);
+    }
   };
 
   // Structure methods
