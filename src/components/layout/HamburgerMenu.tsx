@@ -125,15 +125,6 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
           })}
         </nav>
 
-        {/* CRM Link */}
-        <div className="px-6 py-3" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
-          <button onClick={() => window.open("https://bilanbeactiv.vercel.app", "_blank")}
-            className="w-full text-white text-[13px] font-bold py-[11px] rounded-[10px] cursor-pointer"
-            style={{ background: "linear-gradient(135deg,#1a0a0c,#3d0f18)", border: "none" }}>
-            📋 Ouvrir BE ACTIV BILAN CRM →
-          </button>
-        </div>
-
         {/* Import/Export */}
         <div className="px-6 py-3" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.04)" }}>
           <div className="text-[9px] text-muted-foreground/50 font-medium tracking-[3px] uppercase mb-2">DONNÉES</div>
