@@ -210,6 +210,25 @@ export default function ClientsPage() {
               <div className="badge-pill mt-1" style={{ background: "hsl(348 63% 34% / 0.15)", color: "hsl(348 63% 50%)" }}>
                 {selectedClient.offre}
               </div>
+              {selectedClient.montant != null && (
+                <div className="mt-1.5">
+                  {(() => {
+                    const recus = selectedClient.versementsRecus ?? 0;
+                    const total = selectedClient.paiementMode ?? 1;
+                    const paid = recus >= total;
+                    return (
+                      <span className="badge-pill text-[10px]" style={{
+                        background: paid ? "hsl(152 55% 42% / 0.15)" : "hsl(38 92% 55% / 0.15)",
+                        color: paid ? "hsl(152 55% 55%)" : "hsl(38 92% 60%)",
+                      }}>
+                        {paid
+                          ? `💳 Payé (${total}f) — ${selectedClient.montant}€`
+                          : `⏳ ${recus}/${total} versements reçus — ${selectedClient.montant}€`}
+                      </span>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
             {!editing && (
               <button onClick={() => startEdit(selectedClient)} className="badge-pill cursor-pointer"

@@ -46,6 +46,7 @@ function prospectToRow(p: Prospect, userId: string) {
     note_profil: p.noteProfil ?? 0, bilan_validated: p.bilanValidated ?? false,
     age: p.age ?? null, sap_enabled: p.sapEnabled ?? false,
     group_type: p.groupType ?? null, group_id: p.groupId ?? null, is_group_leader: p.isGroupLeader ?? false,
+    montant: p.montant ?? null, paiement_mode: p.paiementMode ?? 1, versements_recus: p.versementsRecus ?? 0,
   };
 }
 
@@ -59,6 +60,7 @@ function rowToProspect(r: any): Prospect {
     noteProfil: Number(r.note_profil) || 0, bilanValidated: r.bilan_validated ?? false,
     age: r.age ?? undefined, sapEnabled: r.sap_enabled ?? false,
     groupType: r.group_type ?? null, groupId: r.group_id ?? null, isGroupLeader: r.is_group_leader ?? false,
+    montant: r.montant ?? null, paiementMode: r.paiement_mode ?? 1, versementsRecus: r.versements_recus ?? 0,
   };
 }
 

@@ -24,6 +24,9 @@ export interface Prospect {
   groupType?: "duo" | "trio" | "small_group" | null;
   groupId?: string | null;
   isGroupLeader?: boolean;
+  montant?: number | null;
+  paiementMode?: number | null;
+  versementsRecus?: number | null;
 }
 
 export type StructureType = "association" | "entreprise" | "école" | "collectivité" | "salle de sport";
