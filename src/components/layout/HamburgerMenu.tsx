@@ -55,7 +55,8 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
       if (data.financeEntries) { setFinanceEntries(data.financeEntries); count++; }
       if (data.expenses) { setExpenses(data.expenses); count++; }
       toast.success(`Import réussi (${count} table${count > 1 ? "s" : ""} importée${count > 1 ? "s" : ""})`);
-    } catch {
+    } catch (err) {
+      console.error("Import failed:", err);
       toast.error("Erreur lors de l'import");
     }
     if (fileInputRef.current) fileInputRef.current.value = "";

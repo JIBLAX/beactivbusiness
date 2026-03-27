@@ -80,9 +80,9 @@ export default function ClientsPage() {
 
   const startEdit = (c: Prospect) => { setEditData({ ...c }); setEditing(true); };
   const saveEdit = () => {
-    if (!editData.id) return;
+    if (!editData.id || !selectedClient) return;
     setProspects(prospects.map(p => p.id === editData.id ? { ...p, ...editData } as Prospect : p));
-    setSelectedClient({ ...selectedClient!, ...editData } as Prospect);
+    setSelectedClient({ ...selectedClient, ...editData } as Prospect);
     setEditing(false);
   };
 

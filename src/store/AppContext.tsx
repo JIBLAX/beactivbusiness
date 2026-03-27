@@ -286,12 +286,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setPortageMonths = useCallback((v: Record<string, boolean>) => {
     setPortageMonthsState(v);
-    if (user) supabase.from("app_settings").update({ portage_months: v as any }).eq("user_id", user.id).then();
+    if (user) supabase.from("app_settings").update({ portage_months: v as any }).eq("user_id", user.id).then(() => {}, console.error);
   }, [user]);
 
   const setVersementsPerso = useCallback((v: Record<string, Record<string, number | null>>) => {
     setVersementsPersoState(v);
-    if (user) supabase.from("app_settings").update({ versements_perso: v as any }).eq("user_id", user.id).then();
+    if (user) supabase.from("app_settings").update({ versements_perso: v as any }).eq("user_id", user.id).then(() => {}, console.error);
   }, [user]);
 
   const setOffres = useCallback((o: Offre[]) => {
@@ -306,18 +306,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setUrssafMode = useCallback((m: "mois" | "trimestre") => {
     setUrssafModeState(m);
-    if (user) supabase.from("app_settings").update({ urssaf_mode: m } as any).eq("user_id", user.id).then();
+    if (user) supabase.from("app_settings").update({ urssaf_mode: m } as any).eq("user_id", user.id).then(() => {}, console.error);
   }, [user]);
 
   const setQuarterEdits = useCallback((q: Record<string, number>) => {
     setQuarterEditsState(q);
-    if (user) supabase.from("app_settings").update({ quarter_edits: q } as any).eq("user_id", user.id).then();
+    if (user) supabase.from("app_settings").update({ quarter_edits: q } as any).eq("user_id", user.id).then(() => {}, console.error);
   }, [user]);
 
   const incrementQuarterEdit = useCallback((quarterKey: string) => {
     setQuarterEditsState(prev => {
       const updated = { ...prev, [quarterKey]: (prev[quarterKey] ?? 0) + 1 };
-      if (user) supabase.from("app_settings").update({ quarter_edits: updated } as any).eq("user_id", user.id).then();
+      if (user) supabase.from("app_settings").update({ quarter_edits: updated } as any).eq("user_id", user.id).then(() => {}, console.error);
       return updated;
     });
   }, [user]);
