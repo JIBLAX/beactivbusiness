@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AppProvider, useApp } from "@/store/AppContext";
 import PinScreen from "@/components/auth/PinScreen";
+import AuthScreen from "@/components/auth/AuthScreen";
 import AppLayout from "@/components/layout/AppLayout";
 
 const Splash = () => (
@@ -17,16 +18,16 @@ function AppContent() {
   const { isAuthenticated, loading } = useApp();
   const [pinVerified, setPinVerified] = useState(false);
 
-  // Initial data load
-  if (loading && !pinVerified) return <Splash />;
+  // Loading Supabase session / data
+  if (loading) return <Splash />;
 
-  // PIN gate
+  // No Supabase session → login with real credentials first
+  if (!isAuthenticated) return <AuthScreen />;
+
+  // Session exists but PIN not yet entered
   if (!pinVerified) {
     return <PinScreen onSuccess={() => setPinVerified(true)} />;
   }
-
-  // PIN validated — wait for Supabase session + data load
-  if (!isAuthenticated || loading) return <Splash />;
 
   return <AppLayout />;
 }

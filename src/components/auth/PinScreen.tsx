@@ -1,10 +1,7 @@
 import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import beactivLogo from "@/assets/beactiv-logo.png";
 
 const PIN_CODE = "131313";
-const AUTO_EMAIL = "coachjm@beactiv.app";
-const AUTO_PASS = "BeActiv2026!SecurePin";
 
 const PIN_LETTERS: Record<string, string> = {
   "2": "ABC", "3": "DEF", "4": "GHI", "5": "JKL",
@@ -18,71 +15,26 @@ interface PinScreenProps {
 export default function PinScreen({ onSuccess }: PinScreenProps) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
-  const [authError, setAuthError] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const autoLogin = useCallback(async () => {
-    setLoading(true);
-    setAuthError(false);
-    try {
-      // Try sign in first
-      const { error: loginErr } = await supabase.auth.signInWithPassword({
-        email: AUTO_EMAIL,
-        password: AUTO_PASS,
-      });
-
-      if (loginErr) {
-        // Account doesn't exist yet — try to create it
-        const { error: signupErr } = await supabase.auth.signUp({
-          email: AUTO_EMAIL,
-          password: AUTO_PASS,
-        });
-        if (signupErr) throw signupErr;
-
-        // Sign in after signup
-        const { error: loginErr2 } = await supabase.auth.signInWithPassword({
-          email: AUTO_EMAIL,
-          password: AUTO_PASS,
-        });
-        if (loginErr2) throw loginErr2;
-      }
-
-      // Confirm session is actually established
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Session non établie");
-
-      onSuccess();
-    } catch (err) {
-      console.error("Auto-login failed:", err);
-      setAuthError(true);
-      setPin("");
-    } finally {
-      setLoading(false);
-    }
-  }, [onSuccess]);
 
   const handleDigit = useCallback((d: string) => {
-    if (pin.length >= 6 || loading) return;
+    if (pin.length >= 6) return;
     const newPin = pin + d;
     setPin(newPin);
     setError(false);
-    setAuthError(false);
     if (newPin.length === 6) {
       if (newPin === PIN_CODE) {
-        autoLogin();
+        onSuccess();
       } else {
         setError(true);
         setTimeout(() => { setPin(""); setError(false); }, 600);
       }
     }
-  }, [pin, loading, autoLogin]);
+  }, [pin, onSuccess]);
 
   const handleDelete = useCallback(() => {
-    if (loading) return;
     setPin(p => p.slice(0, -1));
     setError(false);
-    setAuthError(false);
-  }, [loading]);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
@@ -109,31 +61,25 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
       <div className="flex gap-3.5 mb-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className={`w-3 h-3 rounded-full transition-all duration-200
-            ${error ? "bg-destructive" :
-              loading && i < pin.length ? "" :
-              i < pin.length
+            ${error
+              ? "bg-destructive"
+              : i < pin.length
                 ? "bg-foreground"
                 : "bg-transparent border-[1.5px]"}`}
             style={
-              loading && i < pin.length
-                ? { background: "hsl(348 63% 45%)", boxShadow: "0 0 8px hsl(348 63% 45% / 0.5)" }
-                : !error && i < pin.length
-                  ? { boxShadow: "0 0 8px hsl(0 0% 96% / 0.3)" }
-                  : !error && i >= pin.length
-                    ? { borderColor: "hsl(0 0% 20%)" }
-                    : undefined
+              !error && i < pin.length
+                ? { boxShadow: "0 0 8px hsl(0 0% 96% / 0.3)" }
+                : !error && i >= pin.length
+                  ? { borderColor: "hsl(0 0% 20%)" }
+                  : undefined
             } />
         ))}
       </div>
 
-      {/* Status messages */}
       <div className="h-6 flex items-center justify-center mb-5">
-        {loading && (
-          <span className="text-[11px] text-muted-foreground animate-pulse">Connexion...</span>
-        )}
-        {authError && !loading && (
+        {error && (
           <span className="text-[11px]" style={{ color: "hsl(0 62% 55%)" }}>
-            Erreur de connexion — réessaie
+            Code incorrect
           </span>
         )}
       </div>
@@ -143,14 +89,14 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
         {["1","2","3","4","5","6","7","8","9","","0","del"].map((key) => {
           if (key === "") return <div key="empty" className="w-[70px] h-[70px]" />;
           if (key === "del") return (
-            <button key="del" onClick={handleDelete} disabled={loading}
-              className="w-[70px] h-[70px] rounded-2xl flex items-center justify-center text-xl text-muted-foreground active:text-foreground active:scale-[0.92] transition-all disabled:opacity-30">
+            <button key="del" onClick={handleDelete}
+              className="w-[70px] h-[70px] rounded-2xl flex items-center justify-center text-xl text-muted-foreground active:text-foreground active:scale-[0.92] transition-all">
               ⌫
             </button>
           );
           return (
-            <button key={key} onClick={() => handleDigit(key)} disabled={loading}
-              className="w-[70px] h-[70px] rounded-2xl flex flex-col items-center justify-center gap-0.5 text-foreground font-medium text-[22px] transition-all active:scale-[0.92] disabled:opacity-30"
+            <button key={key} onClick={() => handleDigit(key)}
+              className="w-[70px] h-[70px] rounded-2xl flex flex-col items-center justify-center gap-0.5 text-foreground font-medium text-[22px] transition-all active:scale-[0.92]"
               style={{
                 background: "hsl(0 0% 100% / 0.03)",
                 border: "1px solid hsl(0 0% 100% / 0.05)",
