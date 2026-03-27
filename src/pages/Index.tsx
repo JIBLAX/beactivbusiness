@@ -1,4 +1,4 @@
-import { useState } from "react"; 
+import { useState } from "react";
 import { AppProvider, useApp } from "@/store/AppContext";
 import PinScreen from "@/components/auth/PinScreen";
 import AppLayout from "@/components/layout/AppLayout";
@@ -6,7 +6,7 @@ import AppLayout from "@/components/layout/AppLayout";
 const Splash = () => (
   <div className="fixed inset-0 flex items-center justify-center"
     style={{ background: "hsl(240 6% 3%)" }}>
-    <div className="w-6 h-6 rounded-full" style={{ 
+    <div className="w-6 h-6 rounded-full" style={{
       background: "var(--gradient-primary)",
       animation: "pulseSub 1.5s ease-in-out infinite"
     }} />
@@ -17,13 +17,16 @@ function AppContent() {
   const { isAuthenticated, loading } = useApp();
   const [pinVerified, setPinVerified] = useState(false);
 
-  if (loading) return <Splash />;
+  // Initial data load
+  if (loading && !pinVerified) return <Splash />;
 
+  // PIN gate
   if (!pinVerified) {
     return <PinScreen onSuccess={() => setPinVerified(true)} />;
   }
 
-  if (!isAuthenticated) return <Splash />;
+  // PIN validated — wait for Supabase session + data load
+  if (!isAuthenticated || loading) return <Splash />;
 
   return <AppLayout />;
 }
