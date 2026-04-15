@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/store/AppContext";
 import { Prospect, Structure, STRUCTURE_TYPES, STRUCTURE_FREQUENCIES, StructureType, StructureFrequency } from "@/data/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +40,7 @@ const GROUP_LABELS: Record<string, string> = { duo: "Duo", trio: "Trio", small_g
 const GROUP_MAX: Record<string, number> = { duo: 2, trio: 3, small_group: 6 };
 
 export default function ClientsPage() {
-  const { prospects, setProspects, financeEntries, offres, structures, setStructures } = useApp();
+  const { prospects, setProspects, financeEntries, offres, structures, setStructures, user } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState<"particuliers" | "structures">("particuliers");
   const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
@@ -63,6 +63,19 @@ export default function ClientsPage() {
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
 
   const [showArchived, setShowArchived] = useState(false);
+
+  // Finance JM payments — fetched from ba_sales on client selection
+  const [clientPayments, setClientPayments] = useState<any[]>([]);
+  useEffect(() => {
+    if (!selectedClient || !user) { setClientPayments([]); return; }
+    supabase
+      .from("ba_sales")
+      .select("*")
+      .or(`client_name.eq.${selectedClient.name},client_id.eq.${selectedClient.id}`)
+      .order("date", { ascending: false })
+      .then(({ data }) => setClientPayments(data ?? []), () => setClientPayments([]));
+  }, [selectedClient?.id, user?.id]);
+
   const allClients = useMemo(() => prospects.filter(p => p.closing === "OUI" && p.offre && p.offre !== "-"), [prospects]);
   const activeClients = useMemo(() => allClients.filter(c => c.statut !== "ARCHIVÉ"), [allClients]);
   const q = searchQuery.toLowerCase();
@@ -463,6 +476,49 @@ export default function ClientsPage() {
                   </span>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Paiements Finance JM */}
+        {clientPayments.length > 0 && (
+          <div className="card-elevated rounded-2xl p-4 mb-4" style={{ borderLeft: "3px solid hsl(152 55% 42% / 0.5)" }}>
+            <div className="text-[9px] font-semibold uppercase tracking-[3px] text-muted-foreground mb-3">Paiements Finance JM</div>
+            <div className="space-y-2">
+              {clientPayments.map((row: any, i: number) => {
+                const isPaid = !row.is_installment || row.financesjm_tx_id;
+                return (
+                  <div key={row.id ?? i} className="flex items-center justify-between py-1.5"
+                    style={{ borderBottom: i < clientPayments.length - 1 ? "1px solid hsl(0 0% 100% / 0.04)" : undefined }}>
+                    <div>
+                      <div className="text-[12px] font-medium text-foreground">
+                        {row.installment_label ?? (row.is_installment ? "Versement" : "Paiement")}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                        <span>{row.date}</span>
+                        {row.payment_mode && <span>· {MOYEN_PAIEMENT_LABEL[row.payment_mode] ?? row.payment_mode}</span>}
+                        {row.channel && (
+                          <span style={{ color: CANAL_FINANCE_COLOR[row.channel] ?? "inherit" }}>
+                            · {CANAL_FINANCE_LABEL[row.channel] ?? row.channel}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[13px] font-bold text-success">+{Number(row.amount).toLocaleString("fr-FR")}€</div>
+                      {row.catalog_price != null && Number(row.catalog_price) !== Number(row.amount) && (
+                        <div className="text-[9px] text-muted-foreground">cat. {Number(row.catalog_price)}€</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <span className="text-[11px] text-muted-foreground">Total encaissé</span>
+              <span className="text-[14px] font-bold text-success">
+                {clientPayments.reduce((s: number, r: any) => s + Number(r.amount), 0).toLocaleString("fr-FR")}€
+              </span>
             </div>
           </div>
         )}
