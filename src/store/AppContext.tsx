@@ -46,7 +46,7 @@ function prospectToRow(p: Prospect, userId: string) {
     note_profil: p.noteProfil ?? 0, bilan_validated: p.bilanValidated ?? false,
     age: p.age ?? null, sap_enabled: p.sapEnabled ?? false,
     group_type: p.groupType ?? null, group_id: p.groupId ?? null, is_group_leader: p.isGroupLeader ?? false,
-    montant: p.montant ?? null, paiement_mode: p.paiementMode ?? 1, versements_recus: p.versementsRecus ?? 0,
+    montant: p.montant ?? null, paiement_mode: p.paiementMode ?? null, versements_recus: p.versementsRecus ?? null,
   };
 }
 
@@ -60,7 +60,7 @@ function rowToProspect(r: any): Prospect {
     noteProfil: Number(r.note_profil) || 0, bilanValidated: r.bilan_validated ?? false,
     age: r.age ?? undefined, sapEnabled: r.sap_enabled ?? false,
     groupType: r.group_type ?? null, groupId: r.group_id ?? null, isGroupLeader: r.is_group_leader ?? false,
-    montant: r.montant ?? null, paiementMode: r.paiement_mode ?? 1, versementsRecus: r.versements_recus ?? 0,
+    montant: r.montant ?? null, paiementMode: r.paiement_mode ?? null, versementsRecus: r.versements_recus ?? null,
   };
 }
 
@@ -120,6 +120,7 @@ function offreToRow(o: Offre, userId: string) {
   return {
     id: o.id, user_id: userId, name: o.name, price: o.price, active: o.active,
     price_history: JSON.parse(JSON.stringify(o.priceHistory)),
+    aliases: o.aliases ?? [],
     duration: o.duration ? JSON.parse(JSON.stringify(o.duration)) : null,
     unit_price: o.unitPrice ?? null, min_quantity: o.minQuantity ?? null,
     is_ala_carte: o.isAlaCarte ?? false, theme: o.theme ?? "TRANSFORMATION",
@@ -133,6 +134,7 @@ function rowToOffre(r: any): Offre {
   return {
     id: r.id, name: r.name, price: Number(r.price), active: r.active ?? true,
     priceHistory: (r.price_history as any) ?? [],
+    aliases: (r.aliases as string[]) ?? [],
     duration: (r.duration as any) ?? undefined,
     unitPrice: r.unit_price != null ? Number(r.unit_price) : undefined,
     minQuantity: r.min_quantity ?? undefined,

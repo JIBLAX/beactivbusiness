@@ -70,8 +70,12 @@ export default function OffresPage() {
     setOffres(offres.map(o => {
       if (o.id !== editingId) return o;
       const priceChanged = o.price !== editPrice;
+      const updatedAliases = nameChanged && !o.aliases.includes(oldName)
+        ? [...o.aliases, oldName]
+        : o.aliases;
       return {
         ...o, name: newOffreName, price: editPrice,
+        aliases: updatedAliases,
         duration: editIsAlaCarte ? undefined : editDuration,
         isAlaCarte: editIsAlaCarte, unitPrice: editUnitPrice, minQuantity: editMinQty,
         theme: editTheme, tvaEnabled: editTva, portageEligible: editPortage,
@@ -99,6 +103,7 @@ export default function OffresPage() {
     const offre: Offre = {
       id: "o" + Date.now(), name: newName.toUpperCase(), price: newPrice, active: !asDraft,
       priceHistory: [{ price: newPrice, date: today }],
+      aliases: [],
       duration: newIsAlaCarte ? undefined : newDuration,
       isAlaCarte: newIsAlaCarte, unitPrice: newUnitPrice, minQuantity: newMinQty,
       theme: newTheme, tvaEnabled: newTva, portageEligible: newPortage,
