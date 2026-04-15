@@ -18,9 +18,9 @@ function formatDuration(d?: OffreDuration): string {
 }
 
 const THEME_LOGOS: Record<string, string> = {
-  "COURS COLLECTIFS": logoCardioMouv,
-  "JM COACHING": logoJM,
-  "PROGRAMMES": logoBeActiv,
+  "COLLECTIF": logoCardioMouv,
+  "ACTION": logoJM,
+  "TRANSFORMATION": logoBeActiv,
 };
 
 export default function OffresPage() {
@@ -33,7 +33,7 @@ export default function OffresPage() {
   const [editIsAlaCarte, setEditIsAlaCarte] = useState(false);
   const [editUnitPrice, setEditUnitPrice] = useState<number | undefined>();
   const [editMinQty, setEditMinQty] = useState<number | undefined>();
-  const [editTheme, setEditTheme] = useState<OffreTheme>("PROGRAMMES");
+  const [editTheme, setEditTheme] = useState<OffreTheme>("TRANSFORMATION");
   const [editTva, setEditTva] = useState(false);
   const [editPortage, setEditPortage] = useState(false);
   const [editMaxInstallments, setEditMaxInstallments] = useState<number | undefined>();
@@ -44,7 +44,7 @@ export default function OffresPage() {
   const [newIsAlaCarte, setNewIsAlaCarte] = useState(false);
   const [newUnitPrice, setNewUnitPrice] = useState<number | undefined>();
   const [newMinQty, setNewMinQty] = useState<number | undefined>();
-  const [newTheme, setNewTheme] = useState<OffreTheme>("PROGRAMMES");
+  const [newTheme, setNewTheme] = useState<OffreTheme>("TRANSFORMATION");
   const [newTva, setNewTva] = useState(false);
   const [newPortage, setNewPortage] = useState(false);
   const [newMaxInstallments, setNewMaxInstallments] = useState<number | undefined>();
@@ -54,7 +54,7 @@ export default function OffresPage() {
     setEditingId(o.id); setEditPrice(o.price); setEditName(o.name);
     setEditDuration(o.duration); setEditIsAlaCarte(o.isAlaCarte || false);
     setEditUnitPrice(o.unitPrice); setEditMinQty(o.minQuantity);
-    setEditTheme(o.theme || "PROGRAMMES"); setEditTva(o.tvaEnabled || false);
+    setEditTheme(o.theme || "TRANSFORMATION"); setEditTva(o.tvaEnabled || false);
     setEditPortage(o.portageEligible || false); setEditMaxInstallments(o.maxInstallments);
   };
 
@@ -70,8 +70,12 @@ export default function OffresPage() {
     setOffres(offres.map(o => {
       if (o.id !== editingId) return o;
       const priceChanged = o.price !== editPrice;
+      const updatedAliases = nameChanged && !o.aliases.includes(oldName)
+        ? [...o.aliases, oldName]
+        : o.aliases;
       return {
         ...o, name: newOffreName, price: editPrice,
+        aliases: updatedAliases,
         duration: editIsAlaCarte ? undefined : editDuration,
         isAlaCarte: editIsAlaCarte, unitPrice: editUnitPrice, minQuantity: editMinQty,
         theme: editTheme, tvaEnabled: editTva, portageEligible: editPortage,
@@ -99,6 +103,7 @@ export default function OffresPage() {
     const offre: Offre = {
       id: "o" + Date.now(), name: newName.toUpperCase(), price: newPrice, active: !asDraft,
       priceHistory: [{ price: newPrice, date: today }],
+      aliases: [],
       duration: newIsAlaCarte ? undefined : newDuration,
       isAlaCarte: newIsAlaCarte, unitPrice: newUnitPrice, minQuantity: newMinQty,
       theme: newTheme, tvaEnabled: newTva, portageEligible: newPortage,
@@ -109,7 +114,7 @@ export default function OffresPage() {
     setShowAdd(false);
     setNewName(""); setNewPrice(0); setNewDuration({ value: 1, unit: "mois" });
     setNewIsAlaCarte(false); setNewUnitPrice(undefined); setNewMinQty(undefined);
-    setNewTheme("PROGRAMMES"); setNewTva(false); setNewPortage(false); setNewMaxInstallments(undefined);
+    setNewTheme("TRANSFORMATION"); setNewTva(false); setNewPortage(false); setNewMaxInstallments(undefined);
   };
 
   const activeCount = offres.filter(o => o.active).length;
@@ -269,7 +274,7 @@ export default function OffresPage() {
       </div>
 
       {OFFRE_THEMES.map(theme => {
-        const allThemeOffers = offres.filter(o => (o.theme || "PROGRAMMES") === theme);
+        const allThemeOffers = offres.filter(o => (o.theme || "TRANSFORMATION") === theme);
         const sq = searchQuery.toLowerCase();
         const themeOffers = sq ? allThemeOffers.filter(o => o.name.toLowerCase().includes(sq)) : allThemeOffers;
         if (themeOffers.length === 0) return null;
