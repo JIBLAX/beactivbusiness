@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import { Prospect, SOURCES, OBJECTIFS, FinanceEntry, PAYMENT_MODES } from "@/data/types";
-import { pushToBaSales } from "@/lib/ba-sales";
 
 function getSourceBadgeClass(source: string) {
   if (source.includes("FITNESS")) return "badge-source-fp";
@@ -34,7 +33,7 @@ function getMonth(d: string): string {
 }
 
 export default function ProspectsPage() {
-  const { prospects, setProspects, offres, financeEntries, setFinanceEntries, user } = useApp();
+  const { prospects, setProspects, offres, financeEntries, setFinanceEntries } = useApp();
   const [search, setSearch] = useState("");
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterClosing, setFilterClosing] = useState("all");
@@ -454,7 +453,6 @@ export default function ProspectsPage() {
                         });
                       }
                       setFinanceEntries([...financeEntries, ...newEntries]);
-                      if (user) pushToBaSales(newEntries, offres, prospects, user.id);
                     }
 
                     setEditMode(false);

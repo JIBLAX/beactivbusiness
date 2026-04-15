@@ -3,7 +3,6 @@ import { useApp } from "@/store/AppContext";
 import ClientAutocomplete from "@/components/ui/ClientAutocomplete";
 import { FinanceEntry, Expense, ExpenseCategory, EXPENSE_CATEGORIES, PAYMENT_MODES, CASH_DECLARATIONS, OffreTheme, OFFRE_THEMES } from "@/data/types";
 import { getMonthEditState, getSealedLabel, getQuarterForMonth } from "@/lib/quarterLock";
-import { pushToBaSales } from "@/lib/ba-sales";
 import logoBeActiv from "@/assets/logo-beactiv.png";
 import logoCardioMouv from "@/assets/logo-cardiomouv.png";
 import logoJM from "@/assets/logo-jm.png";
@@ -47,7 +46,7 @@ const THEME_LOGOS: Record<string, string> = {
 };
 
 export default function ActivitesPage() {
-  const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths, quarterEdits, incrementQuarterEdit, prospects, user } = useApp();
+  const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths, quarterEdits, incrementQuarterEdit } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [activeTab, setActiveTab] = useState<"entrees" | "depenses">("entrees");
   const [showFabMenu, setShowFabMenu] = useState(false);
@@ -171,10 +170,7 @@ export default function ActivitesPage() {
         paymentMode: quickCoursPayment as any,
       });
     });
-    if (newEntries.length > 0) {
-      setFinanceEntries([...financeEntries, ...newEntries]);
-      if (user) pushToBaSales(newEntries, offres, prospects, user.id);
-    }
+    if (newEntries.length > 0) setFinanceEntries([...financeEntries, ...newEntries]);
     setShowQuickCours(false);
   };
 
@@ -190,7 +186,6 @@ export default function ActivitesPage() {
       clientName: extraSessionsClient, paymentMode: "cb",
     };
     setFinanceEntries([...financeEntries, entry]);
-    if (user) pushToBaSales([entry], offres, prospects, user.id);
     setShowAddSessions(false);
     setExtraSessionsOffre(""); setExtraSessionsClient(""); setExtraSessionsCount(0);
   };
@@ -237,7 +232,6 @@ export default function ActivitesPage() {
       });
     }
     setFinanceEntries([...financeEntries, ...newEntries]);
-    if (user) pushToBaSales(newEntries, offres, prospects, user.id);
     setShowAddEntry(false);
     resetEntryForm();
   };
