@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useApp } from "@/store/AppContext";
 import { Prospect, Structure, STRUCTURE_TYPES, STRUCTURE_FREQUENCIES, StructureType, StructureFrequency } from "@/data/types";
 import { supabase } from "@/integrations/supabase/client";
+import { MOYEN_PAIEMENT_LABEL, CANAL_FINANCE_COLOR, CANAL_FINANCE_LABEL } from "@/lib/crm-labels";
 
 /* ── helpers ── */
 function formatDurationFromOffre(offre: string, offres: any[]): string {
@@ -403,6 +404,69 @@ export default function ClientsPage() {
           </div>
         )}
 
+        {/* Closing CRM block — visible only when CRM has pushed data */}
+        {selectedClient.actualAmount != null && (
+          <div className="card-elevated rounded-2xl p-4 mb-4" style={{ borderLeft: "3px solid hsl(200 70% 50% / 0.5)" }}>
+            <div className="text-[9px] font-semibold uppercase tracking-[3px] text-muted-foreground mb-3">Closing Bilan CRM</div>
+            <div className="space-y-2.5">
+              {selectedClient.offerType && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">Type d'offre</span>
+                  <span className="badge-pill text-[10px]" style={
+                    selectedClient.offerType === "programme"
+                      ? { background: "hsl(270 50% 50% / 0.15)", color: "hsl(270 50% 65%)" }
+                      : { background: "hsl(217 70% 50% / 0.15)", color: "hsl(217 70% 65%)" }
+                  }>
+                    {selectedClient.offerType === "programme" ? "📦 Programme fixe" : "🎯 Séances"}
+                  </span>
+                </div>
+              )}
+              {selectedClient.catalogPriceSnapshot != null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">Prix catalogue</span>
+                  <span className="text-[12px] text-muted-foreground">{selectedClient.catalogPriceSnapshot}€</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-muted-foreground">Montant réel encaissé</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-bold text-success">{selectedClient.actualAmount}€</span>
+                  {selectedClient.catalogPriceSnapshot != null
+                    && selectedClient.actualAmount !== selectedClient.catalogPriceSnapshot && (
+                    <span className="badge-pill text-[8px]" style={{ background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 60%)" }}>remise</span>
+                  )}
+                </div>
+              </div>
+              {selectedClient.moyenPaiement && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">Moyen de paiement</span>
+                  <span className="text-[12px] text-foreground">{MOYEN_PAIEMENT_LABEL[selectedClient.moyenPaiement] ?? selectedClient.moyenPaiement}</span>
+                </div>
+              )}
+              {selectedClient.canalFinance && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">Canal Finance</span>
+                  <span className="text-[12px] font-medium" style={{ color: CANAL_FINANCE_COLOR[selectedClient.canalFinance] ?? "inherit" }}>
+                    {CANAL_FINANCE_LABEL[selectedClient.canalFinance] ?? selectedClient.canalFinance}
+                  </span>
+                </div>
+              )}
+              {(selectedClient.installmentsPlanned ?? 0) > 1 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">Versements</span>
+                  <span className="text-[12px] font-semibold" style={{
+                    color: (selectedClient.versementsRecus ?? 0) >= selectedClient.installmentsPlanned!
+                      ? "hsl(152 55% 55%)"
+                      : "hsl(38 92% 60%)"
+                  }}>
+                    {selectedClient.versementsRecus ?? 0} / {selectedClient.installmentsPlanned} reçus
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Archive / Réactiver */}
         <div className="card-elevated rounded-2xl p-4 flex items-center justify-between">
           <div>
@@ -759,10 +823,19 @@ export default function ClientsPage() {
                     {c.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[14px] font-semibold text-foreground">{c.name}</span>
                       {c.id?.startsWith("bcrm_") && (
                         <span className="badge-pill text-[8px] py-0.5 px-1.5" style={{ background: "hsl(200 70% 40% / 0.2)", color: "hsl(200 70% 60%)" }}>CRM</span>
+                      )}
+                      {c.offerType && (
+                        <span className="badge-pill text-[8px] py-0.5 px-1.5" style={
+                          c.offerType === "programme"
+                            ? { background: "hsl(270 50% 50% / 0.15)", color: "hsl(270 50% 65%)" }
+                            : { background: "hsl(217 70% 50% / 0.15)", color: "hsl(217 70% 65%)" }
+                        }>
+                          {c.offerType === "programme" ? "📦 Prog." : "🎯 Séances"}
+                        </span>
                       )}
                       {c.groupType && (
                         <span className="badge-pill text-[8px] py-0.5 px-1.5" style={{ background: "hsl(270 50% 40% / 0.2)", color: "hsl(270 50% 65%)" }}>

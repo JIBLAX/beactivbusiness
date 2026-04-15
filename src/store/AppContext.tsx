@@ -47,6 +47,9 @@ function prospectToRow(p: Prospect, userId: string) {
     age: p.age ?? null, sap_enabled: p.sapEnabled ?? false,
     group_type: p.groupType ?? null, group_id: p.groupId ?? null, is_group_leader: p.isGroupLeader ?? false,
     montant: p.montant ?? null, paiement_mode: p.paiementMode ?? null, versements_recus: p.versementsRecus ?? null,
+    offer_type: p.offerType ?? null, catalog_price_snapshot: p.catalogPriceSnapshot ?? null,
+    actual_amount: p.actualAmount ?? null, moyen_paiement: p.moyenPaiement ?? null,
+    canal_finance: p.canalFinance ?? null, installments_planned: p.installmentsPlanned ?? null,
   };
 }
 
@@ -61,6 +64,9 @@ function rowToProspect(r: any): Prospect {
     age: r.age ?? undefined, sapEnabled: r.sap_enabled ?? false,
     groupType: r.group_type ?? null, groupId: r.group_id ?? null, isGroupLeader: r.is_group_leader ?? false,
     montant: r.montant ?? null, paiementMode: r.paiement_mode ?? null, versementsRecus: r.versements_recus ?? null,
+    offerType: r.offer_type ?? null, catalogPriceSnapshot: r.catalog_price_snapshot ?? null,
+    actualAmount: r.actual_amount ?? null, moyenPaiement: r.moyen_paiement ?? null,
+    canalFinance: r.canal_finance ?? null, installmentsPlanned: r.installments_planned ?? null,
   };
 }
 
@@ -127,6 +133,7 @@ function offreToRow(o: Offre, userId: string) {
     tva_enabled: o.tvaEnabled ?? false, portage_eligible: o.portageEligible ?? false,
     max_installments: o.maxInstallments ?? null,
     is_draft: o.isDraft ?? false,
+    offer_type: o.offerType ?? null,
   };
 }
 
@@ -144,6 +151,7 @@ function rowToOffre(r: any): Offre {
     portageEligible: r.portage_eligible ?? false,
     maxInstallments: r.max_installments ?? undefined,
     isDraft: r.is_draft ?? false,
+    offerType: r.offer_type ?? null,
   };
 }
 

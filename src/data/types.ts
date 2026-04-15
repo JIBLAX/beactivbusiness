@@ -27,6 +27,13 @@ export interface Prospect {
   montant?: number | null;
   paiementMode?: number | null;
   versementsRecus?: number | null;
+  // S2 — CRM-pushed fields
+  offerType?: "session" | "programme" | null;
+  catalogPriceSnapshot?: number | null;
+  actualAmount?: number | null;
+  moyenPaiement?: "cb" | "virement" | "especes" | "plateforme" | "autre" | null;
+  canalFinance?: "banque" | "especes" | "autre" | null;
+  installmentsPlanned?: number | null;
 }
 
 export type StructureType = "association" | "entreprise" | "école" | "collectivité" | "salle de sport";
@@ -221,6 +228,7 @@ export interface Offre {
   active: boolean;
   priceHistory: { price: number; date: string }[];
   aliases: string[];
+  offerType?: "session" | "programme" | null;
   duration?: OffreDuration;
   unitPrice?: number;
   minQuantity?: number;
