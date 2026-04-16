@@ -25,6 +25,7 @@ export default function ClientAutocomplete({ value, onChange, placeholder = "Nom
     supabase
       .from("be_activ_clients")
       .select("id, name, prenom, nom, offre")
+      .not("offre", "is", null)
       .then(({ data }) => {
         if (!data) return;
         setCrmClients(
@@ -34,7 +35,7 @@ export default function ClientAutocomplete({ value, onChange, placeholder = "Nom
               offre: r.offre ?? "",
               source: "crm" as const,
             }))
-            .filter(r => r.name)
+            .filter(r => r.name && r.offre.trim() !== "")
         );
       }, () => {});
   }, []);
