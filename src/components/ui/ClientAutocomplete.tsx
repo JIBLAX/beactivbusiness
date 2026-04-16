@@ -24,13 +24,17 @@ export default function ClientAutocomplete({ value, onChange, placeholder = "Nom
   useEffect(() => {
     supabase
       .from("be_activ_clients")
-      .select("name, offre")
+      .select("id, name, prenom, nom, offre")
       .then(({ data }) => {
         if (!data) return;
         setCrmClients(
           data
+            .map(r => ({
+              name: r.name || `${r.prenom ?? ""} ${r.nom ?? ""}`.trim(),
+              offre: r.offre ?? "",
+              source: "crm" as const,
+            }))
             .filter(r => r.name)
-            .map(r => ({ name: r.name!, offre: r.offre ?? "", source: "crm" as const }))
         );
       }, () => {});
   }, []);
