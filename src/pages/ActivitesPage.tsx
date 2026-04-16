@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
-import { supabase } from "@/integrations/supabase/client";
 import ClientAutocomplete from "@/components/ui/ClientAutocomplete";
 import { FinanceEntry, Expense, ExpenseCategory, EXPENSE_CATEGORIES, PAYMENT_MODES, CASH_DECLARATIONS, OffreTheme, OFFRE_THEMES } from "@/data/types";
 import { getMonthEditState, getSealedLabel, getQuarterForMonth } from "@/lib/quarterLock";
@@ -171,20 +170,7 @@ export default function ActivitesPage() {
         paymentMode: quickCoursPayment as any,
       });
     });
-    if (newEntries.length > 0) {
-      setFinanceEntries([...financeEntries, ...newEntries]);
-      supabase.auth.getUser().then(({ data }) => {
-        supabase.from('ba_sales').insert(
-          newEntries.map(entry => ({
-            client_name: entry.label, offer_name: entry.offre || null,
-            amount: entry.amount, date: new Date().toISOString().split('T')[0],
-            payment_mode: entry.paymentMode || null, is_installment: false,
-            installment_number: 1, installment_total: 1, category: 'coaching',
-            status: 'recu', financesjm_tx_id: null, user_id: data.user?.id || null,
-          }))
-        );
-      });
-    }
+    if (newEntries.length > 0) setFinanceEntries([...financeEntries, ...newEntries]);
     setShowQuickCours(false);
   };
 
@@ -200,15 +186,6 @@ export default function ActivitesPage() {
       clientName: extraSessionsClient, paymentMode: "cb",
     };
     setFinanceEntries([...financeEntries, entry]);
-    supabase.auth.getUser().then(({ data }) => {
-      supabase.from('ba_sales').insert({
-        client_name: extraSessionsClient, offer_name: extraSessionsOffre,
-        amount: entry.amount, date: new Date().toISOString().split('T')[0],
-        payment_mode: 'cb', is_installment: false, category: 'coaching',
-        installment_number: 1, installment_total: 1,
-        status: 'recu', financesjm_tx_id: null, user_id: data.user?.id || null,
-      });
-    });
     setShowAddSessions(false);
     setExtraSessionsOffre(""); setExtraSessionsClient(""); setExtraSessionsCount(0);
   };
@@ -255,24 +232,6 @@ export default function ActivitesPage() {
       });
     }
     setFinanceEntries([...financeEntries, ...newEntries]);
-    supabase.auth.getUser().then(({ data }) => {
-      supabase.from('ba_sales').insert(
-        newEntries.map(entry => ({
-          client_name:        entry.clientName || entry.label,
-          offer_name:         entry.offre || null,
-          amount:             entry.amount,
-          date:               new Date().toISOString().split('T')[0],
-          payment_mode:       entry.paymentMode || null,
-          is_installment:     (entry.installmentTotal || 1) > 1,
-          installment_number: entry.installmentIndex || 1,
-          installment_total:  entry.installmentTotal || 1,
-          category:           'coaching',
-          status:             'recu',
-          financesjm_tx_id:   null,
-          user_id:            data.user?.id || null,
-        }))
-      );
-    });
     setShowAddEntry(false);
     resetEntryForm();
   };
