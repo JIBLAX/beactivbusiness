@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { FinanceEntry, Expense, Prospect, Offre } from "@/data/types";
 import html2canvas from "html2canvas-pro";
+import type { BaSaleRow } from "@/hooks/useBaSalesMonth";
 
 const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 
@@ -10,40 +11,50 @@ interface Props {
   expenses: Expense[];
   prospects: Prospect[];
   offres: Offre[];
+  baSales?: BaSaleRow[];
   onClose: () => void;
 }
 
-export default function AnnualWrapped({ year, financeEntries, expenses, prospects, offres, onClose }: Props) {
+export default function AnnualWrapped({ year, financeEntries, expenses, prospects, offres, baSales = [], onClose }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
 
   const yearEntries = useMemo(() => financeEntries.filter(e => e.month.startsWith(String(year))), [financeEntries, year]);
   const yearExpenses = useMemo(() => expenses.filter(e => e.month.startsWith(String(year))), [expenses, year]);
+  const yearBaSales = useMemo(() => baSales.filter(s => s.date.startsWith(String(year))), [baSales, year]);
 
-  const totalCA = yearEntries.reduce((s, e) => s + e.amount, 0);
+  const baSalesCA = yearBaSales.reduce((s, e) => s + e.amount, 0);
+  const totalCA = yearEntries.reduce((s, e) => s + e.amount, 0) + baSalesCA;
   const totalExpenses = yearExpenses.reduce((s, e) => s + e.amount, 0);
   const totalURSSAF = totalCA * 0.261;
   const netProfit = totalCA - totalURSSAF - totalExpenses;
 
   const clients = useMemo(() => {
-    const names = new Set(yearEntries.map(e => e.clientName).filter(Boolean));
+    const names = new Set([
+      ...yearEntries.map(e => e.clientName),
+      ...yearBaSales.map(s => s.client_name),
+    ].filter(Boolean));
     return names.size;
-  }, [yearEntries]);
+  }, [yearEntries, yearBaSales]);
 
   const sapClients = useMemo(() => {
-    const sapNames = new Set(yearEntries.filter(e => e.sapHours && e.sapHours > 0).map(e => e.clientName).filter(Boolean));
+    const sapNames = new Set([
+      ...yearEntries.filter(e => e.sapHours && e.sapHours > 0).map(e => e.clientName),
+      ...yearBaSales.filter(s => s.is_sap).map(s => s.client_name),
+    ].filter(Boolean));
     return sapNames.size;
-  }, [yearEntries]);
+  }, [yearEntries, yearBaSales]);
 
   const bestMonth = useMemo(() => {
     const map: Record<string, number> = {};
     yearEntries.forEach(e => { map[e.month] = (map[e.month] || 0) + e.amount; });
+    yearBaSales.forEach(s => { const mk = s.date.substring(0, 7); map[mk] = (map[mk] || 0) + s.amount; });
     const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
     if (sorted.length === 0) return null;
     const [mk, val] = sorted[0];
     const mi = parseInt(mk.split("-")[1]) - 1;
     return { name: MONTHS[mi], amount: val };
-  }, [yearEntries]);
+  }, [yearEntries, yearBaSales]);
 
   const topOffre = useMemo(() => {
     const map: Record<string, { count: number; revenue: number }> = {};
@@ -54,12 +65,19 @@ export default function AnnualWrapped({ year, financeEntries, expenses, prospect
         map[e.offre].revenue += e.amount;
       }
     });
+    yearBaSales.forEach(s => {
+      if (s.offer_name) {
+        if (!map[s.offer_name]) map[s.offer_name] = { count: 0, revenue: 0 };
+        map[s.offer_name].count++;
+        map[s.offer_name].revenue += s.amount;
+      }
+    });
     const sorted = Object.entries(map).sort((a, b) => b[1].revenue - a[1].revenue);
     return sorted.length > 0 ? { name: sorted[0][0], ...sorted[0][1] } : null;
-  }, [yearEntries]);
+  }, [yearEntries, yearBaSales]);
 
   const avgMonthly = totalCA / 12;
-  const totalEntries = yearEntries.length;
+  const totalEntries = yearEntries.length + yearBaSales.length;
 
   const fmt = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
 

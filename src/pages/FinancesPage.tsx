@@ -4,7 +4,7 @@ import { OFFRE_THEMES } from "@/data/types";
 import { generateBilanPDF } from "@/lib/pdfExport";
 import { getFiscalReminders, getDaysUntil, getStatusColor, getStatusLabel } from "@/lib/fiscalDates";
 import { getMonthEditState, getSealedLabel } from "@/lib/quarterLock";
-import { useBaSalesMonth } from "@/hooks/useBaSalesMonth";
+import { useBaSalesMonth, useBaSalesYear } from "@/hooks/useBaSalesMonth";
 import { useFjmProOps } from "@/hooks/useFjmProOps";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -69,6 +69,7 @@ export default function FinancesPage() {
   const sealedLabel = getSealedLabel(editState);
 
   const { sales: baSales, total: baSalesTotal } = useBaSalesMonth(selectedMonth);
+  const { sales: baSalesYear } = useBaSalesYear(currentYear);
   const { ops: fjmOps } = useFjmProOps(selectedMonth);
   const fjmRevenuTotal = fjmOps.filter(o => o.family === "revenu").reduce((s, o) => s + (o.actual || 0), 0);
   const fjmChargesTotal = fjmOps.filter(o => o.family !== "revenu").reduce((s, o) => s + (o.actual || 0), 0);
@@ -116,10 +117,19 @@ export default function FinancesPage() {
   const sapData = useMemo(() => {
     return sapMonths.map(month => {
       const entries = financeEntries.filter(e => e.month === month && e.clientName && sapClientNames.has(e.clientName));
-      const uniqueClients = new Set(entries.map(e => e.clientName));
-      return { month, nbClients: uniqueClients.size, hours: entries.reduce((s, e) => s + (e.sapHours || 0), 0), ca: entries.reduce((s, e) => s + e.amount, 0) };
+      const baSap = baSalesYear.filter(s => s.date.startsWith(month) && s.is_sap);
+      const uniqueClients = new Set([
+        ...entries.map(e => e.clientName),
+        ...baSap.map(s => s.client_name),
+      ].filter(Boolean) as string[]);
+      return {
+        month,
+        nbClients: uniqueClients.size,
+        hours: entries.reduce((s, e) => s + (e.sapHours || 0), 0) + baSap.reduce((s, e) => s + (e.sap_hours || 0), 0),
+        ca: entries.reduce((s, e) => s + e.amount, 0) + baSap.reduce((s, e) => s + e.amount, 0),
+      };
     });
-  }, [sapMonths, financeEntries, sapClientNames]);
+  }, [sapMonths, financeEntries, sapClientNames, baSalesYear]);
 
   const fondsPro = gestionPerso * 0.15;
   const plaisirs = gestionPerso * 0.45;
@@ -158,6 +168,7 @@ export default function FinancesPage() {
       portageEnabled: portageEnabled,
       tvaAmount: tvaCollectee,
       versements: monthVersements,
+      baSales,
     });
   };
 

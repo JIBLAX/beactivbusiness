@@ -148,7 +148,7 @@ export default function StatsPage() {
     return data;
   }, [financeEntries, expenses, baSales, currentYear, currentMonth]);
 
-  // Offer breakdown
+  // Offer breakdown (local entries + ba_sales)
   const offerStats = useMemo(() => {
     const map: Record<string, { count: number; revenue: number }> = {};
     yearEntries.forEach(e => {
@@ -158,10 +158,17 @@ export default function StatsPage() {
         map[e.offre].revenue += e.amount;
       }
     });
+    baSales.forEach(s => {
+      if (s.offer_name) {
+        if (!map[s.offer_name]) map[s.offer_name] = { count: 0, revenue: 0 };
+        map[s.offer_name].count++;
+        map[s.offer_name].revenue += s.amount;
+      }
+    });
     return Object.entries(map).sort((a, b) => b[1].revenue - a[1].revenue).map(([name, data], i) => ({
       name, ...data, color: PIE_COLORS[i % PIE_COLORS.length]
     }));
-  }, [yearEntries]);
+  }, [yearEntries, baSales]);
 
   // Projections (always year-level)
   const monthsPassed = currentMonth + 1;
@@ -218,7 +225,7 @@ export default function StatsPage() {
       </div>
 
       {showWrapped && (
-        <AnnualWrapped year={currentYear} financeEntries={financeEntries} expenses={expenses} prospects={prospects} offres={offres} onClose={() => setShowWrapped(false)} />
+        <AnnualWrapped year={currentYear} financeEntries={financeEntries} expenses={expenses} prospects={prospects} offres={offres} baSales={baSales} onClose={() => setShowWrapped(false)} />
       )}
 
       {/* KPIs */}
