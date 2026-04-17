@@ -37,14 +37,16 @@ interface BaSale {
   offer_name: string | null;
   amount: number;
   payment_mode: string | null;
-  sale_type: "individual" | "duo" | "trio" | "classe" | null;
+  sale_type: "individual" | "duo" | "trio" | "collectif" | null;
   participant_count: number | null;
+  is_sap: boolean | null;
+  sap_hours: number | null;
 }
 
 const SALE_TYPE_BADGE: Record<string, { label: string; color: string }> = {
-  duo:    { label: "DUO",    color: "hsl(280 60% 55%)" },
-  trio:   { label: "TRIO",   color: "hsl(260 60% 55%)" },
-  classe: { label: "CLASSE", color: "hsl(200 70% 50%)" },
+  duo:      { label: "DUO",      color: "hsl(280 60% 55%)" },
+  trio:     { label: "TRIO",     color: "hsl(260 60% 55%)" },
+  collectif:{ label: "COLLECTIF",color: "hsl(200 70% 50%)" },
 };
 
 function KpiCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -88,7 +90,7 @@ export default function ComptaPage() {
     const end = `${selectedMonth}-${String(lastDayOf(selectedMonth)).padStart(2,"0")}`;
     supabase
       .from("ba_sales")
-      .select("id, client_name, offer_name, amount, payment_mode, sale_type, participant_count")
+      .select("id, client_name, offer_name, amount, payment_mode, sale_type, participant_count, is_sap, sap_hours")
       .gte("date", start)
       .lte("date", end)
       .then(({ data }) => {
@@ -98,6 +100,8 @@ export default function ComptaPage() {
   }, [selectedMonth]);
 
   const revenusCoaching = sales.reduce((s,r) => s + (r.amount||0), 0);
+  const sapHoursTotal   = sales.reduce((s,r) => s + (r.is_sap ? (r.sap_hours||0) : 0), 0);
+  const sapSalesCount   = sales.filter(r => r.is_sap).length;
   const revenusDiv      = ops.filter(o => o.family === "revenu").reduce((s,o) => s + (o.actual||0), 0);
   const totalRevenus    = revenusCoaching + revenusDiv;
   const chargesFixes    = ops.filter(o => o.family === "charge_fixe").reduce((s,o) => s + (o.actual||0), 0);
@@ -123,7 +127,7 @@ export default function ComptaPage() {
       head: [["Client / Groupe","Type","Offre","Montant"]],
       body: sales.map(s => [
         s.client_name||"—",
-        s.sale_type === "duo" ? "DUO" : s.sale_type === "trio" ? "TRIO" : s.sale_type === "classe" ? `CLASSE (${s.participant_count||"?"})` : "Individuel",
+        s.sale_type === "duo" ? "DUO" : s.sale_type === "trio" ? "TRIO" : s.sale_type === "collectif" ? `COLLECTIF ×${s.participant_count||"?"}` : (s.is_sap ? "SAP" : "Individuel"),
         s.offer_name||"—",
         `${s.amount.toFixed(2)}€`,
       ]),
@@ -215,6 +219,13 @@ export default function ComptaPage() {
               <span className="text-[11px] text-muted-foreground">URSSAF 26.1%</span>
               <span className="value-lg text-[13px] text-destructive">-{urssaf.toFixed(0)}€</span>
             </div>
+            {sapSalesCount > 0 && (
+              <div className="flex justify-between items-center mb-2 px-2.5 py-1.5 rounded-xl"
+                style={{ background: "hsl(142 55% 42% / 0.08)", border: "1px solid hsl(142 55% 42% / 0.15)" }}>
+                <span className="text-[11px] text-green-400">🏠 SAP — {sapSalesCount} séance{sapSalesCount > 1 ? "s" : ""}</span>
+                <span className="text-[11px] text-green-400 font-semibold">{sapHoursTotal > 0 ? `${sapHoursTotal}h` : "—"}</span>
+              </div>
+            )}
             <div className="micro-divider my-3" />
             <div className="flex justify-between items-center">
               <span className="text-[13px] font-bold text-foreground">Résultat net</span>
@@ -229,16 +240,26 @@ export default function ComptaPage() {
             <Section title="💰 Ventes clients">
               {sales.map(s => {
                 const badge = s.sale_type ? SALE_TYPE_BADGE[s.sale_type] : null;
-                const sub = [s.offer_name, s.sale_type === "classe" && s.participant_count ? `${s.participant_count} présents` : null].filter(Boolean).join(" · ");
+                const sub = [
+                  s.offer_name,
+                  s.sale_type === "collectif" && s.participant_count ? `×${s.participant_count} transactions` : null,
+                  s.is_sap ? `🏠 SAP${s.sap_hours ? ` ${s.sap_hours}h` : ""}` : null,
+                ].filter(Boolean).join(" · ");
                 return (
                   <div key={s.id} className="flex items-center gap-3 p-3 rounded-2xl stat-card">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-[13px] font-medium text-foreground truncate">{s.client_name||"—"}</span>
                         {badge && (
                           <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
                             style={{ background: badge.color + "33", color: badge.color }}>
                             {badge.label}
+                          </span>
+                        )}
+                        {s.is_sap && (
+                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                            style={{ background: "hsl(142 55% 42% / 0.2)", color: "hsl(142 55% 55%)" }}>
+                            SAP
                           </span>
                         )}
                       </div>

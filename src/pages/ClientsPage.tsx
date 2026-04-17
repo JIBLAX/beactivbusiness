@@ -97,6 +97,12 @@ export default function ClientsPage() {
     if (!editData.id || !selectedClient) return;
     setProspects(prospects.map(p => p.id === editData.id ? { ...p, ...editData } as Prospect : p));
     setSelectedClient({ ...selectedClient, ...editData } as Prospect);
+    // Sync sap_enabled to shared be_activ_clients table
+    if (editData.sapEnabled !== selectedClient.sapEnabled) {
+      const crmId = editData.id.startsWith("bcrm_") ? editData.id.replace("bcrm_", "") : null;
+      const q = (supabase as any).from("be_activ_clients").update({ sap_enabled: editData.sapEnabled ?? false });
+      if (crmId) q.eq("id", crmId); else q.eq("name", editData.name);
+    }
     setEditing(false);
   };
 
