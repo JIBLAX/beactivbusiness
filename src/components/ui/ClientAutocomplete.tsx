@@ -25,7 +25,7 @@ export default function ClientAutocomplete({ value, onChange, placeholder = "Nom
     supabase
       .from("be_activ_clients")
       .select("id, name, prenom, nom, offre")
-      .not("offre", "is", null)
+      .eq("is_client", true)
       .then(({ data }) => {
         if (!data) return;
         setCrmClients(

@@ -8,6 +8,7 @@ import StatsPage from "@/pages/StatsPage";
 import OffresPage from "@/pages/OffresPage";
 import ClientsPage from "@/pages/ClientsPage";
 import ActivResetPage from "@/pages/ActivResetPage";
+import ComptaPage from "@/pages/ComptaPage";
 
 export default function AppLayout() {
   const { currentPage, setCurrentPage, financeEntries } = useApp();
@@ -28,6 +29,7 @@ export default function AppLayout() {
     stats: "Statistiques",
     clients: "Clients",
     activreset: "Activ Reset",
+    compta: "Comptabilité",
   }[currentPage] || "Finances";
 
   return (
@@ -95,6 +97,7 @@ export default function AppLayout() {
         {currentPage === "stats" && <StatsPage />}
         {currentPage === "clients" && <ClientsPage />}
         {currentPage === "activreset" && <ActivResetPage />}
+        {currentPage === "compta" && <ComptaPage />}
       </div>
 
       <HamburgerMenu open={menuOpen} onClose={() => setMenuOpen(false)} />

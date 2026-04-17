@@ -63,7 +63,7 @@ export const STRUCTURE_FREQUENCIES: { value: StructureFrequency; label: string }
   { value: "annuel", label: "Annuel" },
 ];
 
-export type AppPage = "prospects" | "clients" | "activreset" | "finances" | "stats" | "offres" | "activites";
+export type AppPage = "prospects" | "clients" | "activreset" | "finances" | "stats" | "offres" | "activites" | "compta";
 
 export interface ActivResetClient {
   id: string;
