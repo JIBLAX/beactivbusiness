@@ -37,7 +37,15 @@ interface BaSale {
   offer_name: string | null;
   amount: number;
   payment_mode: string | null;
+  sale_type: "individual" | "duo" | "trio" | "classe" | null;
+  participant_count: number | null;
 }
+
+const SALE_TYPE_BADGE: Record<string, { label: string; color: string }> = {
+  duo:    { label: "DUO",    color: "hsl(280 60% 55%)" },
+  trio:   { label: "TRIO",   color: "hsl(260 60% 55%)" },
+  classe: { label: "CLASSE", color: "hsl(200 70% 50%)" },
+};
 
 function KpiCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -80,7 +88,7 @@ export default function ComptaPage() {
     const end = `${selectedMonth}-${String(lastDayOf(selectedMonth)).padStart(2,"0")}`;
     supabase
       .from("ba_sales")
-      .select("id, client_name, offer_name, amount, payment_mode")
+      .select("id, client_name, offer_name, amount, payment_mode, sale_type, participant_count")
       .gte("date", start)
       .lte("date", end)
       .then(({ data }) => {
@@ -112,10 +120,15 @@ export default function ComptaPage() {
 
     autoTable(doc, {
       startY: 34,
-      head: [["Client","Offre","Montant"]],
-      body: sales.map(s => [s.client_name||"—", s.offer_name||"—", `${s.amount.toFixed(2)}€`]),
+      head: [["Client / Groupe","Type","Offre","Montant"]],
+      body: sales.map(s => [
+        s.client_name||"—",
+        s.sale_type === "duo" ? "DUO" : s.sale_type === "trio" ? "TRIO" : s.sale_type === "classe" ? `CLASSE (${s.participant_count||"?"})` : "Individuel",
+        s.offer_name||"—",
+        `${s.amount.toFixed(2)}€`,
+      ]),
       headStyles: { fillColor: [139,42,60] },
-      foot: [["","Total coaching",`${revenusCoaching.toFixed(2)}€`]],
+      foot: [["","","Total coaching",`${revenusCoaching.toFixed(2)}€`]],
       footStyles: { fillColor: [40,120,80], textColor: 255 },
       theme: "grid",
     });
@@ -214,9 +227,27 @@ export default function ComptaPage() {
           {/* Ventes coaching */}
           {sales.length > 0 && (
             <Section title="💰 Ventes clients">
-              {sales.map(s => (
-                <Row key={s.id} left={s.client_name||"—"} sub={s.offer_name||undefined} right={`+${s.amount}€`} color="text-success" />
-              ))}
+              {sales.map(s => {
+                const badge = s.sale_type ? SALE_TYPE_BADGE[s.sale_type] : null;
+                const sub = [s.offer_name, s.sale_type === "classe" && s.participant_count ? `${s.participant_count} présents` : null].filter(Boolean).join(" · ");
+                return (
+                  <div key={s.id} className="flex items-center gap-3 p-3 rounded-2xl stat-card">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[13px] font-medium text-foreground truncate">{s.client_name||"—"}</span>
+                        {badge && (
+                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                            style={{ background: badge.color + "33", color: badge.color }}>
+                            {badge.label}
+                          </span>
+                        )}
+                      </div>
+                      {sub && <div className="text-[10px] text-muted-foreground">{sub}</div>}
+                    </div>
+                    <span className="value-lg text-[14px] flex-shrink-0 text-success">+{s.amount}€</span>
+                  </div>
+                );
+              })}
             </Section>
           )}
 
