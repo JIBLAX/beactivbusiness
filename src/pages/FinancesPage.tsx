@@ -4,6 +4,8 @@ import { OFFRE_THEMES } from "@/data/types";
 import { generateBilanPDF } from "@/lib/pdfExport";
 import { getFiscalReminders, getDaysUntil, getStatusColor, getStatusLabel } from "@/lib/fiscalDates";
 import { getMonthEditState, getSealedLabel } from "@/lib/quarterLock";
+import { useBaSalesMonth } from "@/hooks/useBaSalesMonth";
+import { useFjmProOps } from "@/hooks/useFjmProOps";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -66,6 +68,11 @@ export default function FinancesPage() {
   const editable = editState.editable;
   const sealedLabel = getSealedLabel(editState);
 
+  const { sales: baSales, total: baSalesTotal } = useBaSalesMonth(selectedMonth);
+  const { ops: fjmOps } = useFjmProOps(selectedMonth);
+  const fjmRevenuTotal = fjmOps.filter(o => o.family === "revenu").reduce((s, o) => s + (o.actual || 0), 0);
+  const fjmChargesTotal = fjmOps.filter(o => o.family !== "revenu").reduce((s, o) => s + (o.actual || 0), 0);
+
   const sapClientNames = useMemo(() => new Set(prospects.filter(p => p.sapEnabled).map(p => p.name)), [prospects]);
 
   const monthEntries = useMemo(() => financeEntries.filter(e => e.month === selectedMonth), [financeEntries, selectedMonth]);
@@ -76,12 +83,15 @@ export default function FinancesPage() {
     return o?.portageEligible ?? false;
   };
 
-  const declaredMicro = monthEntries.filter(e => {
+  const localMicro = monthEntries.filter(e => {
     if (portageEnabled && isPortageEligible(e)) return false;
     if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
     if (!portageEnabled) return true;
     return e.type === "micro";
   }).reduce((s, e) => s + e.amount, 0);
+
+  // ba_sales = coaching revenues = micro CA for URSSAF
+  const declaredMicro = localMicro + baSalesTotal;
 
   const declaredPortage = portageEnabled ? monthEntries.filter(e => {
     if (isPortageEligible(e)) return true;
@@ -90,8 +100,8 @@ export default function FinancesPage() {
   }).reduce((s, e) => s + e.amount, 0) : 0;
 
   const especesNonDeclarees = monthEntries.filter(e => e.paymentMode === "especes" && e.cashDeclaration === "non_declare").reduce((s, e) => s + e.amount, 0);
-  const totalReel = monthEntries.reduce((s, e) => s + e.amount, 0);
-  const totalDepenses = monthExpenses.reduce((s, e) => s + e.amount, 0);
+  const totalReel = monthEntries.reduce((s, e) => s + e.amount, 0) + baSalesTotal + fjmRevenuTotal;
+  const totalDepenses = monthExpenses.reduce((s, e) => s + e.amount, 0) + fjmChargesTotal;
   const urssaf = calcUrssaf(declaredMicro);
   const beneficeNet = totalReel - urssaf - totalDepenses;
   const gestionPerso = calcGestionPerso(beneficeNet);
@@ -180,9 +190,11 @@ export default function FinancesPage() {
 
         {(() => {
           const items = [
-            { label: "CA Micro", sub: "Déclaré URSSAF", value: declaredMicro, color: "hsl(152 55% 52%)" },
+            ...(localMicro > 0 ? [{ label: "CA Local", sub: "Déclaré URSSAF", value: localMicro, color: "hsl(152 55% 52%)" }] : []),
+            ...(baSalesTotal > 0 ? [{ label: "BE ACTIV", sub: "Coaching clients", value: baSalesTotal, color: "hsl(217 70% 60%)" }] : []),
+            ...(fjmRevenuTotal > 0 ? [{ label: "Revenus FJM", sub: "Divers", value: fjmRevenuTotal, color: "hsl(38 92% 55%)" }] : []),
             ...(especesNonDeclarees > 0 ? [{ label: "Espèces", sub: "Non déclarées", value: especesNonDeclarees, color: "hsl(38 92% 55%)" }] : []),
-            ...(portageEnabled ? [{ label: "Portage JUMP", sub: "Via JUMP", value: declaredPortage, color: "hsl(217 70% 60%)" }] : []),
+            ...(portageEnabled ? [{ label: "Portage JUMP", sub: "Via JUMP", value: declaredPortage, color: "hsl(262 80% 65%)" }] : []),
             { label: "URSSAF dû", sub: "26.1% du CA Micro", value: -urssaf, color: "hsl(0 62% 50%)" },
           ];
           const cols = items.length <= 2 ? "grid-cols-2" : items.length === 3 ? "grid-cols-3" : "grid-cols-2";
@@ -237,6 +249,11 @@ export default function FinancesPage() {
           <div className="value-lg text-[22px] text-destructive">
             -{totalDepenses.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
           </div>
+          {fjmChargesTotal > 0 && (
+            <div className="text-[9px] text-muted-foreground mt-1">
+              dont <span style={{ color: "hsl(38 92% 55%)" }}>{fjmChargesTotal.toFixed(0)}€ FJM</span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -6,6 +6,8 @@ import { getMonthEditState, getSealedLabel, getQuarterForMonth } from "@/lib/qua
 import logoBeActiv from "@/assets/logo-beactiv.png";
 import logoCardioMouv from "@/assets/logo-cardiomouv.png";
 import logoJM from "@/assets/logo-jm.png";
+import { useBaSalesMonth } from "@/hooks/useBaSalesMonth";
+import { useFjmProOps } from "@/hooks/useFjmProOps";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -93,6 +95,13 @@ export default function ActivitesPage() {
   const allMonths = useMemo(() => getAllMonths(), []);
   const activeOffres = offres.filter(o => o.active);
 
+  const { sales: baSales, total: baSalesTotal } = useBaSalesMonth(selectedMonth);
+  const { ops: fjmOps } = useFjmProOps(selectedMonth);
+  const fjmRevenuOps = fjmOps.filter(o => o.family === "revenu");
+  const fjmChargeOps = fjmOps.filter(o => o.family !== "revenu");
+  const fjmRevenuTotal = fjmRevenuOps.reduce((s, o) => s + (o.actual || 0), 0);
+  const fjmChargesTotal = fjmChargeOps.reduce((s, o) => s + (o.actual || 0), 0);
+
   const monthEntries = useMemo(() => financeEntries.filter(e => e.month === selectedMonth), [financeEntries, selectedMonth]);
   const monthExpenses = useMemo(() => expenses.filter(e => e.month === selectedMonth), [expenses, selectedMonth]);
 
@@ -109,8 +118,8 @@ export default function ActivitesPage() {
     return grouped;
   }, [monthEntries, offres]);
 
-  const totalEntries = monthEntries.reduce((s, e) => s + e.amount, 0);
-  const totalExpenses = monthExpenses.reduce((s, e) => s + e.amount, 0);
+  const totalEntries = monthEntries.reduce((s, e) => s + e.amount, 0) + baSalesTotal + fjmRevenuTotal;
+  const totalExpenses = monthExpenses.reduce((s, e) => s + e.amount, 0) + fjmChargesTotal;
 
   const handleOffreSelect = (offreName: string) => {
     setEntryOffre(offreName);
@@ -314,7 +323,7 @@ export default function ActivitesPage() {
         >
           <div className="value-lg text-[20px] text-success">{totalEntries.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
           <div className="text-[11px] font-bold text-foreground tracking-wider mt-1">ENTRÉES</div>
-          <div className="text-[9px] text-muted-foreground mt-0.5">{monthEntries.length} opération{monthEntries.length !== 1 ? "s" : ""}</div>
+          <div className="text-[9px] text-muted-foreground mt-0.5">{monthEntries.length + baSales.length + fjmRevenuOps.length} opération{(monthEntries.length + baSales.length + fjmRevenuOps.length) !== 1 ? "s" : ""}</div>
         </button>
         <button
           onClick={() => setActiveTab("depenses")}
@@ -456,7 +465,79 @@ export default function ActivitesPage() {
         </div>
       )}
 
-      {monthEntries.length === 0 && (
+      {/* BE ACTIV coaching sales from FJM */}
+      {baSales.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">💼</span>
+              <span className="text-[12px] font-bold text-foreground">BE ACTIV</span>
+              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(217 70% 60% / 0.15)", color: "hsl(217 70% 60%)" }}>FJM</span>
+              <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{baSales.length}</span>
+            </div>
+            {baSalesTotal > 0 && <span className="value-lg text-[13px] text-success">{baSalesTotal.toFixed(0)}€</span>}
+          </div>
+          <div className="space-y-1.5 ml-1">
+            {baSales.map(s => (
+              <div key={s.id} className="flex items-center gap-3 p-3 rounded-2xl"
+                style={{ background: "hsl(217 70% 60% / 0.04)", border: "1px solid hsl(217 70% 60% / 0.1)" }}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[13px] font-medium text-foreground truncate">{s.client_name || "—"}</span>
+                    {s.sale_type && s.sale_type !== "individual" && (
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                        style={{ background: "hsl(280 60% 55% / 0.15)", color: "hsl(280 60% 65%)" }}>
+                        {s.sale_type.toUpperCase()}
+                      </span>
+                    )}
+                    {s.is_sap && (
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                        style={{ background: "hsl(142 55% 42% / 0.15)", color: "hsl(142 55% 55%)" }}>
+                        SAP
+                      </span>
+                    )}
+                  </div>
+                  {(s.offer_name || s.is_sap) && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      {s.offer_name && <span>{s.offer_name}</span>}
+                      {s.is_sap && s.sap_hours ? <span className="ml-1">🏠 {s.sap_hours}h</span> : null}
+                    </div>
+                  )}
+                </div>
+                <span className="value-lg text-[14px] flex-shrink-0 text-success">+{s.amount}€</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* FJM revenus divers */}
+      {fjmRevenuOps.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">➕</span>
+              <span className="text-[12px] font-bold text-foreground">REVENUS FJM</span>
+              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 55%)" }}>FJM</span>
+            </div>
+            {fjmRevenuTotal > 0 && <span className="value-lg text-[13px] text-success">{fjmRevenuTotal.toFixed(0)}€</span>}
+          </div>
+          <div className="space-y-1.5 ml-1">
+            {fjmRevenuOps.map(o => (
+              <div key={o.id} className="flex items-center gap-3 p-3 rounded-2xl"
+                style={{ background: "hsl(38 92% 55% / 0.04)", border: "1px solid hsl(38 92% 55% / 0.1)" }}>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-medium text-foreground truncate">{o.label}</div>
+                  <div className="text-[10px] text-muted-foreground">{o.category}</div>
+                </div>
+                <span className="value-lg text-[14px] flex-shrink-0 text-success">+{o.actual}€</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {monthEntries.length === 0 && baSales.length === 0 && fjmRevenuOps.length === 0 && (
         <div className="rounded-2xl p-6 text-center stat-card" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
           <div className="text-muted-foreground text-[11px]">Aucune entrée ce mois</div>
         </div>
@@ -578,10 +659,42 @@ export default function ActivitesPage() {
         </div>
       ) : (
         <div className="rounded-2xl p-6 text-center stat-card mb-6" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
-          <div className="text-muted-foreground text-[11px]">Aucune dépense ce mois</div>
+          <div className="text-muted-foreground text-[11px]">Aucune dépense locale ce mois</div>
         </div>
       );
       })()}
+
+      {/* FJM charges */}
+      {fjmChargeOps.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">🔒</span>
+              <span className="text-[12px] font-bold text-foreground">CHARGES FJM</span>
+              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(0 62% 50% / 0.15)", color: "hsl(0 62% 60%)" }}>FJM</span>
+            </div>
+            {fjmChargesTotal > 0 && <span className="value-lg text-[13px] text-destructive">-{fjmChargesTotal.toFixed(0)}€</span>}
+          </div>
+          <div className="space-y-1.5">
+            {fjmChargeOps.map(o => (
+              <div key={o.id} className="flex items-center gap-3 p-3 rounded-2xl"
+                style={{ background: "hsl(0 62% 50% / 0.04)", border: "1px solid hsl(0 62% 50% / 0.08)" }}>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-medium text-foreground truncate">{o.label}</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[10px] text-muted-foreground">{o.category}</span>
+                    <span className="text-[8px] px-1.5 py-0.5 rounded-md font-semibold"
+                      style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 50%)" }}>
+                      {o.family === "charge_fixe" ? "Fixe" : "Variable"}
+                    </span>
+                  </div>
+                </div>
+                <span className="value-lg text-[14px] flex-shrink-0 text-destructive">-{o.actual}€</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       </div>
       )}
 
