@@ -173,6 +173,31 @@ async function syncToSupabase<T>(table: string, items: T[], toRow: (item: T, use
   }
 }
 
+function crmRowToProspect(r: any): Prospect {
+  return {
+    id: `bcrm_${r.id}`,
+    sex: (r.sex as "F" | "H") ?? "F",
+    name: r.name ?? "",
+    contact: r.phone ?? r.contact ?? "",
+    source: "CRM",
+    statut: "CLIENT",
+    date: r.created_at ? r.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+    type: "",
+    presence: "",
+    heure: "",
+    objectif: r.objectif ?? "",
+    objection: "",
+    closing: "OUI",
+    offre: r.offre ?? "-",
+    notes: r.notes ?? "",
+    profile: "",
+    sapEnabled: r.sap_enabled ?? false,
+    groupType: r.group_type ?? null,
+    groupId: r.group_id ?? null,
+    isGroupLeader: r.is_group_leader ?? false,
+  };
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -207,7 +232,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadAllData = async (userId: string) => {
     setLoading(true);
     try {
-      const [pRes, arRes, fRes, eRes, oRes, sRes, stRes] = await Promise.all([
+      const [pRes, arRes, fRes, eRes, oRes, sRes, stRes, crmRes] = await Promise.all([
         supabase.from("prospects").select("*").eq("user_id", userId),
         supabase.from("activ_reset_clients").select("*").eq("user_id", userId),
         supabase.from("finance_entries").select("*").eq("user_id", userId),
@@ -215,6 +240,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         supabase.from("offres").select("*").eq("user_id", userId),
         supabase.from("app_settings").select("*").eq("user_id", userId).maybeSingle(),
         (supabase as any).from("structures").select("*").eq("user_id", userId),
+        (supabase as any).from("be_activ_clients").select("*"),
       ]);
 
       const loadedOffres = (oRes.data && oRes.data.length > 0) ? oRes.data.map(rowToOffre) : null;
@@ -225,12 +251,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setOffresState(loadedOffres);
       }
 
-      if (pRes.data && pRes.data.length > 0) {
-        setProspectsState(pRes.data.map(rowToProspect));
-      } else {
-        setProspectsState(initialProspects);
+      const localProspects: Prospect[] = (pRes.data && pRes.data.length > 0)
+        ? pRes.data.map(rowToProspect)
+        : initialProspects;
+
+      if (!pRes.data || pRes.data.length === 0) {
         await syncToSupabase("prospects", initialProspects, prospectToRow, userId);
       }
+
+      // Merge CRM clients (be_activ_clients) — add ones not already present by name
+      const crmProspects: Prospect[] = (crmRes.data ?? []).map(crmRowToProspect);
+      const localNames = new Set(localProspects.map((p: Prospect) => p.name.toLowerCase()));
+      const toMerge = crmProspects.filter(cp => cp.name && !localNames.has(cp.name.toLowerCase()));
+      setProspectsState([...localProspects, ...toMerge]);
 
       if (arRes.data && arRes.data.length > 0) {
         setActivResetClientsState(arRes.data.map(rowToArClient));
@@ -265,7 +298,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setProspects = useCallback((p: Prospect[]) => {
     setProspectsState(p);
-    if (user) syncToSupabase("prospects", p, prospectToRow, user.id);
+    const localOnly = p.filter(pr => !pr.id.startsWith("bcrm_"));
+    if (user) syncToSupabase("prospects", localOnly, prospectToRow, user.id);
   }, [user]);
 
   const setActivResetClients = useCallback((c: ActivResetClient[] | ((prev: ActivResetClient[]) => ActivResetClient[])) => {
