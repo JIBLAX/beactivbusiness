@@ -17,7 +17,7 @@ const menuItems: { id: AppPage; icon: string; label: string; sub: string }[] = [
   { id: "clients", icon: "👤", label: "Clients", sub: "Fiches & suivi" },
   { id: "offres", icon: "📦", label: "Offres", sub: "Tarifs & catalogues" },
   { id: "stats", icon: "📊", label: "Statistiques", sub: "Santé financière" },
-  { id: "compta", icon: "📒", label: "Comptabilité", sub: "P&L mensuel FJM" },
+  { id: "bilan", icon: "🗂️", label: "Bilan", sub: "Comptabilité & exports" },
 ];
 
 export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {

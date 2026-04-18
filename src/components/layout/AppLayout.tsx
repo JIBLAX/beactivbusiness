@@ -8,19 +8,23 @@ import StatsPage from "@/pages/StatsPage";
 import OffresPage from "@/pages/OffresPage";
 import ClientsPage from "@/pages/ClientsPage";
 import ActivResetPage from "@/pages/ActivResetPage";
-import ComptaPage from "@/pages/ComptaPage";
+import BilanPage from "@/pages/BilanPage";
+import { useBaSalesYear } from "@/hooks/useBaSalesMonth";
 
 export default function AppLayout() {
   const { currentPage, setCurrentPage, financeEntries } = useApp();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const currentYear = new Date().getFullYear();
+  const { sales: baSalesYearData } = useBaSalesYear(currentYear);
 
   const yearlyCA = useMemo(() => {
-    return financeEntries
+    const local = financeEntries
       .filter(e => e.month.startsWith(String(currentYear)))
       .reduce((s, e) => s + e.amount, 0);
-  }, [financeEntries, currentYear]);
+    const ba = baSalesYearData.reduce((s, e) => s + e.amount, 0);
+    return local + ba;
+  }, [financeEntries, currentYear, baSalesYearData]);
 
   const pageTitle = {
     finances: "Finances",
@@ -29,7 +33,7 @@ export default function AppLayout() {
     stats: "Statistiques",
     clients: "Clients",
     activreset: "Activ Reset",
-    compta: "Comptabilité",
+    bilan: "Bilan",
   }[currentPage] || "Finances";
 
   return (
@@ -37,14 +41,14 @@ export default function AppLayout() {
       {/* Premium Topbar */}
       <div className="topbar-blur flex items-center gap-3 px-4 py-3 flex-shrink-0 relative z-10"
         style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.04)" }}>
-        
+
         {/* Logo */}
         <button onClick={() => setCurrentPage("finances")} className="w-9 h-9 rounded-[14px] overflow-hidden flex-shrink-0 relative"
-          style={{ 
+          style={{
             border: "1px solid hsl(348 63% 30% / 0.25)",
             boxShadow: "0 0 20px hsl(348 63% 30% / 0.08)"
           }}>
-          <img src={beactivLogo} alt="Be Activ" className="w-full h-full object-contain" 
+          <img src={beactivLogo} alt="Be Activ" className="w-full h-full object-contain"
             style={{ background: "hsl(240 6% 4%)" }} />
         </button>
 
@@ -77,9 +81,9 @@ export default function AppLayout() {
           {/* Menu button */}
           <button onClick={() => setMenuOpen(true)}
             className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
-            style={{ 
-              background: "hsl(0 0% 100% / 0.03)", 
-              border: "1px solid hsl(0 0% 100% / 0.05)" 
+            style={{
+              background: "hsl(0 0% 100% / 0.03)",
+              border: "1px solid hsl(0 0% 100% / 0.05)"
             }}>
             <svg width="15" height="11" viewBox="0 0 15 11" fill="none">
               <path d="M0 0.5h15M0 5.5h10M0 10.5h6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
@@ -97,7 +101,7 @@ export default function AppLayout() {
         {currentPage === "stats" && <StatsPage />}
         {currentPage === "clients" && <ClientsPage />}
         {currentPage === "activreset" && <ActivResetPage />}
-        {currentPage === "compta" && <ComptaPage />}
+        {currentPage === "bilan" && <BilanPage />}
       </div>
 
       <HamburgerMenu open={menuOpen} onClose={() => setMenuOpen(false)} />

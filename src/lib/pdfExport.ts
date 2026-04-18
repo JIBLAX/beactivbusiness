@@ -11,6 +11,15 @@ function formatMonth(m: string): string {
 
 const BRAND = { primary: [139, 42, 60] as [number, number, number], dark: [12, 12, 14] as [number, number, number], text: [245, 245, 245] as [number, number, number], muted: [120, 120, 130] as [number, number, number], success: [60, 180, 120] as [number, number, number], danger: [220, 60, 60] as [number, number, number] };
 
+interface BaSaleSnap {
+  client_name: string | null;
+  offer_name: string | null;
+  amount: number;
+  sale_type?: string | null;
+  is_sap?: boolean | null;
+  sap_hours?: number | null;
+}
+
 interface BilanData {
   month: string;
   totalReel: number;
@@ -27,6 +36,7 @@ interface BilanData {
   portageEnabled: boolean;
   tvaAmount: number;
   versements: Record<string, number | null>;
+  baSales?: BaSaleSnap[];
 }
 
 export function generateBilanPDF(data: BilanData) {
@@ -93,6 +103,32 @@ export function generateBilanPDF(data: BilanData) {
       styles: { fontSize: 8, textColor: [200, 200, 200], cellPadding: 2.5 },
       headStyles: { fillColor: [25, 25, 28], textColor: [160, 160, 170], fontStyle: "bold", fontSize: 7 },
       alternateRowStyles: { fillColor: [20, 20, 22] },
+      margin: { left: 15, right: 15 },
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+  }
+
+  // BA Ventes table
+  if (data.baSales && data.baSales.length > 0) {
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...BRAND.text);
+    doc.text("VENTES BE ACTIV (FJM)", 15, y);
+    y += 5;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["Client", "Offre", "Type", "Montant"]],
+      body: data.baSales.map(s => [
+        s.client_name || "—",
+        s.offer_name || "—",
+        s.sale_type && s.sale_type !== "individual" ? s.sale_type.toUpperCase() : (s.is_sap ? `SAP${s.sap_hours ? ` ${s.sap_hours}h` : ""}` : "Individuel"),
+        `${s.amount.toLocaleString("fr-FR")}€`,
+      ]),
+      theme: "plain",
+      styles: { fontSize: 8, textColor: [200, 200, 200], cellPadding: 2.5 },
+      headStyles: { fillColor: [20, 35, 70], textColor: [140, 170, 220], fontStyle: "bold", fontSize: 7 },
+      alternateRowStyles: { fillColor: [15, 22, 45] },
       margin: { left: 15, right: 15 },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
