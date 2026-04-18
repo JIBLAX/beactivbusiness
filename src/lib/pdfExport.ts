@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { FinanceEntry, Expense, Offre } from "@/data/types";
+import type { FinanceEntry, Expense } from "@/data/types";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -9,9 +9,47 @@ function formatMonth(m: string): string {
   return `${MONTHS[parseInt(mo) - 1]} ${y}`;
 }
 
-const BRAND = { primary: [139, 42, 60] as [number, number, number], dark: [12, 12, 14] as [number, number, number], text: [245, 245, 245] as [number, number, number], muted: [120, 120, 130] as [number, number, number], success: [60, 180, 120] as [number, number, number], danger: [220, 60, 60] as [number, number, number] };
+// Safe formatter: avoids locale-specific characters that jsPDF can't render
+function amt(n: number): string {
+  const abs = Math.round(Math.abs(n));
+  const s = abs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return s + " EUR";
+}
+function amtDec(n: number): string {
+  const abs = Math.abs(n);
+  const s = abs.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ").replace(".", ",");
+  return (n < 0 ? "- " : "") + s + " EUR";
+}
 
-interface BaSaleSnap {
+// Color palette — light document style (like a real accounting doc)
+const C = {
+  primary:   [139, 42, 60]   as [number, number, number],
+  primaryDk: [100, 28, 42]   as [number, number, number],
+  primaryLt: [248, 238, 240] as [number, number, number],
+  dark:      [25, 25, 30]    as [number, number, number],
+  text:      [30, 30, 35]    as [number, number, number],
+  muted:     [100, 100, 110] as [number, number, number],
+  light:     [245, 244, 242] as [number, number, number],
+  white:     [255, 255, 255] as [number, number, number],
+  success:   [22, 120, 70]   as [number, number, number],
+  successLt: [230, 247, 238] as [number, number, number],
+  danger:    [185, 38, 38]   as [number, number, number],
+  dangerLt:  [252, 235, 235] as [number, number, number],
+  blue:      [50, 90, 160]   as [number, number, number],
+  blueLt:    [232, 239, 252] as [number, number, number],
+  amber:     [140, 90, 20]   as [number, number, number],
+  amberLt:   [252, 243, 228] as [number, number, number],
+  border:    [215, 213, 210] as [number, number, number],
+};
+
+const PAYMENT_LABELS: Record<string, string> = {
+  especes: "Especes",
+  cb: "Carte bancaire",
+  virement: "Virement",
+  prelevement: "Prelevement",
+};
+
+export interface BaSaleSnap {
   client_name: string | null;
   offer_name: string | null;
   amount: number;
@@ -20,7 +58,7 @@ interface BaSaleSnap {
   sap_hours?: number | null;
 }
 
-interface BilanData {
+export interface BilanData {
   month: string;
   totalReel: number;
   declaredMicro: number;
@@ -41,153 +79,358 @@ interface BilanData {
 
 export function generateBilanPDF(data: BilanData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const w = doc.internal.pageSize.getWidth();
-  let y = 15;
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const ML = 14; // margin left
+  const MR = 14; // margin right
+  const CW = W - ML - MR; // content width
 
-  // Header
-  doc.setFillColor(...BRAND.primary);
-  doc.rect(0, 0, w, 35, "F");
+  // Computed helpers
+  const localEntriesTotal = data.entries.reduce((s, e) => s + e.amount, 0);
+  const baSalesTotal = (data.baSales ?? []).reduce((s, e) => s + e.amount, 0);
+  const fjmRevTotal = Math.max(0, Math.round((data.totalReel - localEntriesTotal - baSalesTotal) * 100) / 100);
+  const localExpTotal = data.expenses.reduce((s, e) => s + e.amount, 0);
+  const fjmChgTotal = Math.max(0, Math.round((data.totalDepenses - localExpTotal) * 100) / 100);
+
+  // ─── HEADER ───────────────────────────────────────────────────────────────
+  doc.setFillColor(...C.primary);
+  doc.rect(0, 0, W, 46, "F");
+
+  // Left: company + title
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
+  doc.setFontSize(7.5);
+  doc.setTextColor(210, 160, 170);
+  doc.text("BE ACTIV  |  COACH SPORTIF JM", ML, 11);
+
+  doc.setFontSize(24);
   doc.setTextColor(255, 255, 255);
-  doc.text("BILAN MENSUEL", 15, 18);
-  doc.setFontSize(12);
+  doc.text("BILAN MENSUEL", ML, 26);
+
+  doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(formatMonth(data.month).toUpperCase(), 15, 27);
-  doc.setFontSize(8);
-  doc.text(`Généré le ${new Date().toLocaleDateString("fr-FR")}`, w - 15, 27, { align: "right" });
+  doc.setTextColor(230, 200, 205);
+  doc.text(formatMonth(data.month).toUpperCase(), ML, 36);
 
-  y = 45;
+  // Right: dates
+  doc.setFontSize(7.5);
+  doc.setTextColor(210, 160, 170);
+  doc.text("Date de generation", W - MR, 14, { align: "right" });
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.text(new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }), W - MR, 20, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(210, 160, 170);
+  doc.text(`Periode : ${data.month}`, W - MR, 28, { align: "right" });
+  doc.text("Regime : Micro-entreprise", W - MR, 34, { align: "right" });
 
-  // KPI boxes
+  // Thin accent line
+  doc.setFillColor(...C.primaryDk);
+  doc.rect(0, 46, W, 1.5, "F");
+
+  // ─── KPI STRIP ────────────────────────────────────────────────────────────
+  let y = 55;
   const kpis = [
-    { label: "REVENUS TOTAL", value: `${data.totalReel.toLocaleString("fr-FR")}€`, color: BRAND.text },
-    { label: "CA MICRO", value: `${data.declaredMicro.toLocaleString("fr-FR")}€`, color: BRAND.success },
-    { label: "URSSAF DÛ", value: `-${data.urssaf.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€`, color: BRAND.danger },
-    { label: "BÉNÉFICE NET", value: `${data.beneficeNet.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€`, color: data.beneficeNet >= 0 ? BRAND.success : BRAND.danger },
+    { label: "TOTAL REVENUS", value: amt(data.totalReel), color: C.text, bg: C.light },
+    { label: "BASE URSSAF (MICRO)", value: amt(data.declaredMicro), color: C.blue, bg: C.blueLt },
+    { label: "URSSAF DU (26,1%)", value: amt(data.urssaf), color: C.danger, bg: C.dangerLt },
+    { label: "BENEFICE NET", value: amt(Math.abs(data.beneficeNet)), color: data.beneficeNet >= 0 ? C.success : C.danger, bg: data.beneficeNet >= 0 ? C.successLt : C.dangerLt },
   ];
-  const boxW = (w - 30 - 9) / 4;
+  const kpiW = (CW - 9) / 4;
   kpis.forEach((k, i) => {
-    const x = 15 + i * (boxW + 3);
-    doc.setFillColor(30, 30, 34);
-    doc.roundedRect(x, y, boxW, 22, 2, 2, "F");
-    doc.setFontSize(7);
-    doc.setTextColor(...BRAND.muted);
-    doc.text(k.label, x + boxW / 2, y + 8, { align: "center" });
-    doc.setFontSize(12);
+    const x = ML + i * (kpiW + 3);
+    doc.setFillColor(...k.bg);
+    doc.roundedRect(x, y, kpiW, 26, 2, 2, "F");
+    doc.setDrawColor(...C.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, y, kpiW, 26, 2, 2, "S");
+
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...C.muted);
+    doc.text(k.label, x + kpiW / 2, y + 7, { align: "center" });
+
+    doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...k.color);
-    doc.text(k.value, x + boxW / 2, y + 17, { align: "center" });
-    doc.setFont("helvetica", "normal");
+    doc.text(k.value, x + kpiW / 2, y + 19, { align: "center" });
   });
-  y += 30;
+  if (data.beneficeNet < 0) {
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...C.danger);
+    doc.text("DEFICIT", kpis.length > 0 ? ML + 3 * (kpiW + 3) + kpiW / 2 : 0, y + 24, { align: "center" });
+  }
+  y += 33;
 
-  // Entries table
+  // ─── SECTION HELPERS ──────────────────────────────────────────────────────
+  const sectionHeader = (title: string, sub?: string) => {
+    doc.setFillColor(...C.primary);
+    doc.rect(ML, y, CW, 8, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text(title, ML + 4, y + 5.5);
+    if (sub) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(210, 160, 170);
+      doc.text(sub, W - MR - 2, y + 5.5, { align: "right" });
+    }
+    y += 10;
+  };
+
+  const subLabel = (title: string, color: [number, number, number] = C.muted) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...color);
+    doc.text(title, ML, y + 4);
+    y += 6;
+  };
+
+  const totalBar = (label: string, value: string, positive: boolean) => {
+    const bg = positive ? C.successLt : C.dangerLt;
+    const fg = positive ? C.success : C.danger;
+    doc.setFillColor(...bg);
+    doc.roundedRect(ML, y, CW, 9, 1, 1, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...C.text);
+    doc.text(label, ML + 4, y + 6);
+    doc.setTextColor(...fg);
+    doc.text(value, W - MR - 2, y + 6, { align: "right" });
+    y += 12;
+  };
+
+  const checkPage = (needed = 40) => {
+    if (y + needed > H - 18) {
+      doc.addPage();
+      y = 20;
+    }
+  };
+
+  // ─── RECETTES ─────────────────────────────────────────────────────────────
+  sectionHeader("RECETTES", `Total : ${amt(data.totalReel)}`);
+
+  // — Entrées locales —
   if (data.entries.length > 0) {
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...BRAND.text);
-    doc.text("ENTRÉES", 15, y);
-    y += 5;
-
+    subLabel("Revenus locaux (micro-entreprise)", C.text);
     autoTable(doc, {
       startY: y,
-      head: [["Client", "Offre", "Mode", "Montant"]],
+      head: [["Client / Libelle", "Offre", "Mode paiement", "Montant"]],
       body: data.entries.map(e => [
-        e.clientName || e.label,
-        e.offre || "-",
-        e.paymentMode || "-",
-        `${e.amount.toLocaleString("fr-FR")}€`,
+        e.clientName || e.label || "—",
+        e.offre || "—",
+        PAYMENT_LABELS[e.paymentMode || ""] || (e.paymentMode || "—"),
+        amt(e.amount),
       ]),
+      foot: [["", "", "Sous-total revenus locaux", amt(localEntriesTotal)]],
       theme: "plain",
-      styles: { fontSize: 8, textColor: [200, 200, 200], cellPadding: 2.5 },
-      headStyles: { fillColor: [25, 25, 28], textColor: [160, 160, 170], fontStyle: "bold", fontSize: 7 },
-      alternateRowStyles: { fillColor: [20, 20, 22] },
-      margin: { left: 15, right: 15 },
+      styles: { fontSize: 8, textColor: C.text, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
+      headStyles: { fillColor: C.light, textColor: C.muted, fontStyle: "bold", fontSize: 7, lineWidth: 0 },
+      footStyles: { fillColor: C.light, textColor: C.text, fontStyle: "bold", fontSize: 7.5 },
+      alternateRowStyles: { fillColor: [251, 250, 249] },
+      columnStyles: {
+        0: { cellWidth: 52 },
+        3: { halign: "right", fontStyle: "bold" },
+      },
+      margin: { left: ML, right: MR },
     });
-    y = (doc as any).lastAutoTable.finalY + 8;
+    y = (doc as any).lastAutoTable.finalY + 4;
   }
 
-  // BA Ventes table
+  // — BA Sales —
   if (data.baSales && data.baSales.length > 0) {
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...BRAND.text);
-    doc.text("VENTES BE ACTIV (FJM)", 15, y);
-    y += 5;
-
+    checkPage(30);
+    subLabel("Ventes BE ACTIV — Coaching clients (ba_sales)", C.blue);
     autoTable(doc, {
       startY: y,
-      head: [["Client", "Offre", "Type", "Montant"]],
-      body: data.baSales.map(s => [
-        s.client_name || "—",
-        s.offer_name || "—",
-        s.sale_type && s.sale_type !== "individual" ? s.sale_type.toUpperCase() : (s.is_sap ? `SAP${s.sap_hours ? ` ${s.sap_hours}h` : ""}` : "Individuel"),
-        `${s.amount.toLocaleString("fr-FR")}€`,
-      ]),
+      head: [["Client", "Offre", "Type de vente", "Montant"]],
+      body: data.baSales.map(s => {
+        const typeLabel =
+          s.sale_type && s.sale_type !== "individual"
+            ? s.sale_type.charAt(0).toUpperCase() + s.sale_type.slice(1)
+            : s.is_sap
+            ? `SAP${s.sap_hours ? " " + s.sap_hours + "h" : ""}`
+            : "Individuel";
+        return [s.client_name || "—", s.offer_name || "—", typeLabel, amt(s.amount)];
+      }),
+      foot: [["", "", "Sous-total BE ACTIV", amt(baSalesTotal)]],
       theme: "plain",
-      styles: { fontSize: 8, textColor: [200, 200, 200], cellPadding: 2.5 },
-      headStyles: { fillColor: [20, 35, 70], textColor: [140, 170, 220], fontStyle: "bold", fontSize: 7 },
-      alternateRowStyles: { fillColor: [15, 22, 45] },
-      margin: { left: 15, right: 15 },
+      styles: { fontSize: 8, textColor: C.text, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
+      headStyles: { fillColor: C.blueLt, textColor: C.blue, fontStyle: "bold", fontSize: 7 },
+      footStyles: { fillColor: C.blueLt, textColor: C.blue, fontStyle: "bold", fontSize: 7.5 },
+      alternateRowStyles: { fillColor: [240, 245, 254] },
+      columnStyles: { 3: { halign: "right", fontStyle: "bold" } },
+      margin: { left: ML, right: MR },
     });
-    y = (doc as any).lastAutoTable.finalY + 8;
+    y = (doc as any).lastAutoTable.finalY + 4;
   }
 
-  // Expenses table
+  // — FJM Pro revenues —
+  if (fjmRevTotal > 0.5) {
+    checkPage(20);
+    subLabel("Revenus divers FJM Pro", C.amber);
+    autoTable(doc, {
+      startY: y,
+      body: [["Revenus professionnels FJM (operations pro)", amt(fjmRevTotal)]],
+      foot: [["Sous-total revenus FJM", amt(fjmRevTotal)]],
+      theme: "plain",
+      styles: { fontSize: 8, textColor: C.text, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
+      footStyles: { fillColor: C.amberLt, textColor: C.amber, fontStyle: "bold", fontSize: 7.5 },
+      columnStyles: { 1: { halign: "right", fontStyle: "bold" } },
+      margin: { left: ML, right: MR },
+    });
+    y = (doc as any).lastAutoTable.finalY + 4;
+  }
+
+  totalBar("TOTAL RECETTES", amt(data.totalReel), true);
+
+  // ─── CHARGES ──────────────────────────────────────────────────────────────
+  checkPage(30);
+  sectionHeader("CHARGES", `Total : ${amt(data.totalDepenses)}`);
+
   if (data.expenses.length > 0) {
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...BRAND.text);
-    doc.text("DÉPENSES", 15, y);
-    y += 5;
-
+    subLabel("Charges locales (micro-entreprise)", C.text);
     autoTable(doc, {
       startY: y,
-      head: [["Catégorie", "Libellé", "Date", "Montant"]],
-      body: data.expenses.map(e => [e.category, e.label, e.date, `-${e.amount.toLocaleString("fr-FR")}€`]),
+      head: [["Categorie", "Libelle", "Date", "Montant"]],
+      body: data.expenses.map(e => [e.category, e.label, e.date, amtDec(-e.amount)]),
+      foot: [["", "", "Sous-total charges locales", amtDec(-localExpTotal)]],
       theme: "plain",
-      styles: { fontSize: 8, textColor: [200, 200, 200], cellPadding: 2.5 },
-      headStyles: { fillColor: [25, 25, 28], textColor: [160, 160, 170], fontStyle: "bold", fontSize: 7 },
-      alternateRowStyles: { fillColor: [20, 20, 22] },
-      margin: { left: 15, right: 15 },
+      styles: { fontSize: 8, textColor: C.text, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
+      headStyles: { fillColor: C.light, textColor: C.muted, fontStyle: "bold", fontSize: 7 },
+      footStyles: { fillColor: C.dangerLt, textColor: C.danger, fontStyle: "bold", fontSize: 7.5 },
+      alternateRowStyles: { fillColor: [251, 250, 249] },
+      columnStyles: {
+        0: { cellWidth: 50, fontSize: 7 },
+        3: { halign: "right", fontStyle: "bold", textColor: C.danger },
+      },
+      margin: { left: ML, right: MR },
     });
-    y = (doc as any).lastAutoTable.finalY + 8;
+    y = (doc as any).lastAutoTable.finalY + 4;
   }
 
-  // Summary section
-  if (y > 240) { doc.addPage(); y = 20; }
-  doc.setFillColor(25, 25, 28);
-  doc.roundedRect(15, y, w - 30, 55, 3, 3, "F");
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...BRAND.text);
-  doc.text("SYNTHÈSE", 20, y + 8);
+  if (fjmChgTotal > 0.5) {
+    checkPage(20);
+    subLabel("Charges FJM Pro (fixes + variables)", C.danger);
+    autoTable(doc, {
+      startY: y,
+      body: [["Charges professionnelles FJM (operations pro)", amtDec(-fjmChgTotal)]],
+      foot: [["Sous-total charges FJM", amtDec(-fjmChgTotal)]],
+      theme: "plain",
+      styles: { fontSize: 8, textColor: C.text, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
+      footStyles: { fillColor: C.dangerLt, textColor: C.danger, fontStyle: "bold", fontSize: 7.5 },
+      columnStyles: { 1: { halign: "right", fontStyle: "bold", textColor: C.danger } },
+      margin: { left: ML, right: MR },
+    });
+    y = (doc as any).lastAutoTable.finalY + 4;
+  }
 
-  const lines = [
-    { label: "Total Revenus", value: `${data.totalReel.toLocaleString("fr-FR")}€` },
-    { label: "Total Dépenses", value: `-${data.totalDepenses.toLocaleString("fr-FR")}€` },
-    { label: "URSSAF (26.1%)", value: `-${data.urssaf.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€` },
-    ...(data.tvaAmount > 0 ? [{ label: "TVA collectée", value: `${data.tvaAmount.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€` }] : []),
-    { label: "Bénéfice Net", value: `${data.beneficeNet.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€` },
-    { label: "Gestion Perso", value: `${data.gestionPerso.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€` },
-    { label: "Reste Perso", value: `${data.restePerso.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€` },
+  if (data.expenses.length === 0 && fjmChgTotal < 0.5) {
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(...C.muted);
+    doc.text("Aucune charge enregistree ce mois.", ML + 4, y + 5);
+    y += 10;
+  }
+
+  totalBar("TOTAL CHARGES", amtDec(-data.totalDepenses), false);
+
+  // ─── SITUATION FISCALE ────────────────────────────────────────────────────
+  checkPage(50);
+  sectionHeader("SITUATION FISCALE ET SOCIALE");
+
+  const fiscalBody: [string, string][] = [
+    ["Chiffre d'affaires total (brut)", amt(data.totalReel)],
+    ["Base imposable micro-entreprise (URSSAF)", amt(data.declaredMicro)],
+    ["Taux de cotisation URSSAF", "26,1 %"],
+    ["Cotisations sociales dues", amtDec(-data.urssaf)],
   ];
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  lines.forEach((l, i) => {
-    const ly = y + 14 + i * 5.5;
-    doc.setTextColor(...BRAND.muted);
-    doc.text(l.label, 22, ly);
-    doc.setTextColor(...BRAND.text);
-    doc.text(l.value, w - 22, ly, { align: "right" });
-  });
+  if (data.especesNonDeclarees > 0) {
+    fiscalBody.push(["Especes hors declaration", amt(data.especesNonDeclarees)]);
+  }
+  if (data.portageEnabled && data.declaredPortage > 0) {
+    fiscalBody.push(["CA en portage JUMP (non declare URSSAF)", amt(data.declaredPortage)]);
+  }
+  if (data.tvaAmount > 0) {
+    fiscalBody.push(["CA soumis a TVA (HT)", amt(Math.round(data.tvaAmount / 0.20))]);
+    fiscalBody.push(["TVA collectee (20%) — a reverser", amt(data.tvaAmount)]);
+  }
 
-  // Footer
-  const ph = doc.internal.pageSize.getHeight();
-  doc.setFontSize(7);
-  doc.setTextColor(...BRAND.muted);
-  doc.text("BeActiv Business — Document généré automatiquement", w / 2, ph - 8, { align: "center" });
+  autoTable(doc, {
+    startY: y,
+    head: [["Rubrique fiscale", "Montant"]],
+    body: fiscalBody,
+    theme: "plain",
+    styles: { fontSize: 8, textColor: C.text, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 } },
+    headStyles: { fillColor: C.light, textColor: C.muted, fontStyle: "bold", fontSize: 7 },
+    alternateRowStyles: { fillColor: [251, 250, 249] },
+    columnStyles: {
+      0: { cellWidth: 130 },
+      1: { halign: "right", fontStyle: "bold" },
+    },
+    margin: { left: ML, right: MR },
+  });
+  y = (doc as any).lastAutoTable.finalY + 6;
+
+  // ─── RESULTAT NET ─────────────────────────────────────────────────────────
+  checkPage(60);
+  sectionHeader("RESULTAT NET");
+
+  const resultBody: [string, string, string][] = [
+    ["(+)", "Total revenus encaisses", amt(data.totalReel)],
+    ["(-)", "Total charges deductibles", amtDec(-data.totalDepenses)],
+    ["(-)", "Cotisations URSSAF (26,1% base micro)", amtDec(-data.urssaf)],
+  ];
+  if (data.tvaAmount > 0) {
+    resultBody.push(["(~)", "TVA collectee (a reverser)", amt(data.tvaAmount)]);
+  }
+
+  autoTable(doc, {
+    startY: y,
+    head: [["", "Description", "Montant"]],
+    body: resultBody,
+    theme: "plain",
+    styles: { fontSize: 8, textColor: C.text, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 } },
+    headStyles: { fillColor: C.light, textColor: C.muted, fontStyle: "bold", fontSize: 7 },
+    alternateRowStyles: { fillColor: [251, 250, 249] },
+    columnStyles: {
+      0: { cellWidth: 10, textColor: C.muted, fontSize: 8, fontStyle: "bold" },
+      1: { cellWidth: 130 },
+      2: { halign: "right", fontStyle: "bold" },
+    },
+    margin: { left: ML, right: MR },
+  });
+  y = (doc as any).lastAutoTable.finalY + 4;
+
+  // Final result box
+  checkPage(20);
+  const isPos = data.beneficeNet >= 0;
+  doc.setFillColor(...(isPos ? C.success : C.danger));
+  doc.roundedRect(ML, y, CW, 16, 2, 2, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text("BENEFICE NET", ML + 5, y + 10.5);
+  doc.setFontSize(13);
+  doc.text(`${isPos ? "" : "- "}${amt(Math.abs(data.beneficeNet))}`, W - MR - 5, y + 10.5, { align: "right" });
+  y += 20;
+
+  // ─── FOOTER (all pages) ───────────────────────────────────────────────────
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(...C.primary);
+    doc.rect(0, H - 11, W, 11, "F");
+    doc.setFontSize(6.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(210, 160, 170);
+    doc.text("BE ACTIV BUSINESS  |  Document comptable genere automatiquement  |  Usage interne uniquement", W / 2, H - 4, { align: "center" });
+    if (totalPages > 1) {
+      doc.setTextColor(255, 255, 255);
+      doc.text(`${p} / ${totalPages}`, W - MR, H - 4, { align: "right" });
+    }
+  }
 
   doc.save(`Bilan_${data.month}_BeActiv.pdf`);
 }
