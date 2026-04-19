@@ -4,6 +4,18 @@ import type { FinanceEntry, Expense } from "@/data/types";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
+const EI = {
+  name:    "MFAUME JONATHAN",
+  address: "22 RUE PONSARD",
+  city:    "38100 GRENOBLE",
+  forme:   "Entrepreneur individuel",
+  siren:   "824 253 751",
+  siret:   "824 253 751 00039",
+  ape:     "9609Z",
+  sap:     "SAP824253751",
+  tva:     "Non assujetti a la TVA",
+};
+
 function formatMonth(m: string): string {
   const [y, mo] = m.split("-");
   return `${MONTHS[parseInt(mo) - 1]} ${y}`;
@@ -94,41 +106,46 @@ export function generateBilanPDF(data: BilanData) {
 
   // ─── HEADER ───────────────────────────────────────────────────────────────
   doc.setFillColor(...C.primary);
-  doc.rect(0, 0, W, 46, "F");
+  doc.rect(0, 0, W, 52, "F");
 
-  // Left: company + title
+  // Left: document title
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
-  doc.setTextColor(210, 160, 170);
-  doc.text("BE ACTIV  |  COACH SPORTIF JM", ML, 11);
-
-  doc.setFontSize(24);
+  doc.setFontSize(20);
   doc.setTextColor(255, 255, 255);
-  doc.text("BILAN MENSUEL", ML, 26);
+  doc.text("BILAN MENSUEL", ML, 18);
 
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(230, 200, 205);
-  doc.text(formatMonth(data.month).toUpperCase(), ML, 36);
+  doc.text(formatMonth(data.month).toUpperCase(), ML, 27);
 
-  // Right: dates
-  doc.setFontSize(7.5);
+  doc.setFontSize(7);
   doc.setTextColor(210, 160, 170);
-  doc.text("Date de generation", W - MR, 14, { align: "right" });
-  doc.setTextColor(255, 255, 255);
+  doc.text("Regime : Micro-entreprise  |  " + EI.tva, ML, 35);
+  doc.text(`SIREN ${EI.siren}  |  APE ${EI.ape}  |  N deg. SAP ${EI.sap}`, ML, 42);
+
+  // Right: entrepreneur identity card
+  const rx = W - MR;
   doc.setFont("helvetica", "bold");
-  doc.text(new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }), W - MR, 20, { align: "right" });
+  doc.setFontSize(9);
+  doc.setTextColor(255, 255, 255);
+  doc.text(EI.name, rx, 13, { align: "right" });
   doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(230, 200, 205);
+  doc.text(EI.address, rx, 20, { align: "right" });
+  doc.text(EI.city, rx, 26, { align: "right" });
   doc.setTextColor(210, 160, 170);
-  doc.text(`Periode : ${data.month}`, W - MR, 28, { align: "right" });
-  doc.text("Regime : Micro-entreprise", W - MR, 34, { align: "right" });
+  doc.text(`SIRET ${EI.siret}`, rx, 34, { align: "right" });
+  doc.text(`Genere le ${new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}`, rx, 41, { align: "right" });
+  doc.text(EI.forme, rx, 48, { align: "right" });
 
   // Thin accent line
   doc.setFillColor(...C.primaryDk);
-  doc.rect(0, 46, W, 1.5, "F");
+  doc.rect(0, 52, W, 1.5, "F");
 
   // ─── KPI STRIP ────────────────────────────────────────────────────────────
-  let y = 55;
+  let y = 61;
   const kpis = [
     { label: "TOTAL REVENUS", value: amt(data.totalReel), color: C.text, bg: C.light },
     { label: "BASE URSSAF (MICRO)", value: amt(data.declaredMicro), color: C.blue, bg: C.blueLt },
@@ -433,4 +450,207 @@ export function generateBilanPDF(data: BilanData) {
   }
 
   doc.save(`Bilan_${data.month}_BeActiv.pdf`);
+}
+
+// ─── ANNUAL BILAN ─────────────────────────────────────────────────────────────
+
+export interface AnnualMonthSnap {
+  month: string;
+  totalReel: number;
+  declaredMicro: number;
+  urssaf: number;
+  totalDepenses: number;
+  beneficeNet: number;
+  baSalesTotal: number;
+}
+
+export interface AnnualBilanData {
+  year: number;
+  months: AnnualMonthSnap[];
+}
+
+export function generateAnnualBilanPDF(data: AnnualBilanData) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const ML = 14;
+  const MR = 14;
+  const CW = W - ML - MR;
+
+  const totalCA        = data.months.reduce((s, m) => s + m.totalReel, 0);
+  const totalMicro     = data.months.reduce((s, m) => s + m.declaredMicro, 0);
+  const totalURSSAF    = data.months.reduce((s, m) => s + m.urssaf, 0);
+  const totalCharges   = data.months.reduce((s, m) => s + m.totalDepenses, 0);
+  const totalBenefice  = data.months.reduce((s, m) => s + m.beneficeNet, 0);
+
+  // ─── HEADER ─────────────────────────────────────────────────────────────
+  doc.setFillColor(...C.primary);
+  doc.rect(0, 0, W, 52, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(255, 255, 255);
+  doc.text(`BILAN ANNUEL ${data.year}`, ML, 18);
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(230, 200, 205);
+  doc.text(`Exercice fiscal ${data.year}  —  Janvier a Decembre`, ML, 27);
+
+  doc.setFontSize(7);
+  doc.setTextColor(210, 160, 170);
+  doc.text("Regime : Micro-entreprise  |  " + EI.tva, ML, 35);
+  doc.text(`SIREN ${EI.siren}  |  APE ${EI.ape}  |  N deg. SAP ${EI.sap}`, ML, 42);
+
+  const rx = W - MR;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(255, 255, 255);
+  doc.text(EI.name, rx, 13, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(230, 200, 205);
+  doc.text(EI.address, rx, 20, { align: "right" });
+  doc.text(EI.city, rx, 26, { align: "right" });
+  doc.setTextColor(210, 160, 170);
+  doc.text(`SIRET ${EI.siret}`, rx, 34, { align: "right" });
+  doc.text(`Genere le ${new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}`, rx, 41, { align: "right" });
+  doc.text(EI.forme, rx, 48, { align: "right" });
+
+  doc.setFillColor(...C.primaryDk);
+  doc.rect(0, 52, W, 1.5, "F");
+
+  // ─── KPI STRIP ──────────────────────────────────────────────────────────
+  let y = 61;
+  const kpis = [
+    { label: "CA ANNUEL", value: amt(totalCA), color: C.text, bg: C.light },
+    { label: "BASE URSSAF", value: amt(totalMicro), color: C.blue, bg: C.blueLt },
+    { label: "URSSAF DU", value: amt(totalURSSAF), color: C.danger, bg: C.dangerLt },
+    { label: "BENEFICE NET", value: amt(Math.abs(totalBenefice)), color: totalBenefice >= 0 ? C.success : C.danger, bg: totalBenefice >= 0 ? C.successLt : C.dangerLt },
+  ];
+  const kpiW = (CW - 9) / 4;
+  kpis.forEach((k, i) => {
+    const x = ML + i * (kpiW + 3);
+    doc.setFillColor(...k.bg);
+    doc.roundedRect(x, y, kpiW, 26, 2, 2, "F");
+    doc.setDrawColor(...C.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, y, kpiW, 26, 2, 2, "S");
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...C.muted);
+    doc.text(k.label, x + kpiW / 2, y + 7, { align: "center" });
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...k.color);
+    doc.text(k.value, x + kpiW / 2, y + 19, { align: "center" });
+  });
+  y += 33;
+
+  // ─── SECTION: RECAPITULATIF MENSUEL ─────────────────────────────────────
+  doc.setFillColor(...C.primary);
+  doc.rect(ML, y, CW, 8, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text("RECAPITULATIF MENSUEL", ML + 4, y + 5.5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(210, 160, 170);
+  doc.text(`Exercice ${data.year}`, W - MR - 2, y + 5.5, { align: "right" });
+  y += 10;
+
+  const monthlyBody = data.months.map(m => [
+    formatMonth(m.month),
+    amt(m.totalReel),
+    amt(m.declaredMicro),
+    amtDec(-m.urssaf),
+    amtDec(-m.totalDepenses),
+    m.beneficeNet >= 0 ? amt(m.beneficeNet) : `- ${amt(Math.abs(m.beneficeNet))}`,
+  ]);
+
+  autoTable(doc, {
+    startY: y,
+    head: [["Mois", "Revenus", "Base URSSAF", "URSSAF", "Charges", "Benefice Net"]],
+    body: monthlyBody,
+    foot: [["TOTAL", amt(totalCA), amt(totalMicro), amtDec(-totalURSSAF), amtDec(-totalCharges), totalBenefice >= 0 ? amt(totalBenefice) : `- ${amt(Math.abs(totalBenefice))}`]],
+    theme: "plain",
+    styles: { fontSize: 7.5, textColor: C.text, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 } },
+    headStyles: { fillColor: C.light, textColor: C.muted, fontStyle: "bold", fontSize: 7 },
+    footStyles: { fillColor: C.primaryLt, textColor: C.primaryDk, fontStyle: "bold", fontSize: 8 },
+    alternateRowStyles: { fillColor: [251, 250, 249] },
+    columnStyles: {
+      0: { cellWidth: 28 },
+      1: { halign: "right", fontStyle: "bold" },
+      2: { halign: "right" },
+      3: { halign: "right", textColor: C.danger },
+      4: { halign: "right", textColor: C.danger },
+      5: { halign: "right", fontStyle: "bold" },
+    },
+    margin: { left: ML, right: MR },
+  });
+  y = (doc as any).lastAutoTable.finalY + 6;
+
+  // ─── SECTION: SITUATION FISCALE ANNUELLE ────────────────────────────────
+  if (y + 60 > H - 18) { doc.addPage(); y = 20; }
+
+  doc.setFillColor(...C.primary);
+  doc.rect(ML, y, CW, 8, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text("SITUATION FISCALE ET SOCIALE — ANNUELLE", ML + 4, y + 5.5);
+  y += 10;
+
+  autoTable(doc, {
+    startY: y,
+    head: [["Rubrique", "Montant"]],
+    body: [
+      ["Chiffre d'affaires total annuel", amt(totalCA)],
+      ["Base imposable micro-entreprise (URSSAF)", amt(totalMicro)],
+      ["Taux de cotisation URSSAF", "26,1 %"],
+      ["Cotisations sociales dues (annuel)", amtDec(-totalURSSAF)],
+      ["Total charges deductibles", amtDec(-totalCharges)],
+    ],
+    theme: "plain",
+    styles: { fontSize: 8, textColor: C.text, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 } },
+    headStyles: { fillColor: C.light, textColor: C.muted, fontStyle: "bold", fontSize: 7 },
+    alternateRowStyles: { fillColor: [251, 250, 249] },
+    columnStyles: {
+      0: { cellWidth: 130 },
+      1: { halign: "right", fontStyle: "bold" },
+    },
+    margin: { left: ML, right: MR },
+  });
+  y = (doc as any).lastAutoTable.finalY + 6;
+
+  // ─── RESULT BOX ─────────────────────────────────────────────────────────
+  if (y + 20 > H - 18) { doc.addPage(); y = 20; }
+  const isPos = totalBenefice >= 0;
+  doc.setFillColor(...(isPos ? C.success : C.danger));
+  doc.roundedRect(ML, y, CW, 16, 2, 2, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text(`BENEFICE NET ANNUEL ${data.year}`, ML + 5, y + 10.5);
+  doc.setFontSize(13);
+  doc.text(`${isPos ? "" : "- "}${amt(Math.abs(totalBenefice))}`, W - MR - 5, y + 10.5, { align: "right" });
+
+  // ─── FOOTER ─────────────────────────────────────────────────────────────
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(...C.primary);
+    doc.rect(0, H - 11, W, 11, "F");
+    doc.setFontSize(6.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(210, 160, 170);
+    doc.text(`${EI.name}  |  SIRET ${EI.siret}  |  Bilan annuel ${data.year}  |  Usage interne`, W / 2, H - 4, { align: "center" });
+    if (totalPages > 1) {
+      doc.setTextColor(255, 255, 255);
+      doc.text(`${p} / ${totalPages}`, W - MR, H - 4, { align: "right" });
+    }
+  }
+
+  doc.save(`Bilan_Annuel_${data.year}_BeActiv.pdf`);
 }

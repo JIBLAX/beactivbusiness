@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useApp } from "@/store/AppContext";
-import { generateBilanPDF } from "@/lib/pdfExport";
+import { generateBilanPDF, generateAnnualBilanPDF } from "@/lib/pdfExport";
+import type { AnnualMonthSnap } from "@/lib/pdfExport";
 import { getFiscalReminders, getDaysUntil, getStatusColor, getStatusLabel } from "@/lib/fiscalDates";
 import { useBaSalesMonth, useBaSalesYear } from "@/hooks/useBaSalesMonth";
 import { useFjmProOps } from "@/hooks/useFjmProOps";
@@ -103,6 +104,40 @@ export default function BilanPage() {
   const upcomingReminders = reminders.filter(r => getDaysUntil(r.date) >= 0).slice(0, 5);
   const nextReminder = upcomingReminders[0];
 
+  const annualYearComplete = wrappedYear < currentYear;
+
+  const handleAnnualExportPDF = () => {
+    const allMonths = Array.from({ length: 12 }, (_, i) =>
+      `${wrappedYear}-${String(i + 1).padStart(2, "0")}`
+    );
+    const months: AnnualMonthSnap[] = allMonths.map(month => {
+      const entries = financeEntries.filter(e => e.month === month);
+      const exps = expenses.filter(e => e.month === month);
+      const baTotal = baSalesWrapped.filter(s => s.date?.startsWith(month)).reduce((s, e) => s + e.amount, 0);
+      const portageOn = portageMonths[month] ?? false;
+      const localMicroM = entries.filter(e => {
+        if (portageOn) return false;
+        if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
+        return true;
+      }).reduce((s, e) => s + e.amount, 0);
+      const declared = localMicroM + baTotal;
+      const urssafM = declared * 0.261;
+      const localReel = entries.reduce((s, e) => s + e.amount, 0);
+      const totalReel = localReel + baTotal;
+      const totalDep = exps.reduce((s, e) => s + e.amount, 0);
+      return {
+        month,
+        totalReel,
+        declaredMicro: declared,
+        urssaf: urssafM,
+        totalDepenses: totalDep,
+        beneficeNet: totalReel - urssafM - totalDep,
+        baSalesTotal: baTotal,
+      };
+    });
+    generateAnnualBilanPDF({ year: wrappedYear, months });
+  };
+
   const handleExportPDF = () => {
     generateBilanPDF({
       month: selectedMonth,
@@ -163,17 +198,49 @@ export default function BilanPage() {
         </div>
       </div>
 
-      {/* PDF Export */}
+      {/* PDF Export — Mensuel */}
       <button onClick={handleExportPDF}
         className="w-full rounded-2xl p-4 flex items-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.99] mb-3"
         style={{ background: "linear-gradient(135deg, hsl(348 63% 30%), hsl(348 63% 22%))", border: "1px solid hsl(348 63% 40% / 0.3)" }}>
         <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: "hsl(0 0% 100% / 0.1)" }}>📄</div>
         <div className="flex-1 text-left">
-          <div className="text-[13px] font-semibold text-white">Exporter Bilan PDF</div>
+          <div className="text-[13px] font-semibold text-white">Bilan Mensuel PDF</div>
           <div className="text-[10px] text-white/60">{formatMonth(selectedMonth)} — Télécharger le récap</div>
         </div>
         <span className="text-white/40 text-sm">↓</span>
       </button>
+
+      {/* PDF Export — Annuel */}
+      <div className="card-elevated rounded-2xl p-4 flex items-center gap-3 mb-3">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+          style={{ background: annualYearComplete ? "hsl(348 63% 30% / 0.15)" : "hsl(0 0% 100% / 0.04)" }}>
+          🗓️
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-semibold text-foreground">Bilan Annuel PDF</div>
+          <div className="text-[10px] text-muted-foreground">
+            {annualYearComplete
+              ? `Exercice ${wrappedYear} complet — prêt à exporter`
+              : `Disponible après clôture de l'exercice ${wrappedYear}`}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <select value={wrappedYear} onChange={e => setWrappedYear(Number(e.target.value))}
+            className="rounded-xl px-2 py-1.5 text-xs input-field">
+            {[currentYear - 1, currentYear].map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <button
+            onClick={handleAnnualExportPDF}
+            disabled={!annualYearComplete}
+            className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+            style={annualYearComplete
+              ? { background: "linear-gradient(135deg, hsl(348 63% 30%), hsl(348 63% 22%))", color: "white", border: "1px solid hsl(348 63% 40% / 0.3)" }
+              : { background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 100% / 0.25)", border: "1px solid hsl(0 0% 100% / 0.06)", cursor: "not-allowed" }
+            }>
+            {annualYearComplete ? "↓ Export" : "🔒 Fermé"}
+          </button>
+        </div>
+      </div>
 
       {/* NOVA SAP */}
       <div className="card-elevated rounded-2xl mb-3 overflow-hidden">
