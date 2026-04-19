@@ -1,15 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { useApp } from "@/store/AppContext";
 import beactivLogo from "@/assets/beactiv-logo.png";
 import HamburgerMenu from "./HamburgerMenu";
-import FinancesPage from "@/pages/FinancesPage";
-import ActivitesPage from "@/pages/ActivitesPage";
-import StatsPage from "@/pages/StatsPage";
-import OffresPage from "@/pages/OffresPage";
-import ClientsPage from "@/pages/ClientsPage";
-import ActivResetPage from "@/pages/ActivResetPage";
-import BilanPage from "@/pages/BilanPage";
 import { useBaSalesYear } from "@/hooks/useBaSalesMonth";
+
+const FinancesPage   = lazy(() => import("@/pages/FinancesPage"));
+const ActivitesPage  = lazy(() => import("@/pages/ActivitesPage"));
+const StatsPage      = lazy(() => import("@/pages/StatsPage"));
+const OffresPage     = lazy(() => import("@/pages/OffresPage"));
+const ClientsPage    = lazy(() => import("@/pages/ClientsPage"));
+const ActivResetPage = lazy(() => import("@/pages/ActivResetPage"));
+const BilanPage      = lazy(() => import("@/pages/BilanPage"));
 
 export default function AppLayout() {
   const { currentPage, setCurrentPage, financeEntries } = useApp();
@@ -95,13 +96,15 @@ export default function AppLayout() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
         style={{ WebkitOverflowScrolling: "touch" }}>
-        {currentPage === "finances" && <FinancesPage />}
-        {currentPage === "activites" && <ActivitesPage />}
-        {currentPage === "offres" && <OffresPage />}
-        {currentPage === "stats" && <StatsPage />}
-        {currentPage === "clients" && <ClientsPage />}
-        {currentPage === "activreset" && <ActivResetPage />}
-        {currentPage === "bilan" && <BilanPage />}
+        <Suspense fallback={null}>
+          {currentPage === "finances"   && <FinancesPage />}
+          {currentPage === "activites"  && <ActivitesPage />}
+          {currentPage === "offres"     && <OffresPage />}
+          {currentPage === "stats"      && <StatsPage />}
+          {currentPage === "clients"    && <ClientsPage />}
+          {currentPage === "activreset" && <ActivResetPage />}
+          {currentPage === "bilan"      && <BilanPage />}
+        </Suspense>
       </div>
 
       <HamburgerMenu open={menuOpen} onClose={() => setMenuOpen(false)} />

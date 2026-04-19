@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import { Prospect, ActivResetClient, FinanceEntry, Expense, AppPage, Offre, INITIAL_OFFRES, Structure } from "@/data/types";
 import { initialProspects } from "@/data/prospects";
 import { initialActivResetClients } from "@/data/activResetClients";
@@ -181,6 +181,10 @@ async function syncToSupabase<T>(table: string, items: T[], toRow: (item: T, use
   }
 }
 
+// ─── Local cache ─────────────────────────────────────────────────────────────
+const CACHE_KEY = "ba_app_data";
+const CACHE_VER = 2;
+
 function crmRowToProspect(r: any): Prospect {
   return {
     id: `bcrm_${r.id}`,
@@ -221,24 +225,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [urssafMode, setUrssafModeState] = useState<"mois" | "trimestre">("trimestre");
   const [quarterEdits, setQuarterEditsState] = useState<Record<string, number>>({});
 
+  // Dedup guard — prevents double loadAllData when both onAuthStateChange + getSession fire
+  const loadedUserRef = useRef<string | null>(null);
+
+  const restoreFromCache = (userId: string): boolean => {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return false;
+      const c = JSON.parse(raw);
+      if (c.v !== CACHE_VER || c.userId !== userId) return false;
+      if (c.prospects)         setProspectsState(c.prospects);
+      if (c.activResetClients) setActivResetClientsState(c.activResetClients);
+      if (c.financeEntries)    setFinanceEntriesState(c.financeEntries);
+      if (c.expenses)          setExpensesState(c.expenses);
+      if (c.offres)            setOffresState(c.offres);
+      if (c.structures)        setStructuresState(c.structures);
+      setPortageMonthsState(c.portageMonths ?? {});
+      setVersementsPersoState(c.versementsPerso ?? {});
+      setUrssafModeState(c.urssafMode ?? "trimestre");
+      setQuarterEditsState(c.quarterEdits ?? {});
+      return true;
+    } catch { return false; }
+  };
+
+  const persistToCache = (userId: string, data: {
+    prospects: Prospect[]; activResetClients: ActivResetClient[];
+    financeEntries: FinanceEntry[]; expenses: Expense[]; offres: Offre[];
+    structures: Structure[]; portageMonths: Record<string, boolean>;
+    versementsPerso: Record<string, Record<string, number | null>>;
+    urssafMode: "mois" | "trimestre"; quarterEdits: Record<string, number>;
+  }) => {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ v: CACHE_VER, userId, ...data })); } catch {}
+  };
+
+  // Single auth effect — no separate useEffect([user]) to avoid double-trigger
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      if (!u) {
+        setLoading(false);
+        loadedUserRef.current = null;
+        try { localStorage.removeItem(CACHE_KEY); } catch {}
+        return;
+      }
+      if (loadedUserRef.current === u.id) return;
+      loadedUserRef.current = u.id;
+      const hasCached = restoreFromCache(u.id);
+      if (hasCached) {
+        setLoading(false);
+        loadAllData(u.id, true); // silent background refresh
+      } else {
+        loadAllData(u.id, false);
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (!user) { setLoading(false); return; }
-    loadAllData(user.id);
-  }, [user]);
-
-  const loadAllData = async (userId: string) => {
-    setLoading(true);
+  const loadAllData = async (userId: string, silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [pRes, arRes, fRes, eRes, oRes, sRes, stRes, crmRes] = await Promise.all([
         supabase.from("prospects").select("*").eq("user_id", userId),
@@ -251,57 +296,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
         (supabase as any).from("be_activ_clients").select("*"),
       ]);
 
-      const loadedOffres = (oRes.data && oRes.data.length > 0) ? oRes.data.map(rowToOffre) : null;
-      if (!loadedOffres) {
-        setOffresState(INITIAL_OFFRES);
-        await syncToSupabase("offres", INITIAL_OFFRES, offreToRow, userId);
-      } else {
-        setOffresState(loadedOffres);
-      }
+      // Offres — fire-and-forget seed sync (no blocking await)
+      const offresData = oRes.data?.length ? oRes.data.map(rowToOffre) : INITIAL_OFFRES;
+      setOffresState(offresData);
+      if (!oRes.data?.length) syncToSupabase("offres", INITIAL_OFFRES, offreToRow, userId).catch(() => {});
 
-      const localProspects: Prospect[] = (pRes.data && pRes.data.length > 0)
-        ? pRes.data.map(rowToProspect)
-        : initialProspects;
-
-      if (!pRes.data || pRes.data.length === 0) {
-        await syncToSupabase("prospects", initialProspects, prospectToRow, userId);
-      }
-
-      // Merge CRM clients (be_activ_clients) — add ones not already present by name
+      // Prospects + CRM merge
+      const localProspects: Prospect[] = pRes.data?.length ? pRes.data.map(rowToProspect) : initialProspects;
+      if (!pRes.data?.length) syncToSupabase("prospects", initialProspects, prospectToRow, userId).catch(() => {});
       const crmProspects: Prospect[] = (crmRes.data ?? []).map(crmRowToProspect);
       const localNames = new Set(localProspects.map((p: Prospect) => p.name.toLowerCase()));
-      const toMerge = crmProspects.filter(cp => cp.name && !localNames.has(cp.name.toLowerCase()));
-      setProspectsState([...localProspects, ...toMerge]);
+      const mergedProspects = [...localProspects, ...crmProspects.filter(cp => cp.name && !localNames.has(cp.name.toLowerCase()))];
+      setProspectsState(mergedProspects);
 
-      if (arRes.data && arRes.data.length > 0) {
-        setActivResetClientsState(arRes.data.map(rowToArClient));
-      } else {
-        setActivResetClientsState(initialActivResetClients);
-        await syncToSupabase("activ_reset_clients", initialActivResetClients, arClientToRow, userId);
-      }
+      // ActivReset clients
+      const arData = arRes.data?.length ? arRes.data.map(rowToArClient) : initialActivResetClients;
+      setActivResetClientsState(arData);
+      if (!arRes.data?.length) syncToSupabase("activ_reset_clients", initialActivResetClients, arClientToRow, userId).catch(() => {});
 
-      if (fRes.data && fRes.data.length > 0) {
-        setFinanceEntriesState(fRes.data.map(rowToFinance));
-      } else {
-        setFinanceEntriesState(seedFinanceEntries);
-        await syncToSupabase("finance_entries", seedFinanceEntries, financeToRow, userId);
-      }
+      // Finance entries
+      const financeData = fRes.data?.length ? fRes.data.map(rowToFinance) : seedFinanceEntries;
+      setFinanceEntriesState(financeData);
+      if (!fRes.data?.length) syncToSupabase("finance_entries", seedFinanceEntries, financeToRow, userId).catch(() => {});
 
-      setExpensesState((eRes.data ?? []).map(rowToExpense));
-      setStructuresState((stRes.data ?? []).map(rowToStructure));
+      // Expenses + structures
+      const expensesData = (eRes.data ?? []).map(rowToExpense);
+      const structuresData = (stRes.data ?? []).map(rowToStructure);
+      setExpensesState(expensesData);
+      setStructuresState(structuresData);
 
+      // App settings
+      let portageMonthsData: Record<string, boolean> = {};
+      let versementsPersoData: Record<string, Record<string, number | null>> = {};
+      let urssafModeData: "mois" | "trimestre" = "trimestre";
+      let quarterEditsData: Record<string, number> = {};
       if (sRes.data) {
-        setPortageMonthsState((sRes.data.portage_months as any) ?? {});
-        setVersementsPersoState((sRes.data.versements_perso as any) ?? {});
-        setUrssafModeState(((sRes.data as any).urssaf_mode as any) ?? "trimestre");
-        setQuarterEditsState(((sRes.data as any).quarter_edits as any) ?? {});
+        portageMonthsData  = (sRes.data.portage_months as any) ?? {};
+        versementsPersoData = (sRes.data.versements_perso as any) ?? {};
+        urssafModeData      = ((sRes.data as any).urssaf_mode as any) ?? "trimestre";
+        quarterEditsData    = ((sRes.data as any).quarter_edits as any) ?? {};
       } else {
-        await supabase.from("app_settings").insert({ user_id: userId, portage_enabled: false, versements_perso: {}, portage_months: {}, urssaf_mode: "trimestre" } as any);
+        supabase.from("app_settings").insert({ user_id: userId, portage_enabled: false, versements_perso: {}, portage_months: {}, urssaf_mode: "trimestre" } as any).catch(() => {});
       }
+      setPortageMonthsState(portageMonthsData);
+      setVersementsPersoState(versementsPersoData);
+      setUrssafModeState(urssafModeData);
+      setQuarterEditsState(quarterEditsData);
+
+      // Persist fresh data to cache for next startup
+      persistToCache(userId, {
+        prospects: mergedProspects, activResetClients: arData,
+        financeEntries: financeData, expenses: expensesData,
+        offres: offresData, structures: structuresData,
+        portageMonths: portageMonthsData, versementsPerso: versementsPersoData,
+        urssafMode: urssafModeData, quarterEdits: quarterEditsData,
+      });
     } catch (err) {
       console.error("Error loading data:", err);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   const setProspects = useCallback((p: Prospect[]) => {
