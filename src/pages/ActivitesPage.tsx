@@ -470,43 +470,71 @@ export default function ActivitesPage() {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm">💼</span>
+              <div className="w-6 h-6 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+                <img src={logoBeActiv} alt="BE ACTIV" className="w-full h-full object-cover" />
+              </div>
               <span className="text-[12px] font-bold text-foreground">BE ACTIV</span>
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(217 70% 60% / 0.15)", color: "hsl(217 70% 60%)" }}>FJM</span>
+              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(217 70% 60% / 0.15)", color: "hsl(217 70% 60%)" }}>FJM sync</span>
               <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{baSales.length}</span>
             </div>
             {baSalesTotal > 0 && <span className="value-lg text-[13px] text-success">{baSalesTotal.toFixed(0)}€</span>}
           </div>
           <div className="space-y-1.5 ml-1">
-            {baSales.map(s => (
-              <div key={s.id} className="flex items-center gap-3 p-3 rounded-2xl"
-                style={{ background: "hsl(217 70% 60% / 0.04)", border: "1px solid hsl(217 70% 60% / 0.1)" }}>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[13px] font-medium text-foreground truncate">{s.client_name || "—"}</span>
-                    {s.sale_type && s.sale_type !== "individual" && (
-                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                        style={{ background: "hsl(280 60% 55% / 0.15)", color: "hsl(280 60% 65%)" }}>
-                        {s.sale_type.toUpperCase()}
-                      </span>
-                    )}
-                    {s.is_sap && (
-                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                        style={{ background: "hsl(142 55% 42% / 0.15)", color: "hsl(142 55% 55%)" }}>
-                        SAP
-                      </span>
-                    )}
-                  </div>
-                  {(s.offer_name || s.is_sap) && (
-                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                      {s.offer_name && <span>{s.offer_name}</span>}
-                      {s.is_sap && s.sap_hours ? <span className="ml-1">🏠 {s.sap_hours}h</span> : null}
+            {baSales.map(s => {
+              const hasDiscount = (s.discount_amount && s.discount_amount > 0) || (s.discount_percent && s.discount_percent > 0);
+              const isCollectif = s.sale_type === "collectif" && s.participant_count && s.participant_count > 1;
+              return (
+                <div key={s.id} className="p-3 rounded-2xl"
+                  style={{ background: "hsl(217 70% 60% / 0.04)", border: "1px solid hsl(217 70% 60% / 0.1)" }}>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      {/* Client + badges */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[13px] font-semibold text-foreground">{s.client_name || "—"}</span>
+                        {s.sale_type && s.sale_type !== "individual" && (
+                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                            style={{ background: "hsl(280 60% 55% / 0.15)", color: "hsl(280 60% 65%)" }}>
+                            {s.sale_type.toUpperCase()}
+                          </span>
+                        )}
+                        {s.is_sap && (
+                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                            style={{ background: "hsl(142 55% 42% / 0.15)", color: "hsl(142 55% 55%)" }}>
+                            🏠 SAP
+                          </span>
+                        )}
+                      </div>
+                      {/* Offre + détails */}
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {s.offer_name && <span className="text-[10px] text-muted-foreground">{s.offer_name}</span>}
+                        {s.is_sap && s.sap_hours ? <span className="text-[10px] text-muted-foreground">{s.sap_hours}h</span> : null}
+                        {isCollectif && (
+                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
+                            style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
+                            ×{s.participant_count} participants
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  )}
+                    {/* Montant + réduction */}
+                    <div className="flex-shrink-0 text-right">
+                      {hasDiscount && s.catalog_price ? (
+                        <>
+                          <div className="text-[10px] text-muted-foreground line-through">{s.catalog_price}€</div>
+                          <div className="value-lg text-[14px] text-success">+{s.amount}€</div>
+                          <div className="text-[9px] font-bold mt-0.5"
+                            style={{ color: "hsl(38 92% 55%)" }}>
+                            {s.discount_percent ? `-${s.discount_percent}%` : `-${s.discount_amount}€`}
+                          </div>
+                        </>
+                      ) : (
+                        <span className="value-lg text-[14px] text-success">+{s.amount}€</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <span className="value-lg text-[14px] flex-shrink-0 text-success">+{s.amount}€</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

@@ -12,9 +12,12 @@ export interface BaSaleRow {
   is_sap: boolean | null
   sap_hours: number | null
   date: string
+  catalog_price: number | null
+  discount_amount: number | null
+  discount_percent: number | null
 }
 
-const BA_SALES_SELECT = "id, client_name, offer_name, amount, payment_mode, sale_type, participant_count, is_sap, sap_hours, date"
+const BA_SALES_SELECT = "id, client_name, offer_name, amount, payment_mode, sale_type, participant_count, is_sap, sap_hours, date, catalog_price, discount_amount, discount_percent"
 
 function monthBounds(monthKey: string): [string, string] {
   const [y, m] = monthKey.split("-").map(Number)
