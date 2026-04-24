@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { FinanceEntry, Expense, Prospect, Offre } from "@/data/types";
 import html2canvas from "html2canvas-pro";
 import type { BaSaleRow } from "@/hooks/useBaSalesMonth";
+import { computeUrssaf, sumMicroCA } from "@/lib/revenue";
 
 const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 
@@ -11,11 +12,12 @@ interface Props {
   expenses: Expense[];
   prospects: Prospect[];
   offres: Offre[];
+  portageMonths: Record<string, boolean>;
   baSales?: BaSaleRow[];
   onClose: () => void;
 }
 
-export default function AnnualWrapped({ year, financeEntries, expenses, prospects, offres, baSales = [], onClose }: Props) {
+export default function AnnualWrapped({ year, financeEntries, expenses, prospects, offres, portageMonths, baSales = [], onClose }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
 
@@ -26,7 +28,8 @@ export default function AnnualWrapped({ year, financeEntries, expenses, prospect
   const baSalesCA = yearBaSales.reduce((s, e) => s + e.amount, 0);
   const totalCA = yearEntries.reduce((s, e) => s + e.amount, 0) + baSalesCA;
   const totalExpenses = yearExpenses.reduce((s, e) => s + e.amount, 0);
-  const totalURSSAF = totalCA * 0.261;
+  const microCA = sumMicroCA(yearEntries, offres, portageMonths) + baSalesCA;
+  const totalURSSAF = computeUrssaf(microCA);
   const netProfit = totalCA - totalURSSAF - totalExpenses;
 
   const clients = useMemo(() => {

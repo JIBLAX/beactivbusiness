@@ -3,6 +3,7 @@ import { useApp } from "@/store/AppContext";
 import beactivLogo from "@/assets/beactiv-logo.png";
 import HamburgerMenu from "./HamburgerMenu";
 import { useBaSalesYear } from "@/hooks/useBaSalesMonth";
+import { computeYearlyTotalReel } from "@/lib/revenue";
 
 const FinancesPage   = lazy(() => import("@/pages/FinancesPage"));
 const ActivitesPage  = lazy(() => import("@/pages/ActivitesPage"));
@@ -20,11 +21,8 @@ export default function AppLayout() {
   const { sales: baSalesYearData } = useBaSalesYear(currentYear);
 
   const yearlyCA = useMemo(() => {
-    const local = financeEntries
-      .filter(e => e.month.startsWith(String(currentYear)))
-      .reduce((s, e) => s + e.amount, 0);
     const ba = baSalesYearData.reduce((s, e) => s + e.amount, 0);
-    return local + ba;
+    return computeYearlyTotalReel(financeEntries, ba, currentYear);
   }, [financeEntries, currentYear, baSalesYearData]);
 
   const pageTitle = {

@@ -6,6 +6,15 @@ import { getFiscalReminders, getDaysUntil, getStatusColor, getStatusLabel } from
 import { useBaSalesMonth, useBaSalesYear } from "@/hooks/useBaSalesMonth";
 import { useFjmProOps } from "@/hooks/useFjmProOps";
 import AnnualWrapped from "@/components/stats/AnnualWrapped";
+import {
+  computeMonthlyTotalReel,
+  computeTVACollectee,
+  computeUrssaf,
+  sumEspecesNonDeclarees,
+  sumMicroCA,
+  sumPortageCA,
+} from "@/lib/revenue";
+import { TAUX_TVA } from "@/lib/constants";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -48,30 +57,13 @@ export default function BilanPage() {
   const monthEntries = useMemo(() => financeEntries.filter(e => e.month === selectedMonth), [financeEntries, selectedMonth]);
   const monthExpenses = useMemo(() => expenses.filter(e => e.month === selectedMonth), [expenses, selectedMonth]);
 
-  const isPortageEligible = (e: any) => {
-    const o = offres.find(of => of.name === e.offre);
-    return o?.portageEligible ?? false;
-  };
-
-  const localMicro = monthEntries.filter(e => {
-    if (portageEnabled && isPortageEligible(e)) return false;
-    if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
-    if (!portageEnabled) return true;
-    return e.type === "micro";
-  }).reduce((s, e) => s + e.amount, 0);
-
+  const localMicro = sumMicroCA(monthEntries, offres, portageMonths);
   const declaredMicro = localMicro + baSalesTotal;
-
-  const declaredPortage = portageEnabled ? monthEntries.filter(e => {
-    if (isPortageEligible(e)) return true;
-    if (e.paymentMode === "especes") return e.cashDeclaration === "portage";
-    return e.type === "portage";
-  }).reduce((s, e) => s + e.amount, 0) : 0;
-
-  const especesNonDeclarees = monthEntries.filter(e => e.paymentMode === "especes" && e.cashDeclaration === "non_declare").reduce((s, e) => s + e.amount, 0);
-  const totalReel = monthEntries.reduce((s, e) => s + e.amount, 0) + baSalesTotal + fjmRevenuTotal;
+  const declaredPortage = sumPortageCA(monthEntries, offres, portageMonths);
+  const especesNonDeclarees = sumEspecesNonDeclarees(monthEntries);
+  const totalReel = computeMonthlyTotalReel(monthEntries, baSalesTotal, fjmRevenuTotal);
   const totalDepenses = monthExpenses.reduce((s, e) => s + e.amount, 0) + fjmChargesTotal;
-  const urssaf = declaredMicro * 0.261;
+  const urssaf = computeUrssaf(declaredMicro);
   const beneficeNet = totalReel - urssaf - totalDepenses;
   const monthVersements = versementsPerso[selectedMonth] ?? {};
 
@@ -79,7 +71,7 @@ export default function BilanPage() {
     const offre = offres.find(o => o.name === e.offre);
     return offre?.tvaEnabled;
   }), [monthEntries, offres]);
-  const tvaCollectee = tvaEntries.reduce((s, e) => s + e.amount, 0) * 0.20;
+  const tvaCollectee = useMemo(() => computeTVACollectee(monthEntries, offres), [monthEntries, offres]);
 
   const sapClientNames = useMemo(() => new Set(prospects.filter(p => p.sapEnabled).map(p => p.name)), [prospects]);
   const sapMonths = useMemo(() => getQuarterMonths(sapYear, sapQuarter), [sapYear, sapQuarter]);
@@ -114,16 +106,9 @@ export default function BilanPage() {
       const entries = financeEntries.filter(e => e.month === month);
       const exps = expenses.filter(e => e.month === month);
       const baTotal = baSalesWrapped.filter(s => s.date?.startsWith(month)).reduce((s, e) => s + e.amount, 0);
-      const portageOn = portageMonths[month] ?? false;
-      const localMicroM = entries.filter(e => {
-        if (portageOn) return false;
-        if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
-        return true;
-      }).reduce((s, e) => s + e.amount, 0);
-      const declared = localMicroM + baTotal;
-      const urssafM = declared * 0.261;
-      const localReel = entries.reduce((s, e) => s + e.amount, 0);
-      const totalReel = localReel + baTotal;
+      const declared = sumMicroCA(entries, offres, portageMonths) + baTotal;
+      const urssafM = computeUrssaf(declared);
+      const totalReel = computeMonthlyTotalReel(entries, baTotal);
       const totalDep = exps.reduce((s, e) => s + e.amount, 0);
       return {
         month,
@@ -168,6 +153,7 @@ export default function BilanPage() {
           expenses={expenses}
           prospects={prospects}
           offres={offres}
+          portageMonths={portageMonths}
           baSales={baSalesWrapped}
           onClose={() => setShowWrapped(false)}
         />
@@ -337,7 +323,7 @@ export default function BilanPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-[12px] font-semibold text-foreground">{e.amount.toLocaleString("fr-FR")}€ HT</div>
-                        <div className="text-[10px] font-medium" style={{ color: "hsl(38 92% 55%)" }}>+{(e.amount * 0.20).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€ TVA</div>
+                        <div className="text-[10px] font-medium" style={{ color: "hsl(38 92% 55%)" }}>+{(e.amount * TAUX_TVA).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€ TVA</div>
                       </div>
                     </div>
                   ))}

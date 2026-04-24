@@ -1,8 +1,16 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useApp } from "@/store/AppContext";
 import { getMonthEditState, getSealedLabel } from "@/lib/quarterLock";
 import { useBaSalesMonth } from "@/hooks/useBaSalesMonth";
 import { useFjmProOps } from "@/hooks/useFjmProOps";
+import { PRORATA_BUREAU, TAUX_URSSAF_LABEL } from "@/lib/constants";
+import {
+  computeMonthlyTotalReel,
+  computeUrssaf,
+  sumEspecesNonDeclarees,
+  sumMicroCA,
+  sumPortageCA,
+} from "@/lib/revenue";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -15,10 +23,6 @@ function formatMonth(m: string): string {
   const [y, mo] = m.split("-");
   return `${MONTHS[parseInt(mo) - 1]} ${y}`;
 }
-
-function calcUrssaf(ca: number): number { return ca * 0.261; }
-
-const PRORATA_BUREAU = 13 / 43;
 
 export default function FinancesPage() {
   const { financeEntries, expenses, portageMonths, setPortageMonths, offres, quarterEdits } = useApp();
@@ -37,30 +41,13 @@ export default function FinancesPage() {
   const monthEntries = useMemo(() => financeEntries.filter(e => e.month === selectedMonth), [financeEntries, selectedMonth]);
   const monthExpenses = useMemo(() => expenses.filter(e => e.month === selectedMonth), [expenses, selectedMonth]);
 
-  const isPortageEligible = (e: any) => {
-    const o = offres.find(of => of.name === e.offre);
-    return o?.portageEligible ?? false;
-  };
-
-  const localMicro = monthEntries.filter(e => {
-    if (portageEnabled && isPortageEligible(e)) return false;
-    if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
-    if (!portageEnabled) return true;
-    return e.type === "micro";
-  }).reduce((s, e) => s + e.amount, 0);
-
+  const localMicro = sumMicroCA(monthEntries, offres, portageMonths);
   const declaredMicro = localMicro + baSalesTotal;
-
-  const declaredPortage = portageEnabled ? monthEntries.filter(e => {
-    if (isPortageEligible(e)) return true;
-    if (e.paymentMode === "especes") return e.cashDeclaration === "portage";
-    return e.type === "portage";
-  }).reduce((s, e) => s + e.amount, 0) : 0;
-
-  const especesNonDeclarees = monthEntries.filter(e => e.paymentMode === "especes" && e.cashDeclaration === "non_declare").reduce((s, e) => s + e.amount, 0);
-  const totalReel = monthEntries.reduce((s, e) => s + e.amount, 0) + baSalesTotal + fjmRevenuTotal;
+  const declaredPortage = sumPortageCA(monthEntries, offres, portageMonths);
+  const especesNonDeclarees = sumEspecesNonDeclarees(monthEntries);
+  const totalReel = computeMonthlyTotalReel(monthEntries, baSalesTotal, fjmRevenuTotal);
   const totalDepenses = monthExpenses.reduce((s, e) => s + e.amount, 0) + fjmChargesTotal;
-  const urssaf = calcUrssaf(declaredMicro);
+  const urssaf = computeUrssaf(declaredMicro);
   const beneficeNet = totalReel - urssaf - totalDepenses;
 
   const bureauExpenses = monthExpenses.filter(e => e.category === "LOCAUX & BUREAUX");
@@ -96,7 +83,7 @@ export default function FinancesPage() {
             ...(fjmRevenuTotal > 0 ? [{ label: "Revenus FJM", sub: "Divers", value: fjmRevenuTotal, color: "hsl(38 92% 55%)" }] : []),
             ...(especesNonDeclarees > 0 ? [{ label: "Espèces", sub: "Non déclarées", value: especesNonDeclarees, color: "hsl(38 92% 55%)" }] : []),
             ...(portageEnabled ? [{ label: "Portage JUMP", sub: "Via JUMP", value: declaredPortage, color: "hsl(262 80% 65%)" }] : []),
-            { label: "URSSAF dû", sub: "26.1% du CA Micro", value: -urssaf, color: "hsl(0 62% 50%)" },
+            { label: "URSSAF dû", sub: `${TAUX_URSSAF_LABEL} du CA Micro`, value: -urssaf, color: "hsl(0 62% 50%)" },
           ];
           const cols = items.length <= 2 ? "grid-cols-2" : items.length === 3 ? "grid-cols-3" : "grid-cols-2";
           return (
@@ -161,7 +148,7 @@ export default function FinancesPage() {
       {/* Prorata Bureau */}
       {prorataAmount > 0 && (
         <div className="stat-card rounded-2xl p-4 mb-4">
-          <div className="section-label mb-1">Prorata Bureau (30.23%)</div>
+          <div className="section-label mb-1">Prorata Bureau ({(PRORATA_BUREAU * 100).toFixed(1)}%)</div>
           <div className="value-lg text-[18px] text-foreground">{prorataAmount.toFixed(0)}€</div>
         </div>
       )}

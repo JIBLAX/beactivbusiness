@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/store/AppContext";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AnnualWrapped from "@/components/stats/AnnualWrapped";
 import { useBaSalesYear } from "@/hooks/useBaSalesMonth";
+import { SEUIL_MICRO, SEUIL_TVA, TAUX_URSSAF } from "@/lib/constants";
+import { computeTVACollectee, computeUrssaf, computeYearlyTotalReel, sumMicroCA } from "@/lib/revenue";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 const QUARTERS = [
@@ -12,19 +14,10 @@ const QUARTERS = [
   { label: "T4", months: ["10", "11", "12"] },
 ];
 
-function formatMonth(m: string): string {
-  const [y, mo] = m.split("-");
-  return `${MONTHS[parseInt(mo) - 1]} ${y.slice(2)}`;
-}
-
 const PIE_COLORS = [
   "hsl(348, 63%, 40%)", "hsl(152, 55%, 50%)", "hsl(217, 70%, 58%)",
   "hsl(38, 92%, 55%)", "hsl(280, 50%, 55%)", "hsl(45, 80%, 50%)",
 ];
-
-const SEUIL_MICRO = 77700;
-const SEUIL_TVA = 36800;
-const TAUX_URSSAF = 0.261;
 
 export default function StatsPage() {
   const { financeEntries, expenses, prospects, offres, portageMonths, urssafMode, setUrssafMode } = useApp();
@@ -52,18 +45,6 @@ export default function StatsPage() {
     return yearExpenses.filter(e => e.month === mk);
   }, [yearExpenses, selectedMonth, currentYear]);
 
-  // Micro CA (excluding portage-eligible entries when portage is active for that month)
-  const getMicroCA = (entries: typeof financeEntries) => {
-    return entries.filter(e => {
-      const portageOn = portageMonths[e.month] ?? false;
-      const o = offres.find(of => of.name === e.offre);
-      if (portageOn && o?.portageEligible) return false;
-      if (e.paymentMode === "especes") return e.cashDeclaration === "micro";
-      if (!portageOn) return true;
-      return e.type === "micro";
-    }).reduce((s, e) => s + e.amount, 0);
-  };
-
   // ba_sales filtered for selected period
   const filteredBaSalesTotal = useMemo(() => {
     if (selectedMonth === null) return yearlyBaSalesTotal;
@@ -74,20 +55,16 @@ export default function StatsPage() {
   // Filtered (month or year) — used for KPI cards
   const filteredCA = filteredEntries.reduce((s, e) => s + e.amount, 0) + filteredBaSalesTotal;
   const filteredExp = filteredExpenses.reduce((s, e) => s + e.amount, 0);
-  const filteredMicroCA = useMemo(() => getMicroCA(filteredEntries) + filteredBaSalesTotal, [filteredEntries, portageMonths, offres, filteredBaSalesTotal]);
-  const filteredURSSAF = filteredMicroCA * TAUX_URSSAF;
+  const filteredMicroCA = useMemo(() => sumMicroCA(filteredEntries, offres, portageMonths) + filteredBaSalesTotal, [filteredEntries, portageMonths, offres, filteredBaSalesTotal]);
+  const filteredURSSAF = computeUrssaf(filteredMicroCA);
   const filteredNet = filteredCA - filteredURSSAF - filteredExp;
-  const filteredTVA = useMemo(() => {
-    return filteredEntries.filter(e => offres.find(o => o.name === e.offre)?.tvaEnabled)
-      .reduce((s, e) => s + e.amount, 0) * 0.20;
-  }, [filteredEntries, offres]);
+  const filteredTVA = useMemo(() => computeTVACollectee(filteredEntries, offres), [filteredEntries, offres]);
 
   // Year-level values for URSSAF table, projections
-  const yearlyCA = yearEntries.reduce((s, e) => s + e.amount, 0) + yearlyBaSalesTotal;
+  const yearlyCA = computeYearlyTotalReel(financeEntries, yearlyBaSalesTotal, currentYear);
   const yearlyExpenses = yearExpenses.reduce((s, e) => s + e.amount, 0);
-  const yearlyMicroCA = useMemo(() => getMicroCA(yearEntries) + yearlyBaSalesTotal, [yearEntries, portageMonths, offres, yearlyBaSalesTotal]);
-  const yearlyURSSAF = yearlyMicroCA * TAUX_URSSAF;
-  const yearlyNet = yearlyCA - yearlyURSSAF - yearlyExpenses;
+  const yearlyMicroCA = useMemo(() => sumMicroCA(yearEntries, offres, portageMonths) + yearlyBaSalesTotal, [yearEntries, portageMonths, offres, yearlyBaSalesTotal]);
+  const yearlyURSSAF = computeUrssaf(yearlyMicroCA);
 
   // URSSAF breakdown by period
   const urssafBreakdown = useMemo(() => {
@@ -98,9 +75,9 @@ export default function StatsPage() {
           return q.months.includes(mo);
         });
         const baCaQ = baSales.filter(s => q.months.includes(s.date.split("-")[1])).reduce((s, e) => s + e.amount, 0);
-        const microCA = getMicroCA(entries) + baCaQ;
+        const microCA = sumMicroCA(entries, offres, portageMonths) + baCaQ;
         const totalCA = entries.reduce((s, e) => s + e.amount, 0) + baCaQ;
-        const urssaf = microCA * TAUX_URSSAF;
+        const urssaf = computeUrssaf(microCA);
         const isPast = q.months.every(mo => parseInt(mo) - 1 <= currentMonth);
         const isCurrent = q.months.some(mo => parseInt(mo) - 1 === currentMonth);
         return { label: q.label, ca: totalCA, microCA, urssaf, isPast, isCurrent };
@@ -110,21 +87,15 @@ export default function StatsPage() {
         const mk = `${currentYear}-${String(i + 1).padStart(2, "0")}`;
         const entries = yearEntries.filter(e => e.month === mk);
         const baCaM = baSales.filter(s => s.date.startsWith(mk)).reduce((s, e) => s + e.amount, 0);
-        const microCA = getMicroCA(entries) + baCaM;
+        const microCA = sumMicroCA(entries, offres, portageMonths) + baCaM;
         const totalCA = entries.reduce((s, e) => s + e.amount, 0) + baCaM;
-        return { label: MONTHS[i], ca: totalCA, microCA, urssaf: microCA * TAUX_URSSAF, isPast: i < currentMonth, isCurrent: i === currentMonth };
+        return { label: MONTHS[i], ca: totalCA, microCA, urssaf: computeUrssaf(microCA), isPast: i < currentMonth, isCurrent: i === currentMonth };
       });
     }
-  }, [yearEntries, baSales, urssafMode, currentYear, currentMonth, portageMonths]);
+  }, [yearEntries, baSales, urssafMode, currentYear, currentMonth, portageMonths, offres]);
 
   // TVA (year-level for gauges/year view)
-  const tvaTotalOffres = useMemo(() => {
-    return yearEntries.filter(e => {
-      const offre = offres.find(o => o.name === e.offre);
-      return offre?.tvaEnabled;
-    }).reduce((s, e) => s + e.amount, 0);
-  }, [yearEntries, offres]);
-  const tvaAmount = tvaTotalOffres * 0.20;
+  const tvaAmount = useMemo(() => computeTVACollectee(yearEntries, offres), [yearEntries, offres]);
 
   const clients = useMemo(() => prospects.filter(p => p.closing === "OUI" && p.offre && p.offre !== "-"), [prospects]);
 
@@ -225,7 +196,7 @@ export default function StatsPage() {
       </div>
 
       {showWrapped && (
-        <AnnualWrapped year={currentYear} financeEntries={financeEntries} expenses={expenses} prospects={prospects} offres={offres} baSales={baSales} onClose={() => setShowWrapped(false)} />
+        <AnnualWrapped year={currentYear} financeEntries={financeEntries} expenses={expenses} prospects={prospects} offres={offres} portageMonths={portageMonths} baSales={baSales} onClose={() => setShowWrapped(false)} />
       )}
 
       {/* KPIs */}

@@ -1,6 +1,10 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { FinanceEntry, Expense } from "@/data/types";
+import { TAUX_TVA, TAUX_URSSAF } from "@/lib/constants";
+
+// Label PDF (virgule française pour l'export).
+const TAUX_URSSAF_PDF = `${(TAUX_URSSAF * 100).toFixed(1).replace(".", ",")} %`;
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -149,7 +153,7 @@ export function generateBilanPDF(data: BilanData) {
   const kpis = [
     { label: "TOTAL REVENUS", value: amt(data.totalReel), color: C.text, bg: C.light },
     { label: "BASE URSSAF (MICRO)", value: amt(data.declaredMicro), color: C.blue, bg: C.blueLt },
-    { label: "URSSAF DU (26,1%)", value: amt(data.urssaf), color: C.danger, bg: C.dangerLt },
+    { label: `URSSAF DU (${TAUX_URSSAF_PDF})`, value: amt(data.urssaf), color: C.danger, bg: C.dangerLt },
     { label: "BENEFICE NET", value: amt(Math.abs(data.beneficeNet)), color: data.beneficeNet >= 0 ? C.success : C.danger, bg: data.beneficeNet >= 0 ? C.successLt : C.dangerLt },
   ];
   const kpiW = (CW - 9) / 4;
@@ -360,7 +364,7 @@ export function generateBilanPDF(data: BilanData) {
   const fiscalBody: [string, string][] = [
     ["Chiffre d'affaires total (brut)", amt(data.totalReel)],
     ["Base imposable micro-entreprise (URSSAF)", amt(data.declaredMicro)],
-    ["Taux de cotisation URSSAF", "26,1 %"],
+    ["Taux de cotisation URSSAF", TAUX_URSSAF_PDF],
     ["Cotisations sociales dues", amtDec(-data.urssaf)],
   ];
   if (data.especesNonDeclarees > 0) {
@@ -370,7 +374,7 @@ export function generateBilanPDF(data: BilanData) {
     fiscalBody.push(["CA en portage JUMP (non declare URSSAF)", amt(data.declaredPortage)]);
   }
   if (data.tvaAmount > 0) {
-    fiscalBody.push(["CA soumis a TVA (HT)", amt(Math.round(data.tvaAmount / 0.20))]);
+    fiscalBody.push(["CA soumis a TVA (HT)", amt(Math.round(data.tvaAmount / TAUX_TVA))]);
     fiscalBody.push(["TVA collectee (20%) — a reverser", amt(data.tvaAmount)]);
   }
 
@@ -397,7 +401,7 @@ export function generateBilanPDF(data: BilanData) {
   const resultBody: [string, string, string][] = [
     ["(+)", "Total revenus encaisses", amt(data.totalReel)],
     ["(-)", "Total charges deductibles", amtDec(-data.totalDepenses)],
-    ["(-)", "Cotisations URSSAF (26,1% base micro)", amtDec(-data.urssaf)],
+    ["(-)", `Cotisations URSSAF (${TAUX_URSSAF_PDF} base micro)`, amtDec(-data.urssaf)],
   ];
   if (data.tvaAmount > 0) {
     resultBody.push(["(~)", "TVA collectee (a reverser)", amt(data.tvaAmount)]);
@@ -608,7 +612,7 @@ export function generateAnnualBilanPDF(data: AnnualBilanData) {
     body: [
       ["Chiffre d'affaires total annuel", amt(totalCA)],
       ["Base imposable micro-entreprise (URSSAF)", amt(totalMicro)],
-      ["Taux de cotisation URSSAF", "26,1 %"],
+      ["Taux de cotisation URSSAF", TAUX_URSSAF_PDF],
       ["Cotisations sociales dues (annuel)", amtDec(-totalURSSAF)],
       ["Total charges deductibles", amtDec(-totalCharges)],
     ],
