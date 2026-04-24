@@ -98,6 +98,11 @@ export default function BilanPage() {
 
   const annualYearComplete = wrappedYear < currentYear;
 
+  // Pour l'année en cours : nombre de mois écoulés (janv = 1, déc = 12).
+  // Pour une année passée : 12. Pour une année future : 0.
+  const monthsElapsed = annualYearComplete ? 12 : wrappedYear === currentYear ? new Date().getMonth() + 1 : 0;
+  const annualUnlockDate = `1er janvier ${wrappedYear + 1}`;
+
   const handleAnnualExportPDF = () => {
     const allMonths = Array.from({ length: 12 }, (_, i) =>
       `${wrappedYear}-${String(i + 1).padStart(2, "0")}`
@@ -197,35 +202,43 @@ export default function BilanPage() {
       </button>
 
       {/* PDF Export — Annuel */}
-      <div className="card-elevated rounded-2xl p-4 flex items-center gap-3 mb-3">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-          style={{ background: annualYearComplete ? "hsl(348 63% 30% / 0.15)" : "hsl(0 0% 100% / 0.04)" }}>
-          🗓️
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-semibold text-foreground">Bilan Annuel PDF</div>
-          <div className="text-[10px] text-muted-foreground">
-            {annualYearComplete
-              ? `Exercice ${wrappedYear} complet — prêt à exporter`
-              : `Disponible après clôture de l'exercice ${wrappedYear}`}
+      <div className="card-elevated rounded-2xl p-4 mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+            style={{ background: annualYearComplete ? "hsl(348 63% 30% / 0.15)" : "hsl(0 0% 100% / 0.04)" }}>
+            🗓️
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold text-foreground">Bilan Annuel PDF</div>
+            <div className="text-[10px] text-muted-foreground">
+              {annualYearComplete
+                ? `Exercice ${wrappedYear} complet — prêt à exporter`
+                : `${monthsElapsed}/12 mois — disponible le ${annualUnlockDate}`}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <select value={wrappedYear} onChange={e => setWrappedYear(Number(e.target.value))}
+              className="rounded-xl px-2 py-1.5 text-xs input-field">
+              {[currentYear - 1, currentYear].map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <button
+              onClick={handleAnnualExportPDF}
+              disabled={!annualYearComplete}
+              className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+              style={annualYearComplete
+                ? { background: "linear-gradient(135deg, hsl(348 63% 30%), hsl(348 63% 22%))", color: "white", border: "1px solid hsl(348 63% 40% / 0.3)" }
+                : { background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 100% / 0.25)", border: "1px solid hsl(0 0% 100% / 0.06)", cursor: "not-allowed" }
+              }>
+              {annualYearComplete ? "↓ Export" : "🔒 Fermé"}
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <select value={wrappedYear} onChange={e => setWrappedYear(Number(e.target.value))}
-            className="rounded-xl px-2 py-1.5 text-xs input-field">
-            {[currentYear - 1, currentYear].map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-          <button
-            onClick={handleAnnualExportPDF}
-            disabled={!annualYearComplete}
-            className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
-            style={annualYearComplete
-              ? { background: "linear-gradient(135deg, hsl(348 63% 30%), hsl(348 63% 22%))", color: "white", border: "1px solid hsl(348 63% 40% / 0.3)" }
-              : { background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 100% / 0.25)", border: "1px solid hsl(0 0% 100% / 0.06)", cursor: "not-allowed" }
-            }>
-            {annualYearComplete ? "↓ Export" : "🔒 Fermé"}
-          </button>
-        </div>
+        {!annualYearComplete && monthsElapsed > 0 && (
+          <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${(monthsElapsed / 12) * 100}%`, background: "linear-gradient(90deg, hsl(348 63% 30%), hsl(38 92% 55%))" }} />
+          </div>
+        )}
       </div>
 
       {/* NOVA SAP */}

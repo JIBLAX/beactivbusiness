@@ -11,15 +11,20 @@ function tauxUrssafLabel(year: number): string {
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
 const EI = {
-  name:    "MFAUME JONATHAN",
-  address: "22 RUE PONSARD",
-  city:    "38100 GRENOBLE",
-  forme:   "Entrepreneur individuel",
-  siren:   "824 253 751",
-  siret:   "824 253 751 00039",
-  ape:     "9609Z",
-  sap:     "SAP824253751",
-  tva:     "Non assujetti a la TVA",
+  name:       "MFAUME JONATHAN",
+  address:    "22 RUE PONSARD",
+  city:       "38100 GRENOBLE",
+  forme:      "Entrepreneur individuel",
+  siren:      "824 253 751",
+  siret:      "824 253 751 00039",
+  ape:        "9609Z",
+  sap:        "SAP824253751",
+  tvaNumber:  "FR17824253751",
+  tvaMention: "TVA non applicable - art. 293 B du CGI",
+  tva:        "Non assujetti a la TVA",
+  rcs:        "824 253 751 R.C.S. Grenoble",
+  rcsDate:    "09/12/2016",
+  rneDate:    "07/11/2016",
 };
 
 function formatMonth(m: string): string {
@@ -130,8 +135,9 @@ export function generateBilanPDF(data: BilanData) {
 
   doc.setFontSize(7);
   doc.setTextColor(210, 160, 170);
-  doc.text("Regime : Micro-entreprise  |  " + EI.tva, ML, 35);
+  doc.text("Regime : Micro-entreprise  |  " + EI.tvaMention, ML, 35);
   doc.text(`SIREN ${EI.siren}  |  APE ${EI.ape}  |  N deg. SAP ${EI.sap}`, ML, 42);
+  doc.text(`${EI.rcs}  (inscrit le ${EI.rcsDate})`, ML, 49);
 
   // Right: entrepreneur identity card
   const rx = W - MR;
@@ -146,12 +152,12 @@ export function generateBilanPDF(data: BilanData) {
   doc.text(EI.city, rx, 26, { align: "right" });
   doc.setTextColor(210, 160, 170);
   doc.text(`SIRET ${EI.siret}`, rx, 34, { align: "right" });
-  doc.text(`Genere le ${new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}`, rx, 41, { align: "right" });
-  doc.text(EI.forme, rx, 48, { align: "right" });
+  doc.text(EI.forme, rx, 41, { align: "right" });
+  doc.text(`Genere le ${new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}`, rx, 48, { align: "right" });
 
   // Thin accent line
   doc.setFillColor(...C.primaryDk);
-  doc.rect(0, 52, W, 1.5, "F");
+  doc.rect(0, 54, W, 1.5, "F");
 
   // ─── KPI STRIP ────────────────────────────────────────────────────────────
   let y = 61;
@@ -510,8 +516,9 @@ export function generateAnnualBilanPDF(data: AnnualBilanData) {
 
   doc.setFontSize(7);
   doc.setTextColor(210, 160, 170);
-  doc.text("Regime : Micro-entreprise  |  " + EI.tva, ML, 35);
+  doc.text("Regime : Micro-entreprise  |  " + EI.tvaMention, ML, 35);
   doc.text(`SIREN ${EI.siren}  |  APE ${EI.ape}  |  N deg. SAP ${EI.sap}`, ML, 42);
+  doc.text(`${EI.rcs}  (inscrit le ${EI.rcsDate})`, ML, 49);
 
   const rx = W - MR;
   doc.setFont("helvetica", "bold");
@@ -525,11 +532,11 @@ export function generateAnnualBilanPDF(data: AnnualBilanData) {
   doc.text(EI.city, rx, 26, { align: "right" });
   doc.setTextColor(210, 160, 170);
   doc.text(`SIRET ${EI.siret}`, rx, 34, { align: "right" });
-  doc.text(`Genere le ${new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}`, rx, 41, { align: "right" });
-  doc.text(EI.forme, rx, 48, { align: "right" });
+  doc.text(EI.forme, rx, 41, { align: "right" });
+  doc.text(`Genere le ${new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}`, rx, 48, { align: "right" });
 
   doc.setFillColor(...C.primaryDk);
-  doc.rect(0, 52, W, 1.5, "F");
+  doc.rect(0, 54, W, 1.5, "F");
 
   // ─── KPI STRIP ──────────────────────────────────────────────────────────
   let y = 61;
