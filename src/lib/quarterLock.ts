@@ -9,18 +9,25 @@ const MAX_EDITS_PER_QUARTER = 2;
 /** Get the quarter (1-4) for a given month string "YYYY-MM" */
 export function getQuarterForMonth(month: string): { year: number; quarter: number; key: string } {
   const [y, m] = month.split("-").map(Number);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
+    throw new Error(`Invalid month key "${month}" — expected "YYYY-MM".`);
+  }
   const quarter = Math.ceil(m / 3);
   return { year: y, quarter, key: `${y}-Q${quarter}` };
 }
 
-/** Get the URSSAF declaration deadline for a given quarter */
+/**
+ * Get the URSSAF declaration deadline for a given quarter.
+ * Uses day=0 of the next month so the result is always the real last day
+ * (avoids the `new Date(year, 1, 31)` silent rollover into March).
+ */
 function getUrssafDeadline(year: number, quarter: number): Date {
   switch (quarter) {
-    case 1: return new Date(year, 3, 30); // 30 avril
-    case 2: return new Date(year, 6, 31); // 31 juillet
-    case 3: return new Date(year, 9, 31); // 31 octobre
-    case 4: return new Date(year + 1, 0, 31); // 31 janvier N+1
-    default: return new Date(year, 3, 30);
+    case 1: return new Date(year, 4, 0);      // 30 avril
+    case 2: return new Date(year, 7, 0);      // 31 juillet
+    case 3: return new Date(year, 10, 0);     // 31 octobre
+    case 4: return new Date(year + 1, 1, 0);  // 31 janvier N+1
+    default: return new Date(year, 4, 0);
   }
 }
 

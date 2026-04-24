@@ -29,7 +29,7 @@ export default function AnnualWrapped({ year, financeEntries, expenses, prospect
   const totalCA = yearEntries.reduce((s, e) => s + e.amount, 0) + baSalesCA;
   const totalExpenses = yearExpenses.reduce((s, e) => s + e.amount, 0);
   const microCA = sumMicroCA(yearEntries, offres, portageMonths) + baSalesCA;
-  const totalURSSAF = computeUrssaf(microCA);
+  const totalURSSAF = computeUrssaf(microCA, year);
   const netProfit = totalCA - totalURSSAF - totalExpenses;
 
   const clients = useMemo(() => {
@@ -78,6 +78,25 @@ export default function AnnualWrapped({ year, financeEntries, expenses, prospect
     const sorted = Object.entries(map).sort((a, b) => b[1].revenue - a[1].revenue);
     return sorted.length > 0 ? { name: sorted[0][0], ...sorted[0][1] } : null;
   }, [yearEntries, yearBaSales]);
+
+  // Triangle : COLLECTIF / ACTION / TRANSFORMATION
+  const triangle = useMemo(() => {
+    const out = {
+      COLLECTIF:      { revenue: 0, color: "hsl(217 70% 60%)", label: "Collectif" },
+      ACTION:         { revenue: 0, color: "hsl(38 92% 55%)",  label: "Action" },
+      TRANSFORMATION: { revenue: 0, color: "hsl(348 63% 55%)", label: "Transformation" },
+    };
+    const bump = (offerName: string | null | undefined, amount: number) => {
+      if (!offerName) return;
+      const theme = offres.find(o => o.name === offerName)?.theme;
+      if (!theme || !(theme in out)) return;
+      out[theme as keyof typeof out].revenue += amount;
+    };
+    yearEntries.forEach(e => bump(e.offre, e.amount));
+    yearBaSales.forEach(s => bump(s.offer_name, s.amount));
+    const triTotal = out.COLLECTIF.revenue + out.ACTION.revenue + out.TRANSFORMATION.revenue;
+    return { ...out, triTotal };
+  }, [yearEntries, yearBaSales, offres]);
 
   const avgMonthly = totalCA / 12;
   const totalEntries = yearEntries.length + yearBaSales.length;
@@ -170,6 +189,34 @@ export default function AnnualWrapped({ year, financeEntries, expenses, prospect
                 <div className="text-[10px] uppercase tracking-wider" style={{ color: "hsl(0 0% 50%)" }}>Offre #1</div>
                 <div className="text-[15px] font-bold" style={{ color: "hsl(0 0% 92%)" }}>{topOffre.name}</div>
                 <div className="text-[12px]" style={{ color: "hsl(0 0% 55%)" }}>{topOffre.count} ventes · {fmt(topOffre.revenue)}€</div>
+              </div>
+            </div>
+          )}
+
+          {/* Triangle : COLLECTIF / ACTION / TRANSFORMATION */}
+          {triangle.triTotal > 0 && (
+            <div className="rounded-2xl p-4 mb-3" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.06)" }}>
+              <div className="text-[10px] uppercase tracking-wider mb-3" style={{ color: "hsl(0 0% 50%)" }}>Triangle des piliers</div>
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {(["COLLECTIF", "ACTION", "TRANSFORMATION"] as const).map(key => {
+                  const t = triangle[key];
+                  const pct = triangle.triTotal > 0 ? (t.revenue / triangle.triTotal) * 100 : 0;
+                  return (
+                    <div key={key} className="text-center">
+                      <div className="text-[18px] font-black" style={{ color: t.color }}>{fmt(t.revenue)}€</div>
+                      <div className="text-[9px] mt-0.5" style={{ color: "hsl(0 0% 55%)" }}>{t.label}</div>
+                      <div className="text-[9px] font-bold mt-0.5" style={{ color: t.color }}>{pct.toFixed(0)}%</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden flex" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+                {(["COLLECTIF", "ACTION", "TRANSFORMATION"] as const).map(key => {
+                  const t = triangle[key];
+                  const pct = triangle.triTotal > 0 ? (t.revenue / triangle.triTotal) * 100 : 0;
+                  if (pct === 0) return null;
+                  return <div key={key} style={{ width: `${pct}%`, background: t.color }} />;
+                })}
               </div>
             </div>
           )}

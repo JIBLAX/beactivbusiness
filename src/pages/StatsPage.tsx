@@ -3,7 +3,7 @@ import { useApp } from "@/store/AppContext";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import AnnualWrapped from "@/components/stats/AnnualWrapped";
 import { useBaSalesYear } from "@/hooks/useBaSalesMonth";
-import { SEUIL_MICRO, SEUIL_TVA, TAUX_URSSAF } from "@/lib/constants";
+import { SEUIL_MICRO, SEUIL_TVA, getTauxUrssaf } from "@/lib/constants";
 import { computeTVACollectee, computeUrssaf, computeYearlyTotalReel, sumMicroCA } from "@/lib/revenue";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -20,7 +20,7 @@ const PIE_COLORS = [
 ];
 
 export default function StatsPage() {
-  const { financeEntries, expenses, prospects, offres, portageMonths, urssafMode, setUrssafMode } = useApp();
+  const { financeEntries, expenses, prospects, offres, portageMonths, urssafMode, setUrssafMode, structures } = useApp();
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [showWrapped, setShowWrapped] = useState(false);
   const currentYear = new Date().getFullYear();
@@ -56,7 +56,7 @@ export default function StatsPage() {
   const filteredCA = filteredEntries.reduce((s, e) => s + e.amount, 0) + filteredBaSalesTotal;
   const filteredExp = filteredExpenses.reduce((s, e) => s + e.amount, 0);
   const filteredMicroCA = useMemo(() => sumMicroCA(filteredEntries, offres, portageMonths) + filteredBaSalesTotal, [filteredEntries, portageMonths, offres, filteredBaSalesTotal]);
-  const filteredURSSAF = computeUrssaf(filteredMicroCA);
+  const filteredURSSAF = computeUrssaf(filteredMicroCA, currentYear);
   const filteredNet = filteredCA - filteredURSSAF - filteredExp;
   const filteredTVA = useMemo(() => computeTVACollectee(filteredEntries, offres), [filteredEntries, offres]);
 
@@ -64,7 +64,7 @@ export default function StatsPage() {
   const yearlyCA = computeYearlyTotalReel(financeEntries, yearlyBaSalesTotal, currentYear);
   const yearlyExpenses = yearExpenses.reduce((s, e) => s + e.amount, 0);
   const yearlyMicroCA = useMemo(() => sumMicroCA(yearEntries, offres, portageMonths) + yearlyBaSalesTotal, [yearEntries, portageMonths, offres, yearlyBaSalesTotal]);
-  const yearlyURSSAF = computeUrssaf(yearlyMicroCA);
+  const yearlyURSSAF = computeUrssaf(yearlyMicroCA, currentYear);
 
   // URSSAF breakdown by period
   const urssafBreakdown = useMemo(() => {
@@ -77,7 +77,7 @@ export default function StatsPage() {
         const baCaQ = baSales.filter(s => q.months.includes(s.date.split("-")[1])).reduce((s, e) => s + e.amount, 0);
         const microCA = sumMicroCA(entries, offres, portageMonths) + baCaQ;
         const totalCA = entries.reduce((s, e) => s + e.amount, 0) + baCaQ;
-        const urssaf = computeUrssaf(microCA);
+        const urssaf = computeUrssaf(microCA, currentYear);
         const isPast = q.months.every(mo => parseInt(mo) - 1 <= currentMonth);
         const isCurrent = q.months.some(mo => parseInt(mo) - 1 === currentMonth);
         return { label: q.label, ca: totalCA, microCA, urssaf, isPast, isCurrent };
@@ -89,7 +89,7 @@ export default function StatsPage() {
         const baCaM = baSales.filter(s => s.date.startsWith(mk)).reduce((s, e) => s + e.amount, 0);
         const microCA = sumMicroCA(entries, offres, portageMonths) + baCaM;
         const totalCA = entries.reduce((s, e) => s + e.amount, 0) + baCaM;
-        return { label: MONTHS[i], ca: totalCA, microCA, urssaf: computeUrssaf(microCA), isPast: i < currentMonth, isCurrent: i === currentMonth };
+        return { label: MONTHS[i], ca: totalCA, microCA, urssaf: computeUrssaf(microCA, currentYear), isPast: i < currentMonth, isCurrent: i === currentMonth };
       });
     }
   }, [yearEntries, baSales, urssafMode, currentYear, currentMonth, portageMonths, offres]);
@@ -114,7 +114,7 @@ export default function StatsPage() {
       const baCa = baSales.filter(s => s.date.startsWith(mk)).reduce((s, e) => s + e.amount, 0);
       const exp = expenses.filter(e => e.month === mk).reduce((s, e) => s + e.amount, 0);
       const totalCa = ca + baCa;
-      data.push({ month: MONTHS[m], ca: totalCa, net: totalCa - (totalCa * TAUX_URSSAF) - exp });
+      data.push({ month: MONTHS[m], ca: totalCa, net: totalCa - (totalCa * getTauxUrssaf(currentYear)) - exp });
     }
     return data;
   }, [financeEntries, expenses, baSales, currentYear, currentMonth]);
@@ -140,6 +140,36 @@ export default function StatsPage() {
       name, ...data, color: PIE_COLORS[i % PIE_COLORS.length]
     }));
   }, [yearEntries, baSales]);
+
+  // Triangle breakdown : COLLECTIF / ACTION / TRANSFORMATION (local + ba_sales)
+  const themeStats = useMemo(() => {
+    const out = {
+      COLLECTIF:      { revenue: 0, count: 0, color: "hsl(217 70% 60%)", icon: "🤝", label: "Collectif" },
+      ACTION:         { revenue: 0, count: 0, color: "hsl(38 92% 55%)",  icon: "⚡", label: "Action" },
+      TRANSFORMATION: { revenue: 0, count: 0, color: "hsl(348 63% 55%)", icon: "🔥", label: "Transformation" },
+    };
+    const bump = (offerName: string | null | undefined, amount: number) => {
+      if (!offerName) return;
+      const theme = offres.find(o => o.name === offerName)?.theme;
+      if (!theme || !(theme in out)) return;
+      out[theme as keyof typeof out].revenue += amount;
+      out[theme as keyof typeof out].count += 1;
+    };
+    yearEntries.forEach(e => bump(e.offre, e.amount));
+    baSales.forEach(s => bump(s.offer_name, s.amount));
+    return out;
+  }, [yearEntries, baSales, offres]);
+
+  const themeTotal = themeStats.COLLECTIF.revenue + themeStats.ACTION.revenue + themeStats.TRANSFORMATION.revenue;
+
+  // Pipeline structures : CA projeté annualisé selon la fréquence.
+  // Non inclus dans le CA réalisé (Structures n'ont pas de date de paiement).
+  const structuresPipeline = useMemo(() => {
+    const activeStructures = structures.filter(s => s.active);
+    const freqMultiplier: Record<string, number> = { ponctuel: 1, mensuel: 12, trimestriel: 4, annuel: 1 };
+    const annualProjected = activeStructures.reduce((sum, s) => sum + (s.amount || 0) * (freqMultiplier[s.frequency] ?? 1), 0);
+    return { count: activeStructures.length, annualProjected };
+  }, [structures]);
 
   // Projections (always year-level)
   const monthsPassed = currentMonth + 1;
@@ -283,7 +313,7 @@ export default function StatsPage() {
         </div>
 
         <div className="text-[10px] text-muted-foreground mb-3">
-          Taux : {(TAUX_URSSAF * 100).toFixed(1)}% · Base : CA Micro-entreprise (hors Portage)
+          Taux {currentYear} : {(getTauxUrssaf(currentYear) * 100).toFixed(1)}% · Base : CA Micro-entreprise (hors Portage)
         </div>
 
         <div className="overflow-x-auto">
@@ -392,6 +422,54 @@ export default function StatsPage() {
           <div className="flex gap-6 mt-3 justify-center">
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground"><span className="w-3 h-0.5 rounded-full" style={{ background: "hsl(152, 55%, 52%)" }} /> CA</div>
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground"><span className="w-3 h-0.5 rounded-full" style={{ background: "hsl(217, 70%, 60%)" }} /> Bénéfice</div>
+          </div>
+        </div>
+      )}
+
+      {/* Triangle des thèmes : COLLECTIF / ACTION / TRANSFORMATION */}
+      {themeTotal > 0 && (
+        <div className="card-elevated rounded-2xl p-4 mb-5">
+          <div className="section-label mb-1">Triangle {currentYear}</div>
+          <div className="text-[10px] text-muted-foreground mb-3">Répartition du CA par pilier d'offres</div>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {(["COLLECTIF", "ACTION", "TRANSFORMATION"] as const).map(key => {
+              const t = themeStats[key];
+              const pct = themeTotal > 0 ? (t.revenue / themeTotal) * 100 : 0;
+              return (
+                <div key={key} className="rounded-2xl p-3 text-center" style={{ background: `${t.color.replace(")", " / 0.08)")}`, border: `1px solid ${t.color.replace(")", " / 0.15)")}` }}>
+                  <div className="text-xl mb-1">{t.icon}</div>
+                  <div className="value-lg text-[14px]" style={{ color: t.color }}>{t.revenue.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
+                  <div className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">{t.label}</div>
+                  <div className="text-[9px] font-semibold mt-1" style={{ color: t.color }}>{pct.toFixed(0)}%</div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Barre triangulaire empilée */}
+          <div className="h-2 rounded-full overflow-hidden flex" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+            {(["COLLECTIF", "ACTION", "TRANSFORMATION"] as const).map(key => {
+              const t = themeStats[key];
+              const pct = themeTotal > 0 ? (t.revenue / themeTotal) * 100 : 0;
+              if (pct === 0) return null;
+              return <div key={key} style={{ width: `${pct}%`, background: t.color }} />;
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Pipeline structures (prévisionnel, non réalisé) */}
+      {structuresPipeline.count > 0 && (
+        <div className="card-elevated rounded-2xl p-4 mb-5 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ background: "hsl(217 70% 60% / 0.12)" }}>🏢</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[12px] font-semibold text-foreground">Pipeline structures</div>
+            <div className="text-[10px] text-muted-foreground">
+              {structuresPipeline.count} structure{structuresPipeline.count > 1 ? "s" : ""} active{structuresPipeline.count > 1 ? "s" : ""} · CA projeté annualisé
+            </div>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <div className="value-lg text-[16px]" style={{ color: "hsl(217 70% 60%)" }}>{structuresPipeline.annualProjected.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
+            <div className="text-[9px] text-muted-foreground">prévisionnel</div>
           </div>
         </div>
       )}

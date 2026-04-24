@@ -107,7 +107,7 @@ export default function BilanPage() {
       const exps = expenses.filter(e => e.month === month);
       const baTotal = baSalesWrapped.filter(s => s.date?.startsWith(month)).reduce((s, e) => s + e.amount, 0);
       const declared = sumMicroCA(entries, offres, portageMonths) + baTotal;
-      const urssafM = computeUrssaf(declared);
+      const urssafM = computeUrssaf(declared, wrappedYear);
       const totalReel = computeMonthlyTotalReel(entries, baTotal);
       const totalDep = exps.reduce((s, e) => s + e.amount, 0);
       return {

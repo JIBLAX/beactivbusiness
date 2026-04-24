@@ -1,5 +1,5 @@
 import { FinanceEntry, Offre } from "@/data/types";
-import { TAUX_URSSAF, TAUX_TVA } from "@/lib/constants";
+import { TAUX_TVA, getTauxUrssaf } from "@/lib/constants";
 
 /** Vrai si l'offre de l'entrée est marquée `portageEligible`. */
 export function isPortageEligible(entry: Pick<FinanceEntry, "offre">, offres: Offre[]): boolean {
@@ -106,9 +106,12 @@ export function computeYearlyTotalReel(
   return local + baSalesTotal;
 }
 
-/** Calcul de cotisations URSSAF — unique point d'application du taux. */
-export function computeUrssaf(microCA: number): number {
-  return microCA * TAUX_URSSAF;
+/**
+ * Calcul de cotisations URSSAF — unique point d'application du taux.
+ * Taux piloté par `year` (défaut : année courante). Voir `getTauxUrssaf`.
+ */
+export function computeUrssaf(microCA: number, year: number = new Date().getFullYear()): number {
+  return microCA * getTauxUrssaf(year);
 }
 
 /** Calcul de TVA collectée sur un ensemble d'entrées dont l'offre a `tvaEnabled`. */

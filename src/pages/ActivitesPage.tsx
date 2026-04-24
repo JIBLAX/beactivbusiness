@@ -409,7 +409,14 @@ export default function ActivitesPage() {
                             {CASH_DECLARATIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                           </select>
                         )}
-                        <span className="value-lg text-[14px] text-success">+{e.amount}€</span>
+                        {e.originalAmount && e.originalAmount > e.amount ? (
+                          <div className="flex flex-col items-end leading-tight">
+                            <span className="text-[9px] text-muted-foreground line-through">{e.originalAmount}€</span>
+                            <span className="value-lg text-[14px] text-success">+{e.amount}€</span>
+                          </div>
+                        ) : (
+                          <span className="value-lg text-[14px] text-success">+{e.amount}€</span>
+                        )}
                         {editable && (() => {
                           const entryOffre = offres.find(o => o.name === e.offre);
                           return entryOffre?.unitPrice ? (

@@ -88,7 +88,11 @@ function getMonthShort(m: number): string {
 }
 
 export function getDaysUntil(dateStr: string): number {
-  const target = new Date(dateStr);
+  // Parse "YYYY-MM-DD" as a LOCAL date (not UTC). Using `new Date("YYYY-MM-DD")`
+  // parses as UTC midnight, which can shift the deadline by ±1 day vs. the
+  // user's locale. Splitting and passing numbers forces local interpretation.
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const target = new Date(y, (m ?? 1) - 1, d ?? 1);
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   target.setHours(0, 0, 0, 0);

@@ -1,10 +1,12 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { FinanceEntry, Expense } from "@/data/types";
-import { TAUX_TVA, TAUX_URSSAF } from "@/lib/constants";
+import { TAUX_TVA, formatTaux, getTauxUrssaf } from "@/lib/constants";
 
-// Label PDF (virgule française pour l'export).
-const TAUX_URSSAF_PDF = `${(TAUX_URSSAF * 100).toFixed(1).replace(".", ",")} %`;
+/** Label URSSAF PDF pour une année donnée (virgule française). */
+function tauxUrssafLabel(year: number): string {
+  return formatTaux(getTauxUrssaf(year));
+}
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -100,6 +102,9 @@ export function generateBilanPDF(data: BilanData) {
   const ML = 14; // margin left
   const MR = 14; // margin right
   const CW = W - ML - MR; // content width
+
+  const bilanYear = parseInt(data.month.split("-")[0], 10) || new Date().getFullYear();
+  const TAUX_URSSAF_PDF = tauxUrssafLabel(bilanYear);
 
   // Computed helpers
   const localEntriesTotal = data.entries.reduce((s, e) => s + e.amount, 0);
@@ -480,6 +485,8 @@ export function generateAnnualBilanPDF(data: AnnualBilanData) {
   const ML = 14;
   const MR = 14;
   const CW = W - ML - MR;
+
+  const TAUX_URSSAF_PDF = tauxUrssafLabel(data.year);
 
   const totalCA        = data.months.reduce((s, m) => s + m.totalReel, 0);
   const totalMicro     = data.months.reduce((s, m) => s + m.declaredMicro, 0);
