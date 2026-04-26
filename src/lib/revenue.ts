@@ -1,11 +1,10 @@
 import { FinanceEntry, Offre } from "@/data/types";
 import { TAUX_TVA, getTauxUrssaf } from "@/lib/constants";
+import { findOffreByName } from "@/lib/offres";
 
 /** Vrai si l'offre de l'entrée est marquée `portageEligible`. */
 export function isPortageEligible(entry: Pick<FinanceEntry, "offre">, offres: Offre[]): boolean {
-  if (!entry.offre) return false;
-  const o = offres.find(of => of.name === entry.offre);
-  return o?.portageEligible ?? false;
+  return findOffreByName(entry.offre, offres)?.portageEligible ?? false;
 }
 
 /**
@@ -117,10 +116,7 @@ export function computeUrssaf(microCA: number, year: number = new Date().getFull
 /** Calcul de TVA collectée sur un ensemble d'entrées dont l'offre a `tvaEnabled`. */
 export function computeTVACollectee(entries: FinanceEntry[], offres: Offre[]): number {
   const base = entries
-    .filter(e => {
-      const o = offres.find(of => of.name === e.offre);
-      return o?.tvaEnabled;
-    })
+    .filter(e => findOffreByName(e.offre, offres)?.tvaEnabled)
     .reduce((s, e) => s + e.amount, 0);
   return base * TAUX_TVA;
 }

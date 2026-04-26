@@ -21,7 +21,6 @@ const EI = {
   sap:        "SAP824253751",
   tvaNumber:  "FR17824253751",
   tvaMention: "TVA non applicable - art. 293 B du CGI",
-  tva:        "Non assujetti a la TVA",
   rcs:        "824 253 751 R.C.S. Grenoble",
   rcsDate:    "09/12/2016",
   rneDate:    "07/11/2016",

@@ -32,7 +32,13 @@ export const SEUIL_MICRO = 77700;
 /** Taux de TVA standard appliqué aux offres `tvaEnabled`. */
 export const TAUX_TVA = 0.20;
 
-/** Prorata de la part pro affectée aux locaux & bureaux (ex : 13 / 43 ≈ 30.23 %). */
+/**
+ * Prorata d'utilisation pro pour les charges de la catégorie "LOCAUX & BUREAUX".
+ *
+ * Convention : 13 m² (espace pro / bureau) sur 43 m² (surface totale du logement),
+ * soit ≈ 30.23 % — utilisé pour ventiler la part déductible du loyer / charges
+ * communes sur la fiche pro. Si la surface ou le ratio change, modifier ici.
+ */
 export const PRORATA_BUREAU = 13 / 43;
 
 /** Helper d'affichage : "26.1 %" pour UI / PDF (année courante). */

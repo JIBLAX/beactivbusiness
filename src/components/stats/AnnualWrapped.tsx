@@ -3,6 +3,7 @@ import { FinanceEntry, Expense, Prospect, Offre } from "@/data/types";
 import html2canvas from "html2canvas-pro";
 import type { BaSaleRow } from "@/hooks/useBaSalesMonth";
 import { computeUrssaf, sumMicroCA } from "@/lib/revenue";
+import { findOffreByName } from "@/lib/offres";
 
 const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 
@@ -87,8 +88,7 @@ export default function AnnualWrapped({ year, financeEntries, expenses, prospect
       TRANSFORMATION: { revenue: 0, color: "hsl(348 63% 55%)", label: "Transformation" },
     };
     const bump = (offerName: string | null | undefined, amount: number) => {
-      if (!offerName) return;
-      const theme = offres.find(o => o.name === offerName)?.theme;
+      const theme = findOffreByName(offerName, offres)?.theme;
       if (!theme || !(theme in out)) return;
       out[theme as keyof typeof out].revenue += amount;
     };

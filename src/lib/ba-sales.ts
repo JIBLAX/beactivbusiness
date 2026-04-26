@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { FinanceEntry, Offre, Prospect } from "@/data/types";
+import { findOffreByName } from "@/lib/offres";
 
 /**
  * Fire-and-forget insert into ba_sales for each entry that has a clientName.
@@ -14,7 +15,7 @@ export function pushToBaSales(
   const rows = entries
     .filter(e => !!e.clientName)
     .map(e => {
-      const offre = offres.find(o => o.name === e.offre);
+      const offre = findOffreByName(e.offre, offres);
       const client = prospects.find(p => p.name === e.clientName);
       return {
         user_id: userId,

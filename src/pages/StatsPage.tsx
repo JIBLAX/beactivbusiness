@@ -5,6 +5,7 @@ import AnnualWrapped from "@/components/stats/AnnualWrapped";
 import { useBaSalesYear } from "@/hooks/useBaSalesMonth";
 import { SEUIL_MICRO, SEUIL_TVA, getTauxUrssaf } from "@/lib/constants";
 import { computeTVACollectee, computeUrssaf, computeYearlyTotalReel, sumMicroCA } from "@/lib/revenue";
+import { findOffreByName } from "@/lib/offres";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 const QUARTERS = [
@@ -149,16 +150,20 @@ export default function StatsPage() {
       TRANSFORMATION: { revenue: 0, count: 0, color: "hsl(348 63% 55%)", icon: "🔥", label: "Transformation" },
     };
     const bump = (offerName: string | null | undefined, amount: number) => {
-      if (!offerName) return;
-      const theme = offres.find(o => o.name === offerName)?.theme;
+      const theme = findOffreByName(offerName, offres)?.theme;
       if (!theme || !(theme in out)) return;
       out[theme as keyof typeof out].revenue += amount;
       out[theme as keyof typeof out].count += 1;
     };
-    yearEntries.forEach(e => bump(e.offre, e.amount));
-    baSales.forEach(s => bump(s.offer_name, s.amount));
+    // Quand un mois est sélectionné, on calcule sur la période filtrée.
+    const tEntries = selectedMonth === null ? yearEntries : filteredEntries;
+    const tBaSales = selectedMonth === null
+      ? baSales
+      : baSales.filter(s => s.date.startsWith(`${currentYear}-${String((selectedMonth ?? 0) + 1).padStart(2, "0")}`));
+    tEntries.forEach(e => bump(e.offre, e.amount));
+    tBaSales.forEach(s => bump(s.offer_name, s.amount));
     return out;
-  }, [yearEntries, baSales, offres]);
+  }, [yearEntries, filteredEntries, baSales, offres, selectedMonth, currentYear]);
 
   const themeTotal = themeStats.COLLECTIF.revenue + themeStats.ACTION.revenue + themeStats.TRANSFORMATION.revenue;
 
@@ -279,6 +284,36 @@ export default function StatsPage() {
           <div className="stat-card rounded-2xl p-3 text-center">
             <div className="value-lg text-[18px] text-warning">{filteredTVA.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
             <div className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mt-1">TVA</div>
+          </div>
+        </div>
+      )}
+
+      {/* Triangle des thèmes : COLLECTIF / ACTION / TRANSFORMATION (toujours visible) */}
+      {themeTotal > 0 && (
+        <div className="card-elevated rounded-2xl p-4 mb-5">
+          <div className="section-label mb-1">Triangle {selectedMonth === null ? currentYear : MONTHS[selectedMonth]}</div>
+          <div className="text-[10px] text-muted-foreground mb-3">Répartition du CA par pilier d'offres</div>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {(["COLLECTIF", "ACTION", "TRANSFORMATION"] as const).map(key => {
+              const t = themeStats[key];
+              const pct = themeTotal > 0 ? (t.revenue / themeTotal) * 100 : 0;
+              return (
+                <div key={key} className="rounded-2xl p-3 text-center" style={{ background: `${t.color.replace(")", " / 0.08)")}`, border: `1px solid ${t.color.replace(")", " / 0.15)")}` }}>
+                  <div className="text-xl mb-1">{t.icon}</div>
+                  <div className="value-lg text-[14px]" style={{ color: t.color }}>{t.revenue.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
+                  <div className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">{t.label}</div>
+                  <div className="text-[9px] font-semibold mt-1" style={{ color: t.color }}>{pct.toFixed(0)}%</div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="h-2 rounded-full overflow-hidden flex" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+            {(["COLLECTIF", "ACTION", "TRANSFORMATION"] as const).map(key => {
+              const t = themeStats[key];
+              const pct = themeTotal > 0 ? (t.revenue / themeTotal) * 100 : 0;
+              if (pct === 0) return null;
+              return <div key={key} style={{ width: `${pct}%`, background: t.color }} />;
+            })}
           </div>
         </div>
       )}
@@ -422,37 +457,6 @@ export default function StatsPage() {
           <div className="flex gap-6 mt-3 justify-center">
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground"><span className="w-3 h-0.5 rounded-full" style={{ background: "hsl(152, 55%, 52%)" }} /> CA</div>
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground"><span className="w-3 h-0.5 rounded-full" style={{ background: "hsl(217, 70%, 60%)" }} /> Bénéfice</div>
-          </div>
-        </div>
-      )}
-
-      {/* Triangle des thèmes : COLLECTIF / ACTION / TRANSFORMATION */}
-      {themeTotal > 0 && (
-        <div className="card-elevated rounded-2xl p-4 mb-5">
-          <div className="section-label mb-1">Triangle {currentYear}</div>
-          <div className="text-[10px] text-muted-foreground mb-3">Répartition du CA par pilier d'offres</div>
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {(["COLLECTIF", "ACTION", "TRANSFORMATION"] as const).map(key => {
-              const t = themeStats[key];
-              const pct = themeTotal > 0 ? (t.revenue / themeTotal) * 100 : 0;
-              return (
-                <div key={key} className="rounded-2xl p-3 text-center" style={{ background: `${t.color.replace(")", " / 0.08)")}`, border: `1px solid ${t.color.replace(")", " / 0.15)")}` }}>
-                  <div className="text-xl mb-1">{t.icon}</div>
-                  <div className="value-lg text-[14px]" style={{ color: t.color }}>{t.revenue.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
-                  <div className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">{t.label}</div>
-                  <div className="text-[9px] font-semibold mt-1" style={{ color: t.color }}>{pct.toFixed(0)}%</div>
-                </div>
-              );
-            })}
-          </div>
-          {/* Barre triangulaire empilée */}
-          <div className="h-2 rounded-full overflow-hidden flex" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
-            {(["COLLECTIF", "ACTION", "TRANSFORMATION"] as const).map(key => {
-              const t = themeStats[key];
-              const pct = themeTotal > 0 ? (t.revenue / themeTotal) * 100 : 0;
-              if (pct === 0) return null;
-              return <div key={key} style={{ width: `${pct}%`, background: t.color }} />;
-            })}
           </div>
         </div>
       )}
