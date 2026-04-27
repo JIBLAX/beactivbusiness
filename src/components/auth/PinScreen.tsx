@@ -9,6 +9,12 @@ const AUTO_EMAIL = import.meta.env.VITE_AUTO_EMAIL as string | undefined;
 const AUTO_PASS  = import.meta.env.VITE_AUTO_PASS  as string | undefined;
 const ENV_OK = Boolean(PIN_CODE && AUTO_EMAIL && AUTO_PASS);
 
+// Bootstrap-only safety net: when explicitly enabled (VITE_ALLOW_AUTO_SIGNUP=true),
+// a failed sign-in falls back to creating the auth user, then signing in. Off by
+// default — in steady state we want auth failures to surface as auth failures
+// instead of being masked by a silent signUp attempt.
+const ALLOW_AUTO_SIGNUP = import.meta.env.VITE_ALLOW_AUTO_SIGNUP === "true";
+
 const PIN_LETTERS: Record<string, string> = {
   "2": "ABC", "3": "DEF", "4": "GHI", "5": "JKL",
   "6": "MNO", "7": "PQRS", "8": "TUV", "9": "WXYZ",
@@ -43,14 +49,17 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
       });
 
       if (loginErr) {
-        // Account doesn't exist yet — try to create it
+        if (!ALLOW_AUTO_SIGNUP) throw loginErr;
+
+        // Bootstrap path: account may not exist yet — create it then sign in.
+        // Gated by VITE_ALLOW_AUTO_SIGNUP so a wrong password / network blip
+        // can't silently provision a new account in steady state.
         const { error: signupErr } = await supabase.auth.signUp({
           email: AUTO_EMAIL!,
           password: AUTO_PASS!,
         });
         if (signupErr) throw signupErr;
 
-        // Sign in after signup
         const { error: loginErr2 } = await supabase.auth.signInWithPassword({
           email: AUTO_EMAIL!,
           password: AUTO_PASS!,
