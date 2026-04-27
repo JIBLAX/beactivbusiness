@@ -2,9 +2,10 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import beactivLogo from "@/assets/beactiv-logo.png";
 
-const PIN_CODE = "131313";
-const AUTO_EMAIL = "coachjm@beactiv.app";
-const AUTO_PASS = "BeActiv2026!SecurePin";
+// Configurable via Vite env vars (.env.local). Fallbacks keep current installs working.
+const PIN_CODE   = (import.meta.env.VITE_PIN_CODE   as string | undefined) ?? "131313";
+const AUTO_EMAIL = (import.meta.env.VITE_AUTO_EMAIL as string | undefined) ?? "coachjm@beactiv.app";
+const AUTO_PASS  = (import.meta.env.VITE_AUTO_PASS  as string | undefined) ?? "BeActiv2026!SecurePin";
 
 const PIN_LETTERS: Record<string, string> = {
   "2": "ABC", "3": "DEF", "4": "GHI", "5": "JKL",
@@ -25,7 +26,14 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
     setLoading(true);
     setAuthError(false);
     try {
-      // Try sign in first
+      // Reuse an already-valid session (restored from localStorage by Supabase)
+      // to avoid an unnecessary signInWithPassword round-trip on every PIN entry.
+      const { data: { session: existing } } = await supabase.auth.getSession();
+      if (existing?.user?.email === AUTO_EMAIL) {
+        onSuccess();
+        return;
+      }
+
       const { error: loginErr } = await supabase.auth.signInWithPassword({
         email: AUTO_EMAIL,
         password: AUTO_PASS,
