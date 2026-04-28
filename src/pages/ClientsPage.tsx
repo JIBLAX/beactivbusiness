@@ -68,10 +68,17 @@ export default function ClientsPage() {
   const [clientPayments, setClientPayments] = useState<any[]>([]);
   useEffect(() => {
     if (!selectedClient || !user) { setClientPayments([]); return; }
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isUuid = UUID_RE.test(selectedClient.id ?? "");
+    // Escape name to avoid breaking PostgREST OR parsing (commas, quotes)
+    const safeName = (selectedClient.name ?? "").replace(/"/g, '\\"');
+    const orExpr = isUuid
+      ? `client_name.eq."${safeName}",client_id.eq.${selectedClient.id}`
+      : `client_name.eq."${safeName}"`;
     supabase
       .from("ba_sales")
       .select("*")
-      .or(`client_name.eq.${selectedClient.name},client_id.eq.${selectedClient.id}`)
+      .or(orExpr)
       .order("date", { ascending: false })
       .then(({ data }) => setClientPayments(data ?? []), () => setClientPayments([]));
   }, [selectedClient?.id, user?.id]);
@@ -497,8 +504,18 @@ export default function ClientsPage() {
                   <div key={row.id ?? i} className="flex items-center justify-between py-1.5"
                     style={{ borderBottom: i < clientPayments.length - 1 ? "1px solid hsl(0 0% 100% / 0.04)" : undefined }}>
                     <div>
-                      <div className="text-[12px] font-medium text-foreground">
-                        {row.installment_label ?? (row.is_installment ? "Versement" : "Paiement")}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[12px] font-medium text-foreground">
+                          {row.installment_label ?? (row.is_installment ? "Versement" : "Paiement")}
+                        </span>
+                        {row.is_installment && (
+                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={isPaid
+                              ? { background: "hsl(152 55% 42% / 0.15)", color: "hsl(152 55% 55%)" }
+                              : { background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 55%)" }}>
+                            {isPaid ? "encaissé" : "en attente"}
+                          </span>
+                        )}
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
                         <span>{row.date}</span>
@@ -511,7 +528,9 @@ export default function ClientsPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[13px] font-bold text-success">+{Number(row.amount).toLocaleString("fr-FR")}€</div>
+                      <div className="text-[13px] font-bold" style={{ color: isPaid ? "hsl(152 55% 55%)" : "hsl(38 92% 60%)" }}>
+                        +{Number(row.amount).toLocaleString("fr-FR")}€
+                      </div>
                       {row.catalog_price != null && Number(row.catalog_price) !== Number(row.amount) && (
                         <div className="text-[9px] text-muted-foreground">cat. {Number(row.catalog_price)}€</div>
                       )}
@@ -523,7 +542,10 @@ export default function ClientsPage() {
             <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
               <span className="text-[11px] text-muted-foreground">Total encaissé</span>
               <span className="text-[14px] font-bold text-success">
-                {clientPayments.reduce((s: number, r: any) => s + Number(r.amount), 0).toLocaleString("fr-FR")}€
+                {clientPayments
+                  .filter((r: any) => !r.is_installment || r.financesjm_tx_id)
+                  .reduce((s: number, r: any) => s + Number(r.amount), 0)
+                  .toLocaleString("fr-FR")}€
               </span>
             </div>
           </div>

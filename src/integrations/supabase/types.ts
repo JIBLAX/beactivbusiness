@@ -101,6 +101,81 @@ export type Database = {
         }
         Relationships: []
       }
+      ba_sales: {
+        Row: {
+          id: string
+          created_at: string
+          user_id: string | null
+          client_id: string | null
+          offer_id: string | null
+          client_name: string | null
+          offer_name: string | null
+          amount: number
+          catalog_price: number | null
+          date: string
+          channel: string | null
+          payment_mode: string | null
+          is_installment: boolean | null
+          installment_label: string | null
+          total_amount: number | null
+          sale_type: "individual" | "duo" | "trio" | "collectif" | null
+          participant_count: number | null
+          is_sap: boolean | null
+          sap_hours: number | null
+          discount_amount: number | null
+          discount_percent: number | null
+          financesjm_tx_id: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          user_id?: string | null
+          client_id?: string | null
+          offer_id?: string | null
+          client_name?: string | null
+          offer_name?: string | null
+          amount: number
+          catalog_price?: number | null
+          date: string
+          channel?: string | null
+          payment_mode?: string | null
+          is_installment?: boolean | null
+          installment_label?: string | null
+          total_amount?: number | null
+          sale_type?: "individual" | "duo" | "trio" | "collectif" | null
+          participant_count?: number | null
+          is_sap?: boolean | null
+          sap_hours?: number | null
+          discount_amount?: number | null
+          discount_percent?: number | null
+          financesjm_tx_id?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          user_id?: string | null
+          client_id?: string | null
+          offer_id?: string | null
+          client_name?: string | null
+          offer_name?: string | null
+          amount?: number
+          catalog_price?: number | null
+          date?: string
+          channel?: string | null
+          payment_mode?: string | null
+          is_installment?: boolean | null
+          installment_label?: string | null
+          total_amount?: number | null
+          sale_type?: "individual" | "duo" | "trio" | "collectif" | null
+          participant_count?: number | null
+          is_sap?: boolean | null
+          sap_hours?: number | null
+          discount_amount?: number | null
+          discount_percent?: number | null
+          financesjm_tx_id?: string | null
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
