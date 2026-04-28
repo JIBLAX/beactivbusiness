@@ -47,6 +47,20 @@ const THEME_LOGOS: Record<string, string> = {
   "TRANSFORMATION": logoBeActiv,
 };
 
+const THEME_ORDER: string[] = ["FISCALE", "REMBOURSEMENTS", "ACTION", "TRANSFORMATION", "COLLECTIF"];
+
+function fmtDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+function sortDateStr(dateStr: string | null | undefined, monthKey: string): string {
+  if (dateStr) return dateStr;
+  return monthKey + "-01";
+}
+
 export default function ActivitesPage() {
   const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths, quarterEdits, incrementQuarterEdit } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
@@ -346,232 +360,200 @@ export default function ActivitesPage() {
         </button>
       </div>
 
-      {/* ENTRÉES TAB */}
-      {activeTab === "entrees" && (
-      <div className="mb-2">
+      {/* ENTRÉES TAB — unifiées, groupées par thème, triées par date */}
+      {activeTab === "entrees" && (() => {
+        type RevItem =
+          | { source: "entry"; data: FinanceEntry; theme: string; sortDate: string }
+          | { source: "ba";    data: (typeof baSales)[0];      theme: string; sortDate: string }
+          | { source: "fjm";  data: (typeof fjmRevenuOps)[0]; theme: string; sortDate: string };
 
-      {OFFRE_THEMES.map(theme => {
-        const entries = entriesByTheme[theme] || [];
-        const themeTotal = entries.reduce((s, e) => s + e.amount, 0);
-        if (entries.length === 0) return null;
+        const allItems: RevItem[] = [
+          ...monthEntries.map(e => {
+            const o = offres.find(of => of.name === e.offre);
+            const theme = (o?.theme as string) || "REMBOURSEMENTS";
+            return { source: "entry" as const, data: e, theme, sortDate: e.month + "-15" };
+          }),
+          ...baSales.map(s => {
+            const theme = s.sale_type === "collectif" ? "COLLECTIF" : "ACTION";
+            return { source: "ba" as const, data: s, theme, sortDate: s.date || selectedMonth + "-01" };
+          }),
+          ...fjmRevenuOps.map(o => {
+            const lbl = (o.label || "").toLowerCase();
+            const theme = lbl.includes("collectif") ? "COLLECTIF" : "ACTION";
+            return { source: "fjm" as const, data: o, theme, sortDate: o.date || o.month_key + "-01" };
+          }),
+        ];
 
-        return (
-          <div key={theme} className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                {THEME_LOGOS[theme] ? (
-                  <div className="w-6 h-6 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
-                    <img src={THEME_LOGOS[theme]} alt={theme} className="w-full h-full object-cover" />
-                  </div>
-                ) : <span className="text-sm">📄</span>}
-                <span className="text-[12px] font-bold text-foreground">{theme}</span>
-                <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{entries.length}</span>
-              </div>
-              {themeTotal > 0 && <span className="value-lg text-[13px] text-success">{themeTotal.toFixed(0)}€</span>}
-            </div>
+        const byTheme: Record<string, RevItem[]> = {};
+        THEME_ORDER.forEach(t => { byTheme[t] = []; });
+        allItems.forEach(item => {
+          if (byTheme[item.theme]) byTheme[item.theme].push(item);
+          else byTheme["REMBOURSEMENTS"].push(item);
+        });
+        THEME_ORDER.forEach(t => byTheme[t].sort((a, b) => b.sortDate.localeCompare(a.sortDate)));
 
-            <div className="space-y-1.5 ml-1">
-              {entries.map(e => (
-                <div key={e.id}>
-                  {editingEntryId === e.id ? (
-                    <div className="rounded-2xl p-3 space-y-2" style={{ background: "hsl(0 0% 7%)", border: "1px solid hsl(348 63% 30% / 0.3)" }}>
-                      <input value={editEntry.label || ""} onChange={ev => setEditEntry(p => ({ ...p, label: ev.target.value }))}
-                        className="w-full rounded-xl px-3 py-2 text-sm input-field" />
-                      <div className="flex gap-2">
-                        <input type="number" value={editEntry.amount || ""} onChange={ev => setEditEntry(p => ({ ...p, amount: Number(ev.target.value) }))}
-                          className="flex-1 rounded-xl px-3 py-2 text-sm input-field" placeholder="Montant" />
-                        <input value={editEntry.clientName || ""} onChange={ev => setEditEntry(p => ({ ...p, clientName: ev.target.value }))}
-                          className="flex-1 rounded-xl px-3 py-2 text-sm input-field" placeholder="Client" />
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={saveEditEntry} className="flex-1 py-2 rounded-xl text-xs font-semibold text-white btn-primary">✓</button>
-                        <button onClick={() => setEditingEntryId(null)} className="px-4 py-2 rounded-xl text-xs text-muted-foreground input-field">✕</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3 p-3 rounded-2xl stat-card">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-medium text-foreground truncate">{e.label}</div>
-                        <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                          {e.clientName && <span>{e.clientName}</span>}
-                          {e.paymentMode && <span className="badge-pill text-[8px] py-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>{paymentModeLabel(e.paymentMode)}</span>}
-                          {e.discountValue && e.discountType && (
-                            <span className="badge-pill text-[8px] py-0" style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
-                              -{e.discountValue}{e.discountType === "percent" ? "%" : "€"}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {e.paymentMode === "especes" && (
-                          <select value={e.cashDeclaration || "non_declare"} onChange={ev => editable && updateCashDeclaration(e.id, ev.target.value)}
-                            disabled={!editable} className="rounded-lg py-1 px-1.5 text-[10px] input-field disabled:opacity-40">
-                            {CASH_DECLARATIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                          </select>
-                        )}
-                        <span className="value-lg text-[14px] text-success">+{e.amount}€</span>
-                        {editable && (() => {
-                          const entryOffre = offres.find(o => o.name === e.offre);
-                          return entryOffre?.unitPrice ? (
-                            <button onClick={() => { setShowAddSessions(true); setExtraSessionsOffre(e.offre || ""); setExtraSessionsClient(e.clientName || ""); setExtraSessionsCount(0); }}
-                              className="text-[10px] px-1.5 py-0.5 rounded-lg transition-colors"
-                              style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)", border: "1px solid hsl(38 92% 55% / 0.2)" }}>
-                              +séances
-                            </button>
-                          ) : null;
-                        })()}
-                        {editable && (
-                          <>
-                            <button onClick={() => startEditEntry(e)} className="text-muted-foreground hover:text-foreground transition-colors p-1">✏️</button>
-                            <button onClick={() => deleteEntry(e.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1 text-[10px]">✕</button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+        if (allItems.length === 0) return (
+          <div className="rounded-2xl p-6 text-center stat-card" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
+            <div className="text-muted-foreground text-[11px]">Aucune entrée ce mois</div>
           </div>
         );
-      })}
 
-      {/* Autres entrées */}
-      {(entriesByTheme["AUTRE"] || []).length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm">📄</span>
-            <span className="text-[12px] font-bold text-foreground">AUTRE</span>
-          </div>
-          <div className="space-y-1.5 ml-1">
-            {(entriesByTheme["AUTRE"] || []).map(e => (
-              <div key={e.id} className="flex items-center gap-3 p-3 rounded-2xl stat-card">
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium text-foreground truncate">{e.label}</div>
-                  {e.clientName && <div className="text-[10px] text-muted-foreground">{e.clientName}</div>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="value-lg text-[14px] text-success">+{e.amount}€</span>
-                  {editable && (
-                    <>
-                      <button onClick={() => startEditEntry(e)} className="text-muted-foreground hover:text-foreground p-1">✏️</button>
-                      <button onClick={() => deleteEntry(e.id)} className="text-muted-foreground hover:text-destructive p-1 text-[10px]">✕</button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* BE ACTIV coaching sales from FJM */}
-      {baSales.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
-                <img src={logoBeActiv} alt="BE ACTIV" className="w-full h-full object-cover" />
-              </div>
-              <span className="text-[12px] font-bold text-foreground">BE ACTIV</span>
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(217 70% 60% / 0.15)", color: "hsl(217 70% 60%)" }}>FJM sync</span>
-              <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{baSales.length}</span>
-            </div>
-            {baSalesTotal > 0 && <span className="value-lg text-[13px] text-success">{baSalesTotal.toFixed(0)}€</span>}
-          </div>
-          <div className="space-y-1.5 ml-1">
-            {baSales.map(s => {
-              const hasDiscount = (s.discount_amount && s.discount_amount > 0) || (s.discount_percent && s.discount_percent > 0);
-              const isCollectif = s.sale_type === "collectif" && s.participant_count && s.participant_count > 1;
+        return (
+          <div className="mb-2">
+            {THEME_ORDER.map(theme => {
+              const group = byTheme[theme];
+              if (group.length === 0) return null;
+              const themeTotal = group.reduce((s, item) => {
+                if (item.source === "entry") return s + item.data.amount;
+                if (item.source === "ba")    return s + item.data.amount;
+                return s + (item.data.actual || 0);
+              }, 0);
               return (
-                <div key={s.id} className="p-3 rounded-2xl"
-                  style={{ background: "hsl(217 70% 60% / 0.04)", border: "1px solid hsl(217 70% 60% / 0.1)" }}>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      {/* Client + badges */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[13px] font-semibold text-foreground">{s.client_name || "—"}</span>
-                        {s.sale_type && s.sale_type !== "individual" && (
-                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                            style={{ background: "hsl(280 60% 55% / 0.15)", color: "hsl(280 60% 65%)" }}>
-                            {s.sale_type.toUpperCase()}
-                          </span>
-                        )}
-                        {s.is_sap && (
-                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                            style={{ background: "hsl(142 55% 42% / 0.15)", color: "hsl(142 55% 55%)" }}>
-                            🏠 SAP
-                          </span>
-                        )}
-                      </div>
-                      {/* Offre + détails */}
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        {s.offer_name && <span className="text-[10px] text-muted-foreground">{s.offer_name}</span>}
-                        {s.is_sap && s.sap_hours ? <span className="text-[10px] text-muted-foreground">{s.sap_hours}h</span> : null}
-                        {isCollectif && (
-                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
-                            style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
-                            ×{s.participant_count} participants
-                          </span>
-                        )}
-                      </div>
+                <div key={theme} className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {THEME_LOGOS[theme] ? (
+                        <div className="w-6 h-6 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
+                          <img src={THEME_LOGOS[theme]} alt={theme} className="w-full h-full object-cover" />
+                        </div>
+                      ) : <span className="text-sm">📄</span>}
+                      <span className="text-[12px] font-bold text-foreground">{theme}</span>
+                      <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{group.length}</span>
                     </div>
-                    {/* Montant + réduction */}
-                    <div className="flex-shrink-0 text-right">
-                      {hasDiscount && s.catalog_price ? (
-                        <>
-                          <div className="text-[10px] text-muted-foreground line-through">{s.catalog_price}€</div>
-                          <div className="value-lg text-[14px] text-success">+{s.amount}€</div>
-                          <div className="text-[9px] font-bold mt-0.5"
-                            style={{ color: "hsl(38 92% 55%)" }}>
-                            {s.discount_percent ? `-${s.discount_percent}%` : `-${s.discount_amount}€`}
+                    <span className="value-lg text-[13px] text-success">{themeTotal.toFixed(0)}€</span>
+                  </div>
+                  <div className="space-y-1.5 ml-1">
+                    {group.map((item, idx) => {
+                      if (item.source === "entry") {
+                        const e = item.data;
+                        if (editingEntryId === e.id) return (
+                          <div key={e.id} className="rounded-2xl p-3 space-y-2" style={{ background: "hsl(0 0% 7%)", border: "1px solid hsl(348 63% 30% / 0.3)" }}>
+                            <input value={editEntry.label || ""} onChange={ev => setEditEntry(p => ({ ...p, label: ev.target.value }))}
+                              className="w-full rounded-xl px-3 py-2 text-sm input-field" />
+                            <div className="flex gap-2">
+                              <input type="number" value={editEntry.amount || ""} onChange={ev => setEditEntry(p => ({ ...p, amount: Number(ev.target.value) }))}
+                                className="flex-1 rounded-xl px-3 py-2 text-sm input-field" placeholder="Montant" />
+                              <input value={editEntry.clientName || ""} onChange={ev => setEditEntry(p => ({ ...p, clientName: ev.target.value }))}
+                                className="flex-1 rounded-xl px-3 py-2 text-sm input-field" placeholder="Client" />
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={saveEditEntry} className="flex-1 py-2 rounded-xl text-xs font-semibold text-white btn-primary">✓</button>
+                              <button onClick={() => setEditingEntryId(null)} className="px-4 py-2 rounded-xl text-xs text-muted-foreground input-field">✕</button>
+                            </div>
                           </div>
-                        </>
-                      ) : (
-                        <span className="value-lg text-[14px] text-success">+{s.amount}€</span>
-                      )}
-                    </div>
+                        );
+                        return (
+                          <div key={e.id} className="flex items-center gap-3 p-3 rounded-2xl stat-card">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-[13px] font-medium text-foreground truncate">{e.label}</div>
+                              <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                                <span>{fmtDate(item.sortDate)}</span>
+                                {e.clientName && <span>· {e.clientName}</span>}
+                                {e.paymentMode && <span className="badge-pill text-[8px] py-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>{paymentModeLabel(e.paymentMode)}</span>}
+                                {e.discountValue && e.discountType && (
+                                  <span className="badge-pill text-[8px] py-0" style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
+                                    -{e.discountValue}{e.discountType === "percent" ? "%" : "€"}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {e.paymentMode === "especes" && (
+                                <select value={e.cashDeclaration || "non_declare"} onChange={ev => editable && updateCashDeclaration(e.id, ev.target.value)}
+                                  disabled={!editable} className="rounded-lg py-1 px-1.5 text-[10px] input-field disabled:opacity-40">
+                                  {CASH_DECLARATIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                                </select>
+                              )}
+                              <span className="value-lg text-[14px] text-success">+{e.amount}€</span>
+                              {editable && (() => {
+                                const entryOffre = offres.find(o => o.name === e.offre);
+                                return entryOffre?.unitPrice ? (
+                                  <button onClick={() => { setShowAddSessions(true); setExtraSessionsOffre(e.offre || ""); setExtraSessionsClient(e.clientName || ""); setExtraSessionsCount(0); }}
+                                    className="text-[10px] px-1.5 py-0.5 rounded-lg transition-colors"
+                                    style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)", border: "1px solid hsl(38 92% 55% / 0.2)" }}>
+                                    +séances
+                                  </button>
+                                ) : null;
+                              })()}
+                              {editable && (
+                                <>
+                                  <button onClick={() => startEditEntry(e)} className="text-muted-foreground hover:text-foreground transition-colors p-1">✏️</button>
+                                  <button onClick={() => deleteEntry(e.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1 text-[10px]">✕</button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (item.source === "ba") {
+                        const s = item.data;
+                        const hasDiscount = (s.discount_amount && s.discount_amount > 0) || (s.discount_percent && s.discount_percent > 0);
+                        const isCollectif = s.sale_type === "collectif" && s.participant_count && s.participant_count > 1;
+                        return (
+                          <div key={s.id} className="p-3 rounded-2xl"
+                            style={{ background: "hsl(217 70% 60% / 0.04)", border: "1px solid hsl(217 70% 60% / 0.1)" }}>
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-[13px] font-semibold text-foreground">{s.client_name || "—"}</span>
+                                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(217 70% 60% / 0.15)", color: "hsl(217 70% 60%)" }}>FJM</span>
+                                  {s.sale_type && s.sale_type !== "individual" && (
+                                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                      style={{ background: "hsl(280 60% 55% / 0.15)", color: "hsl(280 60% 65%)" }}>
+                                      {s.sale_type.toUpperCase()}
+                                    </span>
+                                  )}
+                                  {s.is_sap && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(142 55% 42% / 0.15)", color: "hsl(142 55% 55%)" }}>🏠 SAP</span>}
+                                </div>
+                                <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                  <span>{fmtDate(s.date)}</span>
+                                  {s.offer_name && <span>· {s.offer_name}</span>}
+                                  {s.is_sap && s.sap_hours ? <span>· {s.sap_hours}h</span> : null}
+                                  {isCollectif && <span style={{ color: "hsl(38 92% 55%)" }}>· ×{s.participant_count}</span>}
+                                </div>
+                              </div>
+                              <div className="flex-shrink-0 text-right">
+                                {hasDiscount && s.catalog_price ? (
+                                  <>
+                                    <div className="text-[10px] text-muted-foreground line-through">{s.catalog_price}€</div>
+                                    <div className="value-lg text-[14px] text-success">+{s.amount}€</div>
+                                    <div className="text-[9px] font-bold" style={{ color: "hsl(38 92% 55%)" }}>
+                                      {s.discount_percent ? `-${s.discount_percent}%` : `-${s.discount_amount}€`}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <span className="value-lg text-[14px] text-success">+{s.amount}€</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // fjm
+                      const o = item.data;
+                      return (
+                        <div key={o.id} className="flex items-center gap-3 p-3 rounded-2xl"
+                          style={{ background: "hsl(38 92% 55% / 0.04)", border: "1px solid hsl(38 92% 55% / 0.1)" }}>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[13px] font-medium text-foreground truncate">{o.label}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                              {fmtDate(o.date) && <span>{fmtDate(o.date)}</span>}
+                              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 55%)" }}>FJM</span>
+                            </div>
+                          </div>
+                          <span className="value-lg text-[14px] flex-shrink-0 text-success">+{o.actual}€</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
-
-      {/* FJM coaching revenues */}
-      {fjmRevenuOps.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">➕</span>
-              <span className="text-[12px] font-bold text-foreground">COACHING FJM</span>
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 55%)" }}>FJM</span>
-              <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{fjmRevenuOps.length}</span>
-            </div>
-            {fjmRevenuTotal > 0 && <span className="value-lg text-[13px] text-success">{fjmRevenuTotal.toFixed(0)}€</span>}
-          </div>
-          <div className="space-y-1.5 ml-1">
-            {fjmRevenuOps.map(o => (
-              <div key={o.id} className="flex items-center gap-3 p-3 rounded-2xl"
-                style={{ background: "hsl(38 92% 55% / 0.04)", border: "1px solid hsl(38 92% 55% / 0.1)" }}>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium text-foreground truncate">{o.label}</div>
-                </div>
-                <span className="value-lg text-[14px] flex-shrink-0 text-success">+{o.actual}€</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {monthEntries.length === 0 && baSales.length === 0 && fjmRevenuOps.length === 0 && (
-        <div className="rounded-2xl p-6 text-center stat-card" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
-          <div className="text-muted-foreground text-[11px]">Aucune entrée ce mois</div>
-        </div>
-      )}
-      </div>
-      )}
+        );
+      })()}
 
       {/* DÉPENSES TAB */}
       {activeTab === "depenses" && (

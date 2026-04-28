@@ -212,9 +212,9 @@ export const SOURCES = [
 
 export const OBJECTIFS = ["FATLOSS", "SCULPT", "HEALTH", "STRONG", "AUTRE"];
 
-export type OffreTheme = "COLLECTIF" | "ACTION" | "TRANSFORMATION";
+export type OffreTheme = "FISCALE" | "REMBOURSEMENTS" | "ACTION" | "TRANSFORMATION" | "COLLECTIF";
 
-export const OFFRE_THEMES: OffreTheme[] = ["COLLECTIF", "ACTION", "TRANSFORMATION"];
+export const OFFRE_THEMES: OffreTheme[] = ["FISCALE", "REMBOURSEMENTS", "ACTION", "TRANSFORMATION", "COLLECTIF"];
 
 export interface OffreDuration {
   value: number;
