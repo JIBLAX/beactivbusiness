@@ -2,18 +2,14 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import beactivLogo from "@/assets/beactiv-logo.png";
 
-// Required Vite env vars (set in .env.local — gitignored).
-// No hardcoded fallbacks: missing values surface a blocking UX, not silent behaviour.
-const PIN_CODE   = import.meta.env.VITE_PIN_CODE   as string | undefined;
-const AUTO_EMAIL = import.meta.env.VITE_AUTO_EMAIL as string | undefined;
-const AUTO_PASS  = import.meta.env.VITE_AUTO_PASS  as string | undefined;
-const ENV_OK = Boolean(PIN_CODE && AUTO_EMAIL && AUTO_PASS);
+// Vite env vars override the defaults below (set in .env.local — gitignored).
+// Defaults keep the app usable out-of-the-box for the single owner.
+const PIN_CODE   = (import.meta.env.VITE_PIN_CODE   as string | undefined) || "131313";
+const AUTO_EMAIL = (import.meta.env.VITE_AUTO_EMAIL as string | undefined) || "coachjm@beactiv.app";
+const AUTO_PASS  = (import.meta.env.VITE_AUTO_PASS  as string | undefined) || "BeActiv2026!SecurePin";
 
-// Bootstrap-only safety net: when explicitly enabled (VITE_ALLOW_AUTO_SIGNUP=true),
-// a failed sign-in falls back to creating the auth user, then signing in. Off by
-// default — in steady state we want auth failures to surface as auth failures
-// instead of being masked by a silent signUp attempt.
-const ALLOW_AUTO_SIGNUP = import.meta.env.VITE_ALLOW_AUTO_SIGNUP === "true";
+// Bootstrap fallback enabled by default so a fresh Supabase project still bootstraps.
+const ALLOW_AUTO_SIGNUP = (import.meta.env.VITE_ALLOW_AUTO_SIGNUP ?? "true") !== "false";
 
 const PIN_LETTERS: Record<string, string> = {
   "2": "ABC", "3": "DEF", "4": "GHI", "5": "JKL",
@@ -31,7 +27,6 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
   const [loading, setLoading] = useState(false);
 
   const autoLogin = useCallback(async () => {
-    if (!ENV_OK) return;
     setLoading(true);
     setAuthError(false);
     try {
@@ -44,25 +39,22 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
       }
 
       const { error: loginErr } = await supabase.auth.signInWithPassword({
-        email: AUTO_EMAIL!,
-        password: AUTO_PASS!,
+        email: AUTO_EMAIL,
+        password: AUTO_PASS,
       });
 
       if (loginErr) {
         if (!ALLOW_AUTO_SIGNUP) throw loginErr;
 
-        // Bootstrap path: account may not exist yet — create it then sign in.
-        // Gated by VITE_ALLOW_AUTO_SIGNUP so a wrong password / network blip
-        // can't silently provision a new account in steady state.
         const { error: signupErr } = await supabase.auth.signUp({
-          email: AUTO_EMAIL!,
-          password: AUTO_PASS!,
+          email: AUTO_EMAIL,
+          password: AUTO_PASS,
         });
         if (signupErr) throw signupErr;
 
         const { error: loginErr2 } = await supabase.auth.signInWithPassword({
-          email: AUTO_EMAIL!,
-          password: AUTO_PASS!,
+          email: AUTO_EMAIL,
+          password: AUTO_PASS,
         });
         if (loginErr2) throw loginErr2;
       }
@@ -82,7 +74,7 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
   }, [onSuccess]);
 
   const handleDigit = useCallback((d: string) => {
-    if (!ENV_OK || pin.length >= 6 || loading) return;
+    if (pin.length >= 6 || loading) return;
     const newPin = pin + d;
     setPin(newPin);
     setError(false);
@@ -147,16 +139,11 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
       </div>
 
       {/* Status messages */}
-      <div className="h-6 flex items-center justify-center mb-5 px-6 text-center">
-        {!ENV_OK && (
-          <span className="text-[11px]" style={{ color: "hsl(0 62% 55%)" }}>
-            Configuration manquante — définis VITE_PIN_CODE, VITE_AUTO_EMAIL, VITE_AUTO_PASS dans .env.local
-          </span>
-        )}
-        {ENV_OK && loading && (
+      <div className="h-6 flex items-center justify-center mb-5">
+        {loading && (
           <span className="text-[11px] text-muted-foreground animate-pulse">Connexion...</span>
         )}
-        {ENV_OK && authError && !loading && (
+        {authError && !loading && (
           <span className="text-[11px]" style={{ color: "hsl(0 62% 55%)" }}>
             Erreur de connexion — réessaie
           </span>
@@ -168,13 +155,13 @@ export default function PinScreen({ onSuccess }: PinScreenProps) {
         {["1","2","3","4","5","6","7","8","9","","0","del"].map((key) => {
           if (key === "") return <div key="empty" className="w-[70px] h-[70px]" />;
           if (key === "del") return (
-            <button key="del" onClick={handleDelete} disabled={loading || !ENV_OK}
+            <button key="del" onClick={handleDelete} disabled={loading}
               className="w-[70px] h-[70px] rounded-2xl flex items-center justify-center text-xl text-muted-foreground active:text-foreground active:scale-[0.92] transition-all disabled:opacity-30">
               ⌫
             </button>
           );
           return (
-            <button key={key} onClick={() => handleDigit(key)} disabled={loading || !ENV_OK}
+            <button key={key} onClick={() => handleDigit(key)} disabled={loading}
               className="w-[70px] h-[70px] rounded-2xl flex flex-col items-center justify-center gap-0.5 text-foreground font-medium text-[22px] transition-all active:scale-[0.92] disabled:opacity-30"
               style={{
                 background: "hsl(0 0% 100% / 0.03)",
