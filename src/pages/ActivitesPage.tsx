@@ -576,186 +576,55 @@ export default function ActivitesPage() {
       {/* DÉPENSES TAB */}
       {activeTab === "depenses" && (
       <div>
-      {/* Last modification date */}
-      {monthExpenses.length > 0 && (() => {
-        const dates = monthExpenses.map(e => e.date).filter(Boolean).sort();
-        const lastDate = dates[dates.length - 1];
-        return lastDate ? (
-          <div className="text-[10px] text-muted-foreground mb-3 text-right">
-            Dernière modif. : {new Date(lastDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-          </div>
-        ) : null;
-      })()}
-
-      {/* Total charges pro + portage */}
-      {monthExpenses.length > 0 && (
-        <div className="space-y-1 mb-4 px-1">
-          <div className="flex justify-between items-center">
-            <span className="text-[11px] text-muted-foreground">Total charges pro</span>
-            <span className="text-[13px] font-bold text-destructive">
-              -{monthExpenses.reduce((s, e) => s + (e.amount * (e.proPct ?? 100) / 100), 0).toFixed(0)}€
-            </span>
-          </div>
-          {monthExpenses.some(e => e.portagePct != null && e.portagePct > 0) && (
-            <div className="flex justify-between items-center">
-              <span className="text-[11px] text-muted-foreground">↳ dont imputé portage</span>
-              <span className="text-[12px] font-semibold" style={{ color: "hsl(262 80% 65%)" }}>
-                -{monthExpenses.reduce((s, e) => {
-                  const proAmt = e.amount * (e.proPct ?? 100) / 100;
-                  return s + proAmt * (e.portagePct ?? 0) / 100;
-                }, 0).toFixed(0)}€
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {(() => {
-        const filtered = monthExpenses;
-        return filtered.length > 0 ? (
-        <div className="mb-6">
-          <div className="space-y-1.5">
-            {filtered.map(e => (
-              <div key={e.id}>
-                {editingExpenseId === e.id ? (
-                  <div className="rounded-2xl p-3 space-y-2" style={{ background: "hsl(0 0% 7%)", border: "1px solid hsl(348 63% 30% / 0.3)" }}>
-                    <select value={editExpense.category || ""} onChange={ev => setEditExpense(p => ({ ...p, category: ev.target.value as ExpenseCategory }))}
-                      className="w-full rounded-xl px-3 py-2 text-sm input-field">
-                      {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <input value={editExpense.label || ""} onChange={ev => setEditExpense(p => ({ ...p, label: ev.target.value }))}
-                      className="w-full rounded-xl px-3 py-2 text-sm input-field" />
-                    <input type="number" value={editExpense.amount || ""} onChange={ev => setEditExpense(p => ({ ...p, amount: Number(ev.target.value) }))}
-                      className="w-full rounded-xl px-3 py-2 text-sm input-field" />
-                    <div>
-                      <label className="text-[10px] text-muted-foreground mb-1 block">% Pro</label>
-                      <div className="flex items-center gap-2">
-                        <input type="range" min={0} max={100} step={5} value={editExpense.proPct ?? 100}
-                          onChange={ev => setEditExpense(p => ({ ...p, proPct: Number(ev.target.value) }))}
-                          className="flex-1 accent-primary" />
-                        <span className="text-[11px] font-semibold text-foreground w-10 text-right">{editExpense.proPct ?? 100}%</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-muted-foreground mb-1 block">% Portage <span className="text-muted-foreground">(optionnel)</span></label>
-                      <div className="flex items-center gap-2">
-                        <input type="range" min={0} max={100} step={5} value={editExpense.portagePct ?? 0}
-                          onChange={ev => setEditExpense(p => ({ ...p, portagePct: Number(ev.target.value) || null }))}
-                          className="flex-1" style={{ accentColor: "hsl(262 80% 65%)" }} />
-                        <span className="text-[11px] font-semibold w-10 text-right" style={{ color: "hsl(262 80% 65%)" }}>{editExpense.portagePct ?? 0}%</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={saveEditExpense} className="flex-1 py-2 rounded-xl text-xs font-semibold text-white btn-primary">✓</button>
-                      <button onClick={() => setEditingExpenseId(null)} className="px-4 py-2 rounded-xl text-xs text-muted-foreground input-field">✕</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 p-3 rounded-2xl stat-card">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-medium text-foreground">{e.label}</div>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <span className="text-[10px] text-muted-foreground">{e.category}</span>
-                        {(e.proPct ?? 100) < 100 && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold"
-                            style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>
-                            {e.proPct}% pro
-                          </span>
-                        )}
-                        {e.portagePct != null && e.portagePct > 0 && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold"
-                            style={{ background: "hsl(262 80% 65% / 0.1)", color: "hsl(262 80% 65%)" }}>
-                            {e.portagePct}% portage
-                          </span>
-                        )}
-                      </div>
-                    </div>
+      {/* FJM charges groupées par thème */}
+      {fjmChargeOps.length > 0 ? (() => {
+        const byTheme = fjmChargeOps.reduce<Record<string, typeof fjmChargeOps>>((acc, o) => {
+          const key = o.category || "Autres";
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(o);
+          return acc;
+        }, {});
+        return (
+          <div className="space-y-4">
+            {Object.entries(byTheme).map(([theme, ops]) => {
+              const themeTotal = ops.reduce((s, o) => s + (o.actual || 0), 0);
+              return (
+                <div key={theme} className="mb-2">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="value-lg text-[14px] text-destructive">-{e.amount}€</span>
-                      {editable && (
-                        <>
-                          <button onClick={() => startEditExpense(e)} className="text-muted-foreground hover:text-foreground p-1">✏️</button>
-                          <button onClick={() => deleteExpense(e.id)} className="text-muted-foreground hover:text-destructive p-1 text-[10px]">✕</button>
-                        </>
-                      )}
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{theme}</span>
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(0 62% 50% / 0.15)", color: "hsl(0 62% 60%)" }}>FJM</span>
                     </div>
+                    <span className="text-[12px] font-semibold text-destructive">-{themeTotal.toFixed(0)}€</span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-2xl p-6 text-center stat-card mb-6" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
-          <div className="text-muted-foreground text-[11px]">Aucune dépense locale ce mois</div>
-        </div>
-      );
-      })()}
-
-      {/* FJM charges */}
-      {fjmChargeOps.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">🔒</span>
-              <span className="text-[12px] font-bold text-foreground">CHARGES FJM</span>
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(0 62% 50% / 0.15)", color: "hsl(0 62% 60%)" }}>FJM</span>
-            </div>
-            {fjmChargesTotal > 0 && <span className="value-lg text-[13px] text-destructive">-{fjmChargesTotal.toFixed(0)}€</span>}
-          </div>
-          <div className="space-y-1.5">
-            {fjmChargeOps.map(o => (
-              <div key={o.id} className="flex items-center gap-3 p-3 rounded-2xl"
-                style={{ background: "hsl(0 62% 50% / 0.04)", border: "1px solid hsl(0 62% 50% / 0.08)" }}>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-medium text-foreground truncate">{o.label}</div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[10px] text-muted-foreground">{o.category}</span>
-                    <span className="text-[8px] px-1.5 py-0.5 rounded-md font-semibold"
-                      style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 50%)" }}>
-                      {o.family === "charge_fixe" ? "Fixe" : "Variable"}
-                    </span>
+                  <div className="space-y-1.5">
+                    {ops.map(o => (
+                      <div key={o.id} className="flex items-center gap-3 p-3 rounded-2xl"
+                        style={{ background: "hsl(0 62% 50% / 0.04)", border: "1px solid hsl(0 62% 50% / 0.08)" }}>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] font-medium text-foreground truncate">{o.label}</div>
+                          <span className="text-[8px] px-1.5 py-0.5 rounded-md font-semibold"
+                            style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 50%)" }}>
+                            {o.family === "charge_fixe" ? "Fixe" : "Variable"}
+                          </span>
+                        </div>
+                        <span className="value-lg text-[14px] flex-shrink-0 text-destructive">-{o.actual}€</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <span className="value-lg text-[14px] flex-shrink-0 text-destructive">-{o.actual}€</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
+        );
+      })() : (
+        <div className="rounded-2xl p-6 text-center stat-card" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
+          <div className="text-muted-foreground text-[11px]">Aucune charge ce mois</div>
         </div>
       )}
       </div>
       )}
 
-      {/* FAB */}
-      {editable && (
-        <>
-          <button onClick={() => setShowFabMenu(!showFabMenu)}
-            className="fixed bottom-6 right-5 z-[60] w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white btn-primary active:scale-90 transition-transform"
-            style={{ boxShadow: "0 8px 24px hsl(348 63% 30% / 0.4)" }}>
-            <span className={`transition-transform ${showFabMenu ? "rotate-45" : ""}`}>+</span>
-          </button>
-
-          {/* FAB Menu */}
-          {showFabMenu && (
-            <>
-              <div className="fixed inset-0 z-[55]" onClick={() => setShowFabMenu(false)} />
-              <div className="fixed bottom-24 right-5 z-[60] flex flex-col gap-2 items-end animate-fade-up">
-                {[
-                  { label: "💰 Entrée", action: () => { setShowFabMenu(false); resetEntryForm(); setShowAddEntry(true); } },
-                  { label: "💳 Dépense", action: () => { setShowFabMenu(false); setShowAddExpense(true); } },
-                  { label: "🏃 Cours collectifs", action: () => { setShowFabMenu(false); openAddByTheme("COLLECTIF"); } },
-                ].map(item => (
-                  <button key={item.label} onClick={item.action}
-                    className="flex items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-semibold text-foreground"
-                    style={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 100% / 0.08)", boxShadow: "0 8px 32px hsl(0 0% 0% / 0.5)" }}>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </>
-      )}
 
       {/* ADD ENTRY SHEET */}
       {showAddEntry && (
