@@ -31,7 +31,7 @@ export default function FinancesPage() {
 
   const { total: baSalesTotal } = useBaSalesMonth(selectedMonth);
   const { ops: fjmOps } = useFjmProOps(selectedMonth);
-  const fjmRevenuTotal = fjmOps.filter(o => o.family === "revenu").reduce((s, o) => s + (o.actual || 0), 0);
+  const fjmRevenuTotal = fjmOps.filter(o => o.category === "coaching").reduce((s, o) => s + (o.actual || 0), 0);
   const fjmChargesTotal = fjmOps.filter(o => o.family !== "revenu").reduce((s, o) => s + (o.actual || 0), 0);
 
   const monthEntries = useMemo(() => financeEntries.filter(e => e.month === selectedMonth), [financeEntries, selectedMonth]);
@@ -93,7 +93,7 @@ export default function FinancesPage() {
           const items = [
             ...(localMicro > 0 ? [{ label: "CA Local", sub: "Déclaré URSSAF", value: localMicro, color: "hsl(152 55% 52%)" }] : []),
             ...(baSalesTotal > 0 ? [{ label: "BE ACTIV", sub: "Coaching clients", value: baSalesTotal, color: "hsl(217 70% 60%)" }] : []),
-            ...(fjmRevenuTotal > 0 ? [{ label: "Revenus FJM", sub: "Divers", value: fjmRevenuTotal, color: "hsl(38 92% 55%)" }] : []),
+            ...(fjmRevenuTotal > 0 ? [{ label: "Revenus FJM", sub: "Coaching", value: fjmRevenuTotal, color: "hsl(38 92% 55%)" }] : []),
             ...(especesNonDeclarees > 0 ? [{ label: "Espèces", sub: "Non déclarées", value: especesNonDeclarees, color: "hsl(38 92% 55%)" }] : []),
             ...(portageEnabled ? [{ label: "Portage JUMP", sub: "Via JUMP", value: declaredPortage, color: "hsl(262 80% 65%)" }] : []),
             { label: "URSSAF dû", sub: "26.1% du CA Micro", value: -urssaf, color: "hsl(0 62% 50%)" },
