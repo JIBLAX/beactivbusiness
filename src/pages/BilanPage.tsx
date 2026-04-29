@@ -41,7 +41,7 @@ export default function BilanPage() {
   const { sales: baSalesYear } = useBaSalesYear(sapYear);
   const { sales: baSalesWrapped } = useBaSalesYear(wrappedYear);
   const { ops: fjmOps } = useFjmProOps(selectedMonth);
-  const fjmRevenuTotal = fjmOps.filter(o => o.category === "coaching").reduce((s, o) => s + (o.actual || 0), 0);
+  const fjmRevenuTotal = fjmOps.filter(o => o.family === "revenu").reduce((s, o) => s + (o.actual || 0), 0);
   const fjmChargesTotal = fjmOps.filter(o => o.family !== "revenu").reduce((s, o) => s + (o.actual || 0), 0);
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;

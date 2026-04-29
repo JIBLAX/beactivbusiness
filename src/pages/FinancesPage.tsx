@@ -71,7 +71,7 @@ export default function FinancesPage() {
   // Current month data
   const { total: baSalesTotal } = useBaSalesMonth(selectedMonth);
   const { ops: fjmOps } = useFjmProOps(selectedMonth);
-  const fjmRevenuTotal = fjmOps.filter(o => o.category === "coaching").reduce((s, o) => s + (o.actual || 0), 0);
+  const fjmRevenuTotal = fjmOps.filter(o => o.family === "revenu").reduce((s, o) => s + (o.actual || 0), 0);
   const fjmChargesTotal = fjmOps.filter(o => o.family !== "revenu").reduce((s, o) => s + (o.actual || 0), 0);
 
   const monthEntries = useMemo(() => financeEntries.filter(e => e.month === selectedMonth), [financeEntries, selectedMonth]);

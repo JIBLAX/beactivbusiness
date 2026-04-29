@@ -25,7 +25,7 @@ async function fetchFjmProOps(monthKey: string): Promise<FjmProOp[]> {
     .eq("month_key", monthKey)
     .order("family");
 
-  if (!error && data) {
+  if (!error && data?.length) {
     return (data as any[]).map((r) => ({
       id: r.id,
       fjm_op_id: r.external_ref ?? r.id,

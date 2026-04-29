@@ -42,49 +42,11 @@ function getClientMetrics(entries: any[], offreName: string, offres: any[]) {
   return { programmesLabel: "-", programmesCount: 0, seancesLabel: `${entries.length} séance${entries.length > 1 ? "s" : ""}`, seancesCount: entries.length };
 }
 
-function toIsoDate(d: Date): string {
-  return d.toISOString().split("T")[0];
-}
-
-function addDurationToDate(startIso: string, value: number, unit: "jours" | "semaines" | "mois"): string {
-  const d = new Date(`${startIso}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return "";
-  if (unit === "jours") d.setDate(d.getDate() + value);
-  if (unit === "semaines") d.setDate(d.getDate() + value * 7);
-  if (unit === "mois") d.setMonth(d.getMonth() + value);
-  return toIsoDate(d);
-}
-
-function getSessionTrackingDefaults(client: Prospect, offres: any[]) {
-  const found = offres.find((o: any) => o.name === client.offre);
-  if (!found) return { seancesPrevues: undefined, periodeDebut: undefined, periodeFin: undefined };
-
-  const durVal = found.durVal ?? found.duration?.value;
-  const durUnit = found.durUnit ?? found.duration?.unit;
-
-  const seancesPrevues = (() => {
-    if (client.seancesPrevues != null) return client.seancesPrevues;
-    if (typeof found.minQuantity === "number" && found.minQuantity > 0) return found.minQuantity;
-    if (typeof durVal === "number" && typeof durUnit === "string" && durUnit.toLowerCase().includes("seance")) return durVal;
-    return undefined;
-  })();
-
-  const periodeDebut = client.periodeDebut || client.date || undefined;
-  const periodeFin = (() => {
-    if (client.periodeFin) return client.periodeFin;
-    if (!periodeDebut || typeof durVal !== "number" || typeof durUnit !== "string") return undefined;
-    if (durUnit === "jours" || durUnit === "semaines" || durUnit === "mois") return addDurationToDate(periodeDebut, durVal, durUnit);
-    return undefined;
-  })();
-
-  return { seancesPrevues, periodeDebut, periodeFin };
-}
-
 const GROUP_LABELS: Record<string, string> = { duo: "Duo", trio: "Trio", small_group: "Small Group" };
 const GROUP_MAX: Record<string, number> = { duo: 2, trio: 3, small_group: 6 };
 
 export default function ClientsPage() {
-  const { prospects, setProspects, financeEntries, offres, structures, setStructures, user, setCurrentPage } = useApp();
+  const { prospects, setProspects, financeEntries, offres, structures, setStructures, user } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState<"particuliers" | "structures">("particuliers");
   const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
@@ -166,20 +128,13 @@ export default function ClientsPage() {
 
   const addNewClient = () => {
     if (!newClient.name || !newClient.offre) return;
-    const baseClient: Prospect = {
+    const client: Prospect = {
       id: "c" + Date.now(), sex: newClient.sex || "F", name: newClient.name,
       contact: newClient.contact || "", source: newClient.source || "", statut: "CLIENT",
       date: new Date().toISOString().split("T")[0], type: "", presence: "", heure: "",
       objectif: newClient.objectif || "", objection: "", closing: "OUI",
       offre: newClient.offre || "-", notes: newClient.notes || "", profile: "",
       age: newClient.age, sapEnabled: newClient.sapEnabled ?? false,
-    };
-    const trackingDefaults = getSessionTrackingDefaults(baseClient, offres);
-    const client: Prospect = {
-      ...baseClient,
-      seancesPrevues: trackingDefaults.seancesPrevues,
-      periodeDebut: trackingDefaults.periodeDebut,
-      periodeFin: trackingDefaults.periodeFin,
     };
     setProspects([...prospects, client]);
     setShowAddClient(false);
@@ -267,14 +222,6 @@ export default function ClientsPage() {
     const sapTotal = getClientSapTotal(selectedClient.name);
     const duration = formatDurationFromOffre(selectedClient.offre, offres);
     const members = getGroupMembers(selectedClient);
-    const trackingDefaults = getSessionTrackingDefaults(selectedClient, offres);
-    const seancesPrevues = selectedClient.seancesPrevues ?? trackingDefaults.seancesPrevues ?? 0;
-    const seancesEffectuees = selectedClient.seancesEffectuees ?? 0;
-    const seancesRestantes = Math.max(0, seancesPrevues - seancesEffectuees);
-    const periodeDebut = selectedClient.periodeDebut ?? trackingDefaults.periodeDebut ?? "";
-    const periodeFin = selectedClient.periodeFin ?? trackingDefaults.periodeFin ?? "";
-    const hasOverrun = seancesPrevues > 0 && seancesEffectuees > seancesPrevues;
-
     // Unified financial data
     const baSalesConfirmedTotal = clientPayments
       .filter((r: any) => !r.is_installment || r.financesjm_tx_id)
@@ -317,11 +264,6 @@ export default function ClientsPage() {
         catalogPrice: row.catalog_price != null && Number(row.catalog_price) !== Number(row.amount) ? Number(row.catalog_price) : undefined,
       })),
     ].sort((a, b) => b.sortDate.localeCompare(a.sortDate));
-
-    const updateSelectedClient = (patch: Partial<Prospect>) => {
-      setProspects(prospects.map(p => p.id === selectedClient.id ? { ...p, ...patch } : p));
-      setSelectedClient({ ...selectedClient, ...patch });
-    };
 
     return (
       <div className="px-4 pt-4 pb-24">
@@ -370,16 +312,6 @@ export default function ClientsPage() {
             </div>
             {!editing && (
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    localStorage.setItem("ba_jump_client_name", selectedClient.name);
-                    setCurrentPage("activites");
-                  }}
-                  className="badge-pill cursor-pointer"
-                  style={{ background: "hsl(217 70% 58% / 0.15)", color: "hsl(217 70% 65%)" }}
-                >
-                  📊 Opérations
-                </button>
                 <button onClick={() => startEdit(selectedClient)} className="badge-pill cursor-pointer"
                   style={{ background: "hsl(0 0% 100% / 0.05)", color: "hsl(0 0% 70%)" }}>✏️ Modifier</button>
               </div>
@@ -517,68 +449,6 @@ export default function ClientsPage() {
             <div className="stat-card rounded-2xl p-4 text-center">
               <div className="section-label mb-1">Séances</div>
               <div className="value-lg text-[22px] text-foreground">{sessionCount > 0 ? `${sessionCount} séance${sessionCount > 1 ? "s" : ""}` : "—"}</div>
-            </div>
-          )}
-        </div>
-
-        <div className="card-elevated rounded-2xl p-4 mb-4">
-          <div className="section-label mb-3">Suivi des séances</div>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div className="stat-card rounded-xl p-3">
-              <div className="text-[10px] text-muted-foreground">Séances prévues</div>
-              <input
-                type="number"
-                min={0}
-                value={seancesPrevues}
-                onChange={e => updateSelectedClient({ seancesPrevues: Math.max(0, Number(e.target.value) || 0) })}
-                className="mt-1 w-full rounded-xl px-2.5 py-1.5 text-[12px] input-field"
-              />
-            </div>
-            <div className="stat-card rounded-xl p-3">
-              <div className="text-[10px] text-muted-foreground">Séances effectuées</div>
-              <div className="mt-1 flex items-center gap-2">
-                <button onClick={() => updateSelectedClient({ seancesEffectuees: Math.max(0, seancesEffectuees - 1) })}
-                  className="w-7 h-7 rounded-lg input-field text-[12px] font-bold">-1</button>
-                <div className="min-w-[28px] text-center text-[13px] font-semibold text-foreground">{seancesEffectuees}</div>
-                <button onClick={() => updateSelectedClient({ seancesEffectuees: seancesEffectuees + 1 })}
-                  className="w-7 h-7 rounded-lg input-field text-[12px] font-bold">+1</button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 mb-2">
-            <div className="stat-card rounded-xl p-3">
-              <div className="text-[10px] text-muted-foreground">Début de période</div>
-              <input
-                type="date"
-                value={periodeDebut}
-                onChange={e => updateSelectedClient({ periodeDebut: e.target.value || undefined })}
-                className="mt-1 w-full rounded-xl px-2.5 py-1.5 text-[12px] input-field"
-              />
-            </div>
-            <div className="stat-card rounded-xl p-3">
-              <div className="text-[10px] text-muted-foreground">Fin de période</div>
-              <input
-                type="date"
-                value={periodeFin}
-                onChange={e => updateSelectedClient({ periodeFin: e.target.value || undefined })}
-                className="mt-1 w-full rounded-xl px-2.5 py-1.5 text-[12px] input-field"
-              />
-            </div>
-          </div>
-
-          <div className="text-[12px] text-foreground">
-            <span className="font-semibold">{seancesEffectuees}</span> séances effectuées ·{" "}
-            <span className="font-semibold">{seancesRestantes}</span> restantes
-          </div>
-          {(periodeDebut || periodeFin) && (
-            <div className="text-[11px] text-muted-foreground mt-1">
-              période du {periodeDebut || "—"} au {periodeFin || "—"}
-            </div>
-          )}
-          {hasOverrun && (
-            <div className="text-[10px] mt-2" style={{ color: "hsl(38 92% 55%)" }}>
-              Séances effectuées au-delà du prévu
             </div>
           )}
         </div>

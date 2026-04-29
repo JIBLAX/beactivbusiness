@@ -111,7 +111,7 @@ export default function ActivitesPage() {
 
   const { sales: baSales, total: baSalesTotal } = useBaSalesMonth(selectedMonth);
   const { ops: fjmOps } = useFjmProOps(selectedMonth);
-  const fjmRevenuOps = fjmOps.filter(o => o.category === "coaching");
+  const fjmRevenuOps = fjmOps.filter(o => o.family === "revenu");
   const fjmChargeOps = fjmOps.filter(o => o.family !== "revenu");
   const fjmRevenuTotal = fjmRevenuOps.reduce((s, o) => s + (o.actual || 0), 0);
   const fjmChargesTotal = fjmChargeOps.reduce((s, o) => s + (o.actual || 0), 0);
