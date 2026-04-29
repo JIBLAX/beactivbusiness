@@ -4,6 +4,7 @@ import { getMonthEditState, getSealedLabel } from "@/lib/quarterLock";
 import { useBaSalesMonth, useBaSalesYear } from "@/hooks/useBaSalesMonth";
 import { useFjmProOps } from "@/hooks/useFjmProOps";
 
+
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 const MONTHS_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
@@ -20,10 +21,9 @@ function formatMonth(m: string): string {
 function calcUrssaf(ca: number): number { return ca * 0.261; }
 
 const PRORATA_BUREAU = 13 / 43;
-const GOAL_KEY = "ba_monthly_goal";
 
 export default function FinancesPage() {
-  const { financeEntries, expenses, portageMonths, setPortageMonths, offres, quarterEdits } = useApp();
+  const { financeEntries, expenses, portageMonths, setPortageMonths, offres, quarterEdits, monthlyGoal, setMonthlyGoal } = useApp();
   const selectedMonth = getCurrentMonth();
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
@@ -31,17 +31,12 @@ export default function FinancesPage() {
   const editable = editState.editable;
   const sealedLabel = getSealedLabel(editState);
 
-  // Monthly goal
-  const [monthlyGoal, setMonthlyGoal] = useState<number>(() => {
-    const v = localStorage.getItem(GOAL_KEY);
-    return v ? Number(v) : 2500;
-  });
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState("");
 
   const saveGoal = () => {
     const v = Number(goalInput);
-    if (v > 0) { setMonthlyGoal(v); localStorage.setItem(GOAL_KEY, String(v)); }
+    if (v > 0) setMonthlyGoal(v);
     setEditingGoal(false);
   };
 

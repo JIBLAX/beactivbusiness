@@ -21,6 +21,8 @@ interface AppState {
   urssafMode: "mois" | "trimestre";
   quarterEdits: Record<string, number>;
   incrementQuarterEdit: (quarterKey: string) => void;
+  monthlyGoal: number;
+  setMonthlyGoal: (v: number) => void;
   loading: boolean;
   setCurrentPage: (p: AppPage) => void;
   setProspects: (p: Prospect[]) => void;
@@ -224,6 +226,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [structures, setStructuresState] = useState<Structure[]>([]);
   const [urssafMode, setUrssafModeState] = useState<"mois" | "trimestre">("trimestre");
   const [quarterEdits, setQuarterEditsState] = useState<Record<string, number>>({});
+  const [monthlyGoal, setMonthlyGoalState] = useState<number>(2500);
 
   // Dedup guard — prevents double loadAllData when both onAuthStateChange + getSession fire
   const loadedUserRef = useRef<string | null>(null);
@@ -335,6 +338,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         versementsPersoData = (sRes.data.versements_perso as any) ?? {};
         urssafModeData      = ((sRes.data as any).urssaf_mode as any) ?? "trimestre";
         quarterEditsData    = ((sRes.data as any).quarter_edits as any) ?? {};
+        const goalData = (sRes.data as any).monthly_goal;
+        if (goalData) setMonthlyGoalState(Number(goalData));
       } else {
         supabase.from("app_settings").insert({ user_id: userId, portage_enabled: false, versements_perso: {}, portage_months: {}, urssaf_mode: "trimestre" } as any).catch(() => {});
       }
@@ -411,6 +416,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (user) supabase.from("app_settings").update({ quarter_edits: q } as any).eq("user_id", user.id).then(() => {}, console.error);
   }, [user]);
 
+  const setMonthlyGoal = useCallback((v: number) => {
+    setMonthlyGoalState(v);
+    if (user) supabase.from("app_settings").update({ monthly_goal: v } as any).eq("user_id", user.id).then(() => {}, console.error);
+  }, [user]);
+
   const incrementQuarterEdit = useCallback((quarterKey: string) => {
     setQuarterEditsState(prev => {
       const updated = { ...prev, [quarterKey]: (prev[quarterKey] ?? 0) + 1 };
@@ -422,9 +432,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider value={{
       user, isAuthenticated: !!user, currentPage, prospects, activResetClients,
-      financeEntries, expenses, portageMonths, versementsPerso, offres, structures, urssafMode, quarterEdits, loading,
+      financeEntries, expenses, portageMonths, versementsPerso, offres, structures, urssafMode, quarterEdits, monthlyGoal, loading,
       setCurrentPage, setProspects, setActivResetClients, setFinanceEntries,
-      setExpenses, setPortageMonths, setVersementsPerso, setOffres, setStructures, setUrssafMode, setQuarterEdits, incrementQuarterEdit,
+      setExpenses, setPortageMonths, setVersementsPerso, setOffres, setStructures, setUrssafMode, setQuarterEdits, incrementQuarterEdit, setMonthlyGoal,
     }}>
       {children}
     </AppContext.Provider>
