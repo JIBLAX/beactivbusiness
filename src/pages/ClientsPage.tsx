@@ -84,7 +84,7 @@ const GROUP_LABELS: Record<string, string> = { duo: "Duo", trio: "Trio", small_g
 const GROUP_MAX: Record<string, number> = { duo: 2, trio: 3, small_group: 6 };
 
 export default function ClientsPage() {
-  const { prospects, setProspects, financeEntries, offres, structures, setStructures, user } = useApp();
+  const { prospects, setProspects, financeEntries, offres, structures, setStructures, user, setCurrentPage } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState<"particuliers" | "structures">("particuliers");
   const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
@@ -107,6 +107,13 @@ export default function ClientsPage() {
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
 
   const [showArchived, setShowArchived] = useState(false);
+  useEffect(() => {
+    const jumpClient = localStorage.getItem("ba_jump_client_name");
+    if (jumpClient) {
+      setSearchQuery(jumpClient);
+      localStorage.removeItem("ba_jump_client_name");
+    }
+  }, []);
 
   // Finance JM payments — fetched from ba_sales on client selection
   const [clientPayments, setClientPayments] = useState<any[]>([]);
@@ -362,8 +369,20 @@ export default function ClientsPage() {
               )}
             </div>
             {!editing && (
-              <button onClick={() => startEdit(selectedClient)} className="badge-pill cursor-pointer"
-                style={{ background: "hsl(0 0% 100% / 0.05)", color: "hsl(0 0% 70%)" }}>✏️ Modifier</button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    localStorage.setItem("ba_jump_client_name", selectedClient.name);
+                    setCurrentPage("activites");
+                  }}
+                  className="badge-pill cursor-pointer"
+                  style={{ background: "hsl(217 70% 58% / 0.15)", color: "hsl(217 70% 65%)" }}
+                >
+                  📊 Opérations
+                </button>
+                <button onClick={() => startEdit(selectedClient)} className="badge-pill cursor-pointer"
+                  style={{ background: "hsl(0 0% 100% / 0.05)", color: "hsl(0 0% 70%)" }}>✏️ Modifier</button>
+              </div>
             )}
           </div>
 

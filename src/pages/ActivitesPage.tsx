@@ -62,7 +62,7 @@ function sortDateStr(dateStr: string | null | undefined, monthKey: string): stri
 }
 
 export default function ActivitesPage() {
-  const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths, quarterEdits, incrementQuarterEdit } = useApp();
+  const { financeEntries, setFinanceEntries, expenses, setExpenses, offres, portageMonths, quarterEdits, incrementQuarterEdit, setCurrentPage } = useApp();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [activeTab, setActiveTab] = useState<"entrees" | "depenses">("entrees");
   const [showFabMenu, setShowFabMenu] = useState(false);
@@ -301,6 +301,11 @@ export default function ActivitesPage() {
     trackSealedEdit();
   };
   const paymentModeLabel = (mode?: string) => PAYMENT_MODES.find(p => p.value === mode)?.label || "";
+  const jumpToClient = (name?: string | null) => {
+    if (!name) return;
+    localStorage.setItem("ba_jump_client_name", name);
+    setCurrentPage("clients");
+  };
 
   return (
     <div className="px-4 pt-4 pb-24">
@@ -464,6 +469,15 @@ export default function ActivitesPage() {
                                   {CASH_DECLARATIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                                 </select>
                               )}
+                              {e.clientName && (
+                                <button
+                                  onClick={() => jumpToClient(e.clientName)}
+                                  className="text-[10px] px-1.5 py-0.5 rounded-lg"
+                                  style={{ background: "hsl(217 70% 60% / 0.12)", color: "hsl(217 70% 65%)" }}
+                                >
+                                  👤
+                                </button>
+                              )}
                               <span className="value-lg text-[14px] text-success">+{e.amount}€</span>
                               {editable && (() => {
                                 const entryOffre = offres.find(o => o.name === e.offre);
@@ -523,6 +537,15 @@ export default function ActivitesPage() {
                                   </>
                                 ) : (
                                   <span className="value-lg text-[14px] text-success">+{s.amount}€</span>
+                                )}
+                                {s.client_name && (
+                                  <button
+                                    onClick={() => jumpToClient(s.client_name)}
+                                    className="mt-1 text-[10px] px-1.5 py-0.5 rounded-lg"
+                                    style={{ background: "hsl(217 70% 60% / 0.12)", color: "hsl(217 70% 65%)" }}
+                                  >
+                                    👤
+                                  </button>
                                 )}
                               </div>
                             </div>

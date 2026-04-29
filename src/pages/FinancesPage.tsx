@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useApp } from "@/store/AppContext";
 import { getMonthEditState, getSealedLabel } from "@/lib/quarterLock";
 import { useBaSalesMonth, useBaSalesYear } from "@/hooks/useBaSalesMonth";
 import { useFjmProOps } from "@/hooks/useFjmProOps";
+import { supabase } from "@/integrations/supabase/client";
 
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -23,7 +24,7 @@ function calcUrssaf(ca: number): number { return ca * 0.261; }
 const PRORATA_BUREAU = 13 / 43;
 
 export default function FinancesPage() {
-  const { financeEntries, expenses, portageMonths, setPortageMonths, offres, quarterEdits, monthlyGoal, setMonthlyGoal } = useApp();
+  const { financeEntries, expenses, portageMonths, setPortageMonths, offres, quarterEdits, monthlyGoal, setMonthlyGoal, user } = useApp();
   const selectedMonth = getCurrentMonth();
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;
@@ -33,6 +34,33 @@ export default function FinancesPage() {
 
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState("");
+  const [health, setHealth] = useState<{ clients: number; offres: number; operations: number; lastSyncAt: string | null; lastErrorAt: string | null }>({
+    clients: 0,
+    offres: 0,
+    operations: 0,
+    lastSyncAt: null,
+    lastErrorAt: null,
+  });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    (supabase as any)
+      .from("pro_system_health")
+      .select("*")
+      .eq("user_id", user.id)
+      .limit(1)
+      .then(({ data }: any) => {
+        const row = data?.[0];
+        if (!row) return;
+        setHealth({
+          clients: Number(row.clients_count) || 0,
+          offres: Number(row.offres_count) || 0,
+          operations: Number(row.operations_count) || 0,
+          lastSyncAt: row.last_sync_at ?? null,
+          lastErrorAt: row.last_error_at ?? null,
+        });
+      });
+  }, [user?.id]);
 
   const saveGoal = () => {
     const v = Number(goalInput);
@@ -287,6 +315,31 @@ export default function FinancesPage() {
           <div className="value-lg text-[18px] text-foreground">{prorataAmount.toFixed(0)}€</div>
         </div>
       )}
+
+      {/* Santé système (PRO unifié) */}
+      <div className="card-elevated rounded-2xl p-4 mb-4">
+        <div className="section-label mb-3">Santé système</div>
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="stat-card rounded-xl p-3 text-center">
+            <div className={`text-[10px] font-semibold uppercase tracking-wider ${health.clients > 0 ? "text-success" : "text-muted-foreground"}`}>Clients</div>
+            <div className="text-[14px] font-bold text-foreground">{health.clients}</div>
+          </div>
+          <div className="stat-card rounded-xl p-3 text-center">
+            <div className={`text-[10px] font-semibold uppercase tracking-wider ${health.offres > 0 ? "text-success" : "text-muted-foreground"}`}>Offres</div>
+            <div className="text-[14px] font-bold text-foreground">{health.offres}</div>
+          </div>
+          <div className="stat-card rounded-xl p-3 text-center">
+            <div className={`text-[10px] font-semibold uppercase tracking-wider ${health.operations > 0 ? "text-success" : "text-muted-foreground"}`}>Ops PRO</div>
+            <div className="text-[14px] font-bold text-foreground">{health.operations}</div>
+          </div>
+        </div>
+        <div className="text-[10px] text-muted-foreground">
+          Dernière sync: {health.lastSyncAt ? new Date(health.lastSyncAt).toLocaleString("fr-FR") : "—"}
+        </div>
+        <div className={`text-[10px] mt-1 ${health.lastErrorAt ? "text-destructive" : "text-success"}`}>
+          {health.lastErrorAt ? `Dernière erreur: ${new Date(health.lastErrorAt).toLocaleString("fr-FR")}` : "Aucune erreur récente"}
+        </div>
+      </div>
     </div>
   );
 }
