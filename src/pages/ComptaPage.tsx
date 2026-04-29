@@ -272,9 +272,9 @@ export default function ComptaPage() {
             </Section>
           )}
 
-          {/* Revenus divers FJM */}
+          {/* Revenus divers pro */}
           {ops.filter(o => o.family === "revenu").length > 0 && (
-            <Section title="➕ Revenus divers (FJM)">
+            <Section title="➕ Revenus divers">
               {ops.filter(o => o.family === "revenu").map(o => (
                 <Row key={o.id} left={o.label} sub={o.category} right={`+${o.actual}€`} color="text-info" />
               ))}
@@ -283,7 +283,7 @@ export default function ComptaPage() {
 
           {/* Charges fixes */}
           {ops.filter(o => o.family === "charge_fixe").length > 0 && (
-            <Section title="🔒 Charges fixes (FJM)">
+            <Section title="🔒 Charges fixes">
               {ops.filter(o => o.family === "charge_fixe").map(o => (
                 <Row key={o.id} left={o.label} sub={o.category} right={`-${o.actual}€`} color="text-destructive" />
               ))}
@@ -292,7 +292,7 @@ export default function ComptaPage() {
 
           {/* Charges variables */}
           {ops.filter(o => o.family === "charge_variable").length > 0 && (
-            <Section title="📊 Charges variables (FJM)">
+            <Section title="📊 Charges variables">
               {ops.filter(o => o.family === "charge_variable").map(o => (
                 <Row key={o.id} left={o.label} sub={o.category} right={`-${o.actual}€`} color="text-destructive" />
               ))}
@@ -303,7 +303,7 @@ export default function ComptaPage() {
             <div className="rounded-2xl p-8 text-center stat-card" style={{ border: "1px dashed hsl(0 0% 100% / 0.06)" }}>
               <div className="text-2xl mb-2">📭</div>
               <div className="text-muted-foreground text-[12px]">Aucune donnée pour ce mois</div>
-              <div className="text-muted-foreground text-[10px] mt-1">FJM synchronisera ses opérations automatiquement</div>
+              <div className="text-muted-foreground text-[10px] mt-1">Les opérations pro se synchronisent automatiquement</div>
             </div>
           )}
         </>

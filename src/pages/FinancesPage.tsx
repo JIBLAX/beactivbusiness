@@ -133,8 +133,8 @@ export default function FinancesPage() {
         {(() => {
           const items = [
             ...(localMicro > 0 ? [{ label: "CA Micro", sub: "Déclaré URSSAF", value: localMicro, color: "hsl(152 55% 52%)" }] : []),
-            ...(baSalesTotal > 0 ? [{ label: "BE ACTIV", sub: "Boutique / FJM", value: baSalesTotal, color: "hsl(217 70% 60%)" }] : []),
-            ...(fjmRevenuTotal > 0 ? [{ label: "JUMP Coaching", sub: "Portage FJM", value: fjmRevenuTotal, color: "hsl(38 92% 55%)" }] : []),
+            ...(baSalesTotal > 0 ? [{ label: "BE ACTIV", sub: "Ventes coaching", value: baSalesTotal, color: "hsl(217 70% 60%)" }] : []),
+            ...(fjmRevenuTotal > 0 ? [{ label: "Autres revenus", sub: "Opérations pro", value: fjmRevenuTotal, color: "hsl(38 92% 55%)" }] : []),
             ...(portageEnabled ? [{ label: "Portage JUMP", sub: "Via JUMP", value: declaredPortage, color: "hsl(262 80% 65%)" }] : []),
             { label: "URSSAF dû", sub: "26.1% du CA Micro", value: -urssaf, color: "hsl(0 62% 50%)" },
           ];
@@ -274,7 +274,7 @@ export default function FinancesPage() {
           </div>
           {fjmChargesTotal > 0 && (
             <div className="text-[9px] text-muted-foreground mt-1">
-              dont <span style={{ color: "hsl(38 92% 55%)" }}>{fjmChargesTotal.toFixed(0)}€ FJM</span>
+              dont <span style={{ color: "hsl(38 92% 55%)" }}>{fjmChargesTotal.toFixed(0)}€ synchronisées</span>
             </div>
           )}
         </div>

@@ -556,7 +556,7 @@ export default function ActivitesPage() {
       {/* DÉPENSES TAB */}
       {activeTab === "depenses" && (
       <div>
-      {/* FJM charges groupées par thème */}
+      {/* Charges pro groupées par thème */}
       {fjmChargeOps.length > 0 ? (() => {
         const byTheme = fjmChargeOps.reduce<Record<string, typeof fjmChargeOps>>((acc, o) => {
           const key = o.category || "Autres";
@@ -573,7 +573,6 @@ export default function ActivitesPage() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{theme}</span>
-                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(0 62% 50% / 0.15)", color: "hsl(0 62% 60%)" }}>FJM</span>
                     </div>
                     <span className="text-[12px] font-semibold text-destructive">-{themeTotal.toFixed(0)}€</span>
                   </div>

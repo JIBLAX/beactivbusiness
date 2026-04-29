@@ -112,7 +112,7 @@ export default function ProspectsPage() {
     <div className="px-3.5">
       {/* Header */}
       <h1 className="font-display text-[25px] font-extrabold text-foreground mb-0.5 pt-1">Prospects</h1>
-      <p className="text-xs text-muted-foreground mb-3.5">Pipeline & CRM</p>
+      <p className="text-xs text-muted-foreground mb-3.5">Pipeline clients</p>
 
       {/* CA Widget */}
       <div className="rounded-2xl p-4 mb-3.5"

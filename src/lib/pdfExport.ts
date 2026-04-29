@@ -283,14 +283,14 @@ export function generateBilanPDF(data: BilanData) {
     y = (doc as any).lastAutoTable.finalY + 4;
   }
 
-  // — FJM Pro revenues —
+  // — Pro revenues —
   if (fjmRevTotal > 0.5) {
     checkPage(20);
-    subLabel("Revenus divers FJM Pro", C.amber);
+    subLabel("Revenus divers Pro", C.amber);
     autoTable(doc, {
       startY: y,
-      body: [["Revenus professionnels FJM (operations pro)", amt(fjmRevTotal)]],
-      foot: [["Sous-total revenus FJM", amt(fjmRevTotal)]],
+      body: [["Revenus professionnels (operations pro)", amt(fjmRevTotal)]],
+      foot: [["Sous-total revenus pro", amt(fjmRevTotal)]],
       theme: "plain",
       styles: { fontSize: 8, textColor: C.text, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
       footStyles: { fillColor: C.amberLt, textColor: C.amber, fontStyle: "bold", fontSize: 7.5 },
@@ -329,11 +329,11 @@ export function generateBilanPDF(data: BilanData) {
 
   if (fjmChgTotal > 0.5) {
     checkPage(20);
-    subLabel("Charges FJM Pro (fixes + variables)", C.danger);
+    subLabel("Charges Pro (fixes + variables)", C.danger);
     autoTable(doc, {
       startY: y,
-      body: [["Charges professionnelles FJM (operations pro)", amtDec(-fjmChgTotal)]],
-      foot: [["Sous-total charges FJM", amtDec(-fjmChgTotal)]],
+      body: [["Charges professionnelles (operations pro)", amtDec(-fjmChgTotal)]],
+      foot: [["Sous-total charges pro", amtDec(-fjmChgTotal)]],
       theme: "plain",
       styles: { fontSize: 8, textColor: C.text, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
       footStyles: { fillColor: C.dangerLt, textColor: C.danger, fontStyle: "bold", fontSize: 7.5 },
