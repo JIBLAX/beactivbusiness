@@ -161,6 +161,47 @@ function rowToOffre(r: any): Offre {
   };
 }
 
+function offreToProRow(o: Offre, userId: string) {
+  return {
+    user_id: userId,
+    external_ref: o.id,
+    name: o.name,
+    price: o.price,
+    active: o.active,
+    aliases: o.aliases ?? [],
+    duration: o.duration ? JSON.parse(JSON.stringify(o.duration)) : null,
+    unit_price: o.unitPrice ?? null,
+    min_quantity: o.minQuantity ?? null,
+    is_draft: o.isDraft ?? false,
+    theme: o.theme ?? "TRANSFORMATION",
+    tva_enabled: o.tvaEnabled ?? false,
+    portage_eligible: o.portageEligible ?? false,
+    max_installments: o.maxInstallments ?? null,
+    offer_type: o.offerType ?? null,
+  };
+}
+
+function rowToOffrePro(r: any): Offre {
+  return {
+    id: r.external_ref ?? r.id,
+    name: r.name,
+    price: Number(r.price),
+    active: r.active ?? true,
+    priceHistory: [],
+    aliases: (r.aliases as string[]) ?? [],
+    duration: (r.duration as any) ?? undefined,
+    unitPrice: r.unit_price != null ? Number(r.unit_price) : undefined,
+    minQuantity: r.min_quantity ?? undefined,
+    isAlaCarte: false,
+    theme: r.theme ?? "TRANSFORMATION",
+    tvaEnabled: r.tva_enabled ?? false,
+    portageEligible: r.portage_eligible ?? false,
+    maxInstallments: r.max_installments ?? undefined,
+    isDraft: r.is_draft ?? false,
+    offerType: r.offer_type ?? null,
+  };
+}
+
 function structureToRow(s: Structure, userId: string) {
   return {
     id: s.id, user_id: userId, name: s.name, contact_name: s.contactName, phone: s.phone,
@@ -184,6 +225,14 @@ async function syncToSupabase<T>(table: string, items: T[], toRow: (item: T, use
   if (items.length > 0) {
     const rows = items.map(i => toRow(i, userId));
     await client.from(table).upsert(rows);
+  }
+}
+
+async function syncOffresPro(items: Offre[], userId: string) {
+  const client = supabase as any;
+  await client.from("offres_pro").delete().eq("user_id", userId);
+  if (items.length > 0) {
+    await client.from("offres_pro").insert(items.map(o => offreToProRow(o, userId)));
   }
 }
 
@@ -211,6 +260,31 @@ function crmRowToProspect(r: any): Prospect {
     profile: "",
     sapEnabled: r.sap_enabled ?? false,
     groupType: r.group_type ?? null,
+    groupId: r.group_id ?? null,
+    isGroupLeader: r.is_group_leader ?? false,
+  };
+}
+
+function proClientRowToProspect(r: any): Prospect {
+  return {
+    id: `cpro_${r.id}`,
+    sex: (r.sex as "F" | "H") ?? "F",
+    name: r.name ?? "",
+    contact: r.contact ?? "",
+    source: r.source ?? "",
+    statut: r.statut ?? "CLIENT",
+    date: r.date ?? (r.created_at ? r.created_at.split("T")[0] : ""),
+    type: "",
+    presence: "",
+    heure: "",
+    objectif: r.objectif ?? "",
+    objection: "",
+    closing: r.closing ?? "OUI",
+    offre: r.offre ?? "-",
+    notes: r.notes ?? "",
+    profile: r.profile ?? "",
+    age: r.age ?? undefined,
+    sapEnabled: r.sap_enabled ?? false,
     groupId: r.group_id ?? null,
     isGroupLeader: r.is_group_leader ?? false,
   };
@@ -292,28 +366,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadAllData = async (userId: string, silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [pRes, arRes, fRes, eRes, oRes, sRes, stRes, crmRes] = await Promise.all([
+      const [pRes, arRes, fRes, eRes, oProRes, oRes, sRes, stRes, crmRes, clientsProRes] = await Promise.all([
         supabase.from("prospects").select("*").eq("user_id", userId),
         supabase.from("activ_reset_clients").select("*").eq("user_id", userId),
         supabase.from("finance_entries").select("*").eq("user_id", userId),
         supabase.from("expenses").select("*").eq("user_id", userId),
+        (supabase as any).from("offres_pro").select("*").eq("user_id", userId),
         supabase.from("offres").select("*").eq("user_id", userId),
         supabase.from("app_settings").select("*").eq("user_id", userId).maybeSingle(),
         (supabase as any).from("structures").select("*").eq("user_id", userId),
         (supabase as any).from("be_activ_clients").select("*"),
+        (supabase as any).from("clients_pro").select("*").eq("user_id", userId),
       ]);
 
       // Offres — fire-and-forget seed sync (no blocking await)
-      const offresData = oRes.data?.length ? oRes.data.map(rowToOffre) : INITIAL_OFFRES;
+      const offresData = oProRes.data?.length
+        ? oProRes.data.map(rowToOffrePro)
+        : (oRes.data?.length ? oRes.data.map(rowToOffre) : INITIAL_OFFRES);
       setOffresState(offresData);
-      if (!oRes.data?.length) syncToSupabase("offres", INITIAL_OFFRES, offreToRow, userId).catch(() => {});
+      if (!oProRes.data?.length) syncOffresPro(offresData, userId).catch(() => {});
 
       // Prospects + CRM merge
       const localProspects: Prospect[] = pRes.data?.length ? pRes.data.map(rowToProspect) : initialProspects;
       if (!pRes.data?.length) syncToSupabase("prospects", initialProspects, prospectToRow, userId).catch(() => {});
       const crmProspects: Prospect[] = (crmRes.data ?? []).map(crmRowToProspect);
+      const coreProspects: Prospect[] = (clientsProRes.data ?? []).map(proClientRowToProspect);
       const localNames = new Set(localProspects.map((p: Prospect) => p.name.toLowerCase()));
-      const mergedProspects = [...localProspects, ...crmProspects.filter(cp => cp.name && !localNames.has(cp.name.toLowerCase()))];
+      const mergedProspects = [
+        ...localProspects,
+        ...coreProspects.filter(cp => cp.name && !localNames.has(cp.name.toLowerCase())),
+        ...crmProspects.filter(cp => cp.name && !localNames.has(cp.name.toLowerCase())),
+      ];
       setProspectsState(mergedProspects);
 
       // ActivReset clients
@@ -368,7 +451,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setProspects = useCallback((p: Prospect[]) => {
     setProspectsState(p);
-    const localOnly = p.filter(pr => !pr.id.startsWith("bcrm_"));
+    const localOnly = p.filter(pr => !pr.id.startsWith("bcrm_") && !pr.id.startsWith("cpro_"));
     if (user) syncToSupabase("prospects", localOnly, prospectToRow, user.id);
   }, [user]);
 
@@ -402,7 +485,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setOffres = useCallback((o: Offre[]) => {
     setOffresState(o);
-    if (user) syncToSupabase("offres", o, offreToRow, user.id);
+    if (user) syncOffresPro(o, user.id);
   }, [user]);
 
   const setStructures = useCallback((s: Structure[]) => {

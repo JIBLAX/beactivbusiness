@@ -13,7 +13,7 @@ $$ LANGUAGE plpgsql SET search_path = public;
 -- ==================== CLIENTS PRO ====================
 CREATE TABLE IF NOT EXISTS public.clients_pro (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID,
   external_ref TEXT, -- stable external key (optional during transition)
   name TEXT NOT NULL,
   contact TEXT DEFAULT '',
@@ -21,16 +21,22 @@ CREATE TABLE IF NOT EXISTS public.clients_pro (
   age INTEGER,
   source TEXT DEFAULT '',
   statut TEXT DEFAULT 'CLIENT',
+  closing TEXT DEFAULT 'OUI',
+  date TEXT DEFAULT '',
+  offre TEXT DEFAULT '-',
   objectif TEXT DEFAULT '',
   notes TEXT DEFAULT '',
   profile TEXT DEFAULT '',
   sap_enabled BOOLEAN DEFAULT false,
+  group_id TEXT,
+  group_name TEXT,
+  is_group_leader BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS clients_pro_user_external_ref_uniq
-  ON public.clients_pro(user_id, external_ref)
+CREATE UNIQUE INDEX IF NOT EXISTS clients_pro_external_ref_uniq
+  ON public.clients_pro(external_ref)
   WHERE external_ref IS NOT NULL;
 
 CREATE UNIQUE INDEX IF NOT EXISTS clients_pro_user_name_contact_uniq
@@ -47,7 +53,7 @@ FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 -- ==================== OFFRES PRO ====================
 CREATE TABLE IF NOT EXISTS public.offres_pro (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID,
   external_ref TEXT, -- optional migration key
   name TEXT NOT NULL,
   price NUMERIC NOT NULL DEFAULT 0,
@@ -66,8 +72,8 @@ CREATE TABLE IF NOT EXISTS public.offres_pro (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS offres_pro_user_external_ref_uniq
-  ON public.offres_pro(user_id, external_ref)
+CREATE UNIQUE INDEX IF NOT EXISTS offres_pro_external_ref_uniq
+  ON public.offres_pro(external_ref)
   WHERE external_ref IS NOT NULL;
 
 CREATE UNIQUE INDEX IF NOT EXISTS offres_pro_user_name_uniq
@@ -84,7 +90,7 @@ FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 -- ==================== OPERATIONS PRO ====================
 CREATE TABLE IF NOT EXISTS public.operations_pro (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID,
   external_ref TEXT, -- id from producer app if any
   operation_date DATE,
   month_key TEXT,
@@ -102,8 +108,8 @@ CREATE TABLE IF NOT EXISTS public.operations_pro (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS operations_pro_user_external_ref_uniq
-  ON public.operations_pro(user_id, external_ref)
+CREATE UNIQUE INDEX IF NOT EXISTS operations_pro_external_ref_uniq
+  ON public.operations_pro(external_ref)
   WHERE external_ref IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS operations_pro_user_month_idx
