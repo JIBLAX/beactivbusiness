@@ -69,7 +69,9 @@ export default function BilanPage() {
   }).reduce((s, e) => s + e.amount, 0) : 0;
 
   const especesNonDeclarees = monthEntries.filter(e => e.paymentMode === "especes" && e.cashDeclaration === "non_declare").reduce((s, e) => s + e.amount, 0);
-  const totalReel = monthEntries.reduce((s, e) => s + e.amount, 0) + baSalesTotal + fjmRevenuTotal;
+  const totalReel = monthEntries
+    .filter(e => !(e.paymentMode === "especes" && e.cashDeclaration === "non_declare"))
+    .reduce((s, e) => s + e.amount, 0) + baSalesTotal + fjmRevenuTotal;
   const totalDepenses = monthExpenses.reduce((s, e) => s + e.amount, 0) + fjmChargesTotal;
   const urssaf = declaredMicro * 0.261;
   const beneficeNet = totalReel - urssaf - totalDepenses;
@@ -122,7 +124,9 @@ export default function BilanPage() {
       }).reduce((s, e) => s + e.amount, 0);
       const declared = localMicroM + baTotal;
       const urssafM = declared * 0.261;
-      const localReel = entries.reduce((s, e) => s + e.amount, 0);
+      const localReel = entries
+        .filter(e => !(e.paymentMode === "especes" && e.cashDeclaration === "non_declare"))
+        .reduce((s, e) => s + e.amount, 0);
       const totalReel = localReel + baTotal;
       const totalDep = exps.reduce((s, e) => s + e.amount, 0);
       return {

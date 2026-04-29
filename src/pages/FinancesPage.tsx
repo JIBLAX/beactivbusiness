@@ -62,7 +62,9 @@ export default function FinancesPage() {
   }, []);
 
   const sparkData = useMemo(() => last6.map(month => {
-    const local = financeEntries.filter(e => e.month === month).reduce((s, e) => s + e.amount, 0);
+    const local = financeEntries
+      .filter(e => e.month === month && !(e.paymentMode === "especes" && e.cashDeclaration === "non_declare"))
+      .reduce((s, e) => s + e.amount, 0);
     const ba = yearBaSales.filter(s => s.date.startsWith(month)).reduce((s, r) => s + r.amount, 0);
     return { month, total: local + ba };
   }), [last6, financeEntries, yearBaSales]);
@@ -90,7 +92,10 @@ export default function FinancesPage() {
   }).reduce((s, e) => s + e.amount, 0) : 0;
 
   const especesNonDeclarees = monthEntries.filter(e => e.paymentMode === "especes" && e.cashDeclaration === "non_declare").reduce((s, e) => s + e.amount, 0);
-  const totalReel = monthEntries.reduce((s, e) => s + e.amount, 0) + baSalesTotal + fjmRevenuTotal;
+  // Espèces non déclarées exclues du CA officiel
+  const totalReel = monthEntries
+    .filter(e => !(e.paymentMode === "especes" && e.cashDeclaration === "non_declare"))
+    .reduce((s, e) => s + e.amount, 0) + baSalesTotal + fjmRevenuTotal;
   const totalDepenses = monthExpenses.reduce((s, e) => s + e.amount, 0) + fjmChargesTotal;
   const urssaf = calcUrssaf(declaredMicro);
   const beneficeNet = totalReel - urssaf - totalDepenses;
@@ -127,26 +132,34 @@ export default function FinancesPage() {
         {/* Breakdown grid */}
         {(() => {
           const items = [
-            ...(localMicro > 0 ? [{ label: "CA Local", sub: "Déclaré URSSAF", value: localMicro, color: "hsl(152 55% 52%)" }] : []),
-            ...(baSalesTotal > 0 ? [{ label: "BE ACTIV", sub: "Coaching clients", value: baSalesTotal, color: "hsl(217 70% 60%)" }] : []),
-            ...(fjmRevenuTotal > 0 ? [{ label: "Revenus FJM", sub: "Coaching", value: fjmRevenuTotal, color: "hsl(38 92% 55%)" }] : []),
-            ...(especesNonDeclarees > 0 ? [{ label: "Espèces", sub: "Non déclarées", value: especesNonDeclarees, color: "hsl(38 92% 55%)" }] : []),
+            ...(localMicro > 0 ? [{ label: "CA Micro", sub: "Déclaré URSSAF", value: localMicro, color: "hsl(152 55% 52%)" }] : []),
+            ...(baSalesTotal > 0 ? [{ label: "BE ACTIV", sub: "Boutique / FJM", value: baSalesTotal, color: "hsl(217 70% 60%)" }] : []),
+            ...(fjmRevenuTotal > 0 ? [{ label: "JUMP Coaching", sub: "Portage FJM", value: fjmRevenuTotal, color: "hsl(38 92% 55%)" }] : []),
             ...(portageEnabled ? [{ label: "Portage JUMP", sub: "Via JUMP", value: declaredPortage, color: "hsl(262 80% 65%)" }] : []),
             { label: "URSSAF dû", sub: "26.1% du CA Micro", value: -urssaf, color: "hsl(0 62% 50%)" },
           ];
           const cols = items.length <= 2 ? "grid-cols-2" : items.length === 3 ? "grid-cols-3" : "grid-cols-2";
           return (
-            <div className={`grid gap-2 ${cols}`}>
-              {items.map(k => (
-                <div key={k.label} className="rounded-2xl p-3 text-center" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
-                  <div className="value-lg text-[15px] leading-none mb-1" style={{ color: k.color }}>
-                    {Math.abs(k.value).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
+            <>
+              <div className={`grid gap-2 ${cols}`}>
+                {items.map(k => (
+                  <div key={k.label} className="rounded-2xl p-3 text-center" style={{ background: "hsl(0 0% 100% / 0.03)" }}>
+                    <div className="value-lg text-[15px] leading-none mb-1" style={{ color: k.color }}>
+                      {Math.abs(k.value).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€
+                    </div>
+                    <div className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">{k.label}</div>
+                    <div className="text-[8px] text-muted-foreground/60 mt-0.5">{k.sub}</div>
                   </div>
-                  <div className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">{k.label}</div>
-                  <div className="text-[8px] text-muted-foreground/60 mt-0.5">{k.sub}</div>
+                ))}
+              </div>
+              {especesNonDeclarees > 0 && (
+                <div className="mt-2 px-3 py-2 rounded-xl flex items-center justify-between"
+                  style={{ background: "hsl(0 0% 100% / 0.02)", border: "1px dashed hsl(0 0% 100% / 0.08)" }}>
+                  <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">Espèces hors bilan</span>
+                  <span className="text-[11px] font-semibold text-muted-foreground/40">+{especesNonDeclarees.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</span>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           );
         })()}
 
