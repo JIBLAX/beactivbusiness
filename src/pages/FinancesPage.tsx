@@ -3,6 +3,7 @@ import { useApp } from "@/store/AppContext";
 import { getMonthEditState, getSealedLabel } from "@/lib/quarterLock";
 import { useBaSalesMonth, useBaSalesYear } from "@/hooks/useBaSalesMonth";
 import { useFjmProOps } from "@/hooks/useFjmProOps";
+import { filterFjmProOtherRevenues } from "@/lib/fjmProRevenue";
 import { supabase } from "@/integrations/supabase/client";
 
 
@@ -71,7 +72,7 @@ export default function FinancesPage() {
   // Current month data
   const { total: baSalesTotal } = useBaSalesMonth(selectedMonth);
   const { ops: fjmOps } = useFjmProOps(selectedMonth);
-  const fjmRevenuTotal = fjmOps.filter(o => o.family === "revenu").reduce((s, o) => s + (o.actual || 0), 0);
+  const fjmRevenuTotal = filterFjmProOtherRevenues(fjmOps).reduce((s, o) => s + (o.actual || 0), 0);
   const fjmChargesTotal = fjmOps.filter(o => o.family !== "revenu").reduce((s, o) => s + (o.actual || 0), 0);
 
   const monthEntries = useMemo(() => financeEntries.filter(e => e.month === selectedMonth), [financeEntries, selectedMonth]);

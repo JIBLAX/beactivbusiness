@@ -5,6 +5,7 @@ import type { AnnualMonthSnap } from "@/lib/pdfExport";
 import { getFiscalReminders, getDaysUntil, getStatusColor, getStatusLabel } from "@/lib/fiscalDates";
 import { useBaSalesMonth, useBaSalesYear } from "@/hooks/useBaSalesMonth";
 import { useFjmProOps } from "@/hooks/useFjmProOps";
+import { filterFjmProOtherRevenues } from "@/lib/fjmProRevenue";
 import AnnualWrapped from "@/components/stats/AnnualWrapped";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
@@ -41,7 +42,7 @@ export default function BilanPage() {
   const { sales: baSalesYear } = useBaSalesYear(sapYear);
   const { sales: baSalesWrapped } = useBaSalesYear(wrappedYear);
   const { ops: fjmOps } = useFjmProOps(selectedMonth);
-  const fjmRevenuTotal = fjmOps.filter(o => o.family === "revenu").reduce((s, o) => s + (o.actual || 0), 0);
+  const fjmRevenuTotal = filterFjmProOtherRevenues(fjmOps).reduce((s, o) => s + (o.actual || 0), 0);
   const fjmChargesTotal = fjmOps.filter(o => o.family !== "revenu").reduce((s, o) => s + (o.actual || 0), 0);
 
   const portageEnabled = portageMonths[selectedMonth] ?? false;

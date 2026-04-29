@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFjmProOps } from "@/hooks/useFjmProOps";
+import { filterFjmProOtherRevenues } from "@/lib/fjmProRevenue";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -83,6 +84,7 @@ export default function ComptaPage() {
   const [sales, setSales] = useState<BaSale[]>([]);
   const [salesLoading, setSalesLoading] = useState(true);
   const { ops, loading: opsLoading } = useFjmProOps(selectedMonth);
+  const revenuDivOps = useMemo(() => filterFjmProOtherRevenues(ops), [ops]);
 
   useEffect(() => {
     setSalesLoading(true);
@@ -102,7 +104,7 @@ export default function ComptaPage() {
   const revenusCoaching = sales.reduce((s,r) => s + (r.amount||0), 0);
   const sapHoursTotal   = sales.reduce((s,r) => s + (r.is_sap ? (r.sap_hours||0) : 0), 0);
   const sapSalesCount   = sales.filter(r => r.is_sap).length;
-  const revenusDiv      = ops.filter(o => o.family === "revenu").reduce((s,o) => s + (o.actual||0), 0);
+  const revenusDiv      = revenuDivOps.reduce((s,o) => s + (o.actual||0), 0);
   const totalRevenus    = revenusCoaching + revenusDiv;
   const chargesFixes    = ops.filter(o => o.family === "charge_fixe").reduce((s,o) => s + (o.actual||0), 0);
   const chargesVar      = ops.filter(o => o.family === "charge_variable").reduce((s,o) => s + (o.actual||0), 0);
@@ -139,7 +141,7 @@ export default function ComptaPage() {
 
     const chargeRows = ops.filter(o => o.family !== "revenu")
       .map(o => [o.family === "charge_fixe" ? "Fixe" : "Variable", o.category, o.label||o.subcategory||"—", `${o.actual.toFixed(2)}€`]);
-    const revenuDivRows = ops.filter(o => o.family === "revenu")
+    const revenuDivRows = revenuDivOps
       .map(o => [o.category, o.label||"—", `${o.actual.toFixed(2)}€`]);
 
     if (revenuDivRows.length > 0) {
@@ -273,9 +275,9 @@ export default function ComptaPage() {
           )}
 
           {/* Revenus divers pro */}
-          {ops.filter(o => o.family === "revenu").length > 0 && (
+          {revenuDivOps.length > 0 && (
             <Section title="➕ Revenus divers">
-              {ops.filter(o => o.family === "revenu").map(o => (
+              {revenuDivOps.map(o => (
                 <Row key={o.id} left={o.label} sub={o.category} right={`+${o.actual}€`} color="text-info" />
               ))}
             </Section>
