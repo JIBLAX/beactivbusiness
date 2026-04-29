@@ -465,14 +465,13 @@ export default function ActivitesPage() {
         </div>
       )}
 
-      {/* BE ACTIV coaching sales from FJM */}
+      {/* BE ACTIV sales synced from shared business data */}
       {baSales.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-sm">💼</span>
               <span className="text-[12px] font-bold text-foreground">BE ACTIV</span>
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(217 70% 60% / 0.15)", color: "hsl(217 70% 60%)" }}>FJM</span>
               <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 60%)" }}>{baSales.length}</span>
             </div>
             {baSalesTotal > 0 && <span className="value-lg text-[13px] text-success">{baSalesTotal.toFixed(0)}€</span>}
@@ -511,14 +510,13 @@ export default function ActivitesPage() {
         </div>
       )}
 
-      {/* FJM revenus divers */}
+      {/* Other synced revenues */}
       {fjmRevenuOps.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-sm">➕</span>
-              <span className="text-[12px] font-bold text-foreground">REVENUS FJM</span>
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 55%)" }}>FJM</span>
+              <span className="text-[12px] font-bold text-foreground">AUTRES REVENUS</span>
             </div>
             {fjmRevenuTotal > 0 && <span className="value-lg text-[13px] text-success">{fjmRevenuTotal.toFixed(0)}€</span>}
           </div>
@@ -664,14 +662,13 @@ export default function ActivitesPage() {
       );
       })()}
 
-      {/* FJM charges */}
+      {/* Synced pro charges */}
       {fjmChargeOps.length > 0 && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-sm">🔒</span>
-              <span className="text-[12px] font-bold text-foreground">CHARGES FJM</span>
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(0 62% 50% / 0.15)", color: "hsl(0 62% 60%)" }}>FJM</span>
+              <span className="text-[12px] font-bold text-foreground">CHARGES PRO</span>
             </div>
             {fjmChargesTotal > 0 && <span className="value-lg text-[13px] text-destructive">-{fjmChargesTotal.toFixed(0)}€</span>}
           </div>

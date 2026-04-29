@@ -47,6 +47,8 @@ function prospectToRow(p: Prospect, userId: string) {
     age: p.age ?? null, sap_enabled: p.sapEnabled ?? false,
     group_type: p.groupType ?? null, group_id: p.groupId ?? null, is_group_leader: p.isGroupLeader ?? false,
     montant: p.montant ?? null, paiement_mode: p.paiementMode ?? null, versements_recus: p.versementsRecus ?? null,
+    seances_prevues: p.seancesPrevues ?? null, seances_effectuees: p.seancesEffectuees ?? null,
+    periode_debut: p.periodeDebut ?? null, periode_fin: p.periodeFin ?? null,
   };
 }
 
@@ -61,6 +63,8 @@ function rowToProspect(r: any): Prospect {
     age: r.age ?? undefined, sapEnabled: r.sap_enabled ?? false,
     groupType: r.group_type ?? null, groupId: r.group_id ?? null, isGroupLeader: r.is_group_leader ?? false,
     montant: r.montant ?? null, paiementMode: r.paiement_mode ?? null, versementsRecus: r.versements_recus ?? null,
+    seancesPrevues: r.seances_prevues ?? undefined, seancesEffectuees: r.seances_effectuees ?? undefined,
+    periodeDebut: r.periode_debut ?? undefined, periodeFin: r.periode_fin ?? undefined,
   };
 }
 

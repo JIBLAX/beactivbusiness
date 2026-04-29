@@ -27,6 +27,10 @@ export interface Prospect {
   montant?: number | null;
   paiementMode?: number | null;
   versementsRecus?: number | null;
+  seancesPrevues?: number;
+  seancesEffectuees?: number;
+  periodeDebut?: string;
+  periodeFin?: string;
 }
 
 export type StructureType = "association" | "entreprise" | "école" | "collectivité" | "salle de sport";

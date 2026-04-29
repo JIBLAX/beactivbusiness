@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 interface ClientEntry {
   name: string;
   offre: string;
-  source: "business" | "crm";
 }
 
 interface Props {
@@ -20,7 +19,7 @@ export default function ClientAutocomplete({ value, onChange, placeholder = "Nom
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Load CRM clients once on mount
+  // Load shared clients once on mount
   useEffect(() => {
     supabase
       .from("be_activ_clients")
@@ -30,7 +29,7 @@ export default function ClientAutocomplete({ value, onChange, placeholder = "Nom
         setCrmClients(
           data
             .filter(r => r.name)
-            .map(r => ({ name: r.name!, offre: r.offre ?? "", source: "crm" as const }))
+            .map(r => ({ name: r.name!, offre: r.offre ?? "" }))
         );
       }, () => {});
   }, []);
@@ -38,7 +37,7 @@ export default function ClientAutocomplete({ value, onChange, placeholder = "Nom
   // Business clients (closing = OUI with an offer)
   const businessClients: ClientEntry[] = prospects
     .filter(p => p.closing === "OUI" && p.offre && p.offre !== "-")
-    .map(p => ({ name: p.name, offre: p.offre, source: "business" as const }));
+    .map(p => ({ name: p.name, offre: p.offre }));
 
   // Merge — Business takes priority, deduplicate by name
   const businessNames = new Set(businessClients.map(c => c.name.toLowerCase()));
@@ -73,16 +72,12 @@ export default function ClientAutocomplete({ value, onChange, placeholder = "Nom
         <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[200px] overflow-y-auto rounded-xl"
           style={{ background: "hsl(var(--surface2))", border: "1px solid hsl(var(--glass-border))", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
           {filtered.slice(0, 10).map((c, i) => (
-            <button key={`${c.source}-${c.name}-${i}`} onClick={() => { onChange(c.name); setOpen(false); }}
-              className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-foreground/5 transition-colors flex items-center justify-between">
+            <button key={`${c.name}-${i}`} onClick={() => { onChange(c.name); setOpen(false); }}
+              className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-foreground/5 transition-colors">
               <div>
                 <span className="font-medium">{c.name}</span>
                 {c.offre && <span className="text-[10px] text-muted-foreground ml-2">{c.offre}</span>}
               </div>
-              {c.source === "crm" && (
-                <span className="text-[8px] px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0"
-                  style={{ background: "hsl(200 70% 40% / 0.2)", color: "hsl(200 70% 60%)" }}>CRM</span>
-              )}
             </button>
           ))}
         </div>

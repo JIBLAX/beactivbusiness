@@ -35,6 +35,49 @@ function getClientMetrics(entries: any[], offreName: string, offres: any[]) {
   return { programmesLabel: "-", programmesCount: 0, seancesLabel: `${entries.length} séance${entries.length > 1 ? "s" : ""}`, seancesCount: entries.length };
 }
 
+function toIsoDate(d: Date): string {
+  return d.toISOString().split("T")[0];
+}
+
+function addDuration(dateIso: string, value: number, unit: string): string {
+  const d = new Date(`${dateIso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return "";
+  if (unit === "jours") d.setDate(d.getDate() + value);
+  else if (unit === "semaines") d.setDate(d.getDate() + value * 7);
+  else if (unit === "mois") d.setMonth(d.getMonth() + value);
+  else return "";
+  return toIsoDate(d);
+}
+
+function getSessionTrackingDefaults(client: Prospect, offres: any[]) {
+  const found = offres.find((o: any) => o.name === client.offre);
+  if (!found) return { seancesPrevues: undefined, periodeDebut: undefined, periodeFin: undefined };
+
+  const seancesPrevues = (() => {
+    if (client.seancesPrevues != null) return client.seancesPrevues;
+    if (typeof found.minQuantity === "number" && found.minQuantity > 0) return found.minQuantity;
+    const durVal = found.durVal ?? found.duration?.value;
+    const durUnit = found.durUnit ?? found.duration?.unit;
+    if (typeof durVal === "number" && typeof durUnit === "string" && durUnit.toLowerCase().includes("seance")) {
+      return durVal;
+    }
+    return undefined;
+  })();
+
+  const periodeDebut = client.periodeDebut || client.date || undefined;
+  const periodeFin = (() => {
+    if (client.periodeFin) return client.periodeFin;
+    if (!periodeDebut) return undefined;
+    const durVal = found.durVal ?? found.duration?.value;
+    const durUnit = found.durUnit ?? found.duration?.unit;
+    if (typeof durVal !== "number" || typeof durUnit !== "string") return undefined;
+    if (!["jours", "semaines", "mois"].includes(durUnit)) return undefined;
+    return addDuration(periodeDebut, durVal, durUnit);
+  })();
+
+  return { seancesPrevues, periodeDebut, periodeFin };
+}
+
 const GROUP_LABELS: Record<string, string> = { duo: "Duo", trio: "Trio", small_group: "Small Group" };
 const GROUP_MAX: Record<string, number> = { duo: 2, trio: 3, small_group: 6 };
 
@@ -93,13 +136,20 @@ export default function ClientsPage() {
 
   const addNewClient = () => {
     if (!newClient.name || !newClient.offre) return;
-    const client: Prospect = {
+    const baseClient: Prospect = {
       id: "c" + Date.now(), sex: newClient.sex || "F", name: newClient.name,
       contact: newClient.contact || "", source: newClient.source || "", statut: "CLIENT",
       date: new Date().toISOString().split("T")[0], type: "", presence: "", heure: "",
       objectif: newClient.objectif || "", objection: "", closing: "OUI",
       offre: newClient.offre || "-", notes: newClient.notes || "", profile: "",
       age: newClient.age, sapEnabled: newClient.sapEnabled ?? false,
+    };
+    const defaults = getSessionTrackingDefaults(baseClient, offres);
+    const client: Prospect = {
+      ...baseClient,
+      seancesPrevues: defaults.seancesPrevues,
+      periodeDebut: defaults.periodeDebut,
+      periodeFin: defaults.periodeFin,
     };
     setProspects([...prospects, client]);
     setShowAddClient(false);
@@ -189,6 +239,18 @@ export default function ClientsPage() {
     const duration = formatDurationFromOffre(selectedClient.offre, offres);
     const metrics = getMetrics(selectedClient);
     const members = getGroupMembers(selectedClient);
+    const trackingDefaults = getSessionTrackingDefaults(selectedClient, offres);
+    const seancesPrevues = selectedClient.seancesPrevues ?? trackingDefaults.seancesPrevues ?? 0;
+    const seancesEffectuees = selectedClient.seancesEffectuees ?? 0;
+    const seancesRestantes = Math.max(0, seancesPrevues - seancesEffectuees);
+    const periodeDebut = selectedClient.periodeDebut ?? trackingDefaults.periodeDebut ?? "";
+    const periodeFin = selectedClient.periodeFin ?? trackingDefaults.periodeFin ?? "";
+    const depassement = seancesPrevues > 0 && seancesEffectuees > seancesPrevues;
+
+    const patchSelectedClient = (patch: Partial<Prospect>) => {
+      setProspects(prospects.map(p => p.id === selectedClient.id ? { ...p, ...patch } : p));
+      setSelectedClient({ ...selectedClient, ...patch });
+    };
 
     return (
       <div className="px-4 pt-4 pb-24">
@@ -357,6 +419,80 @@ export default function ClientsPage() {
             <div className="section-label mb-1">Séances</div>
             <div className="value-lg text-[22px] text-foreground">{metrics.seancesLabel}</div>
           </div>
+        </div>
+
+        {/* Session tracking */}
+        <div className="card-elevated rounded-2xl p-4 mb-4">
+          <div className="section-label mb-3">Suivi des séances</div>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="stat-card rounded-xl p-3">
+              <div className="text-[10px] text-muted-foreground">Séances prévues</div>
+              <input
+                type="number"
+                min={0}
+                value={seancesPrevues}
+                onChange={e => {
+                  const n = Math.max(0, Number(e.target.value) || 0);
+                  patchSelectedClient({ seancesPrevues: n });
+                }}
+                className="mt-1 w-full rounded-lg px-2 py-1.5 text-[12px] input-field"
+              />
+            </div>
+            <div className="stat-card rounded-xl p-3">
+              <div className="text-[10px] text-muted-foreground">Séances effectuées</div>
+              <div className="mt-1 flex items-center gap-2">
+                <button
+                  onClick={() => patchSelectedClient({ seancesEffectuees: Math.max(0, seancesEffectuees - 1) })}
+                  className="w-7 h-7 rounded-lg input-field text-[12px] font-bold"
+                >
+                  -1
+                </button>
+                <div className="text-[13px] font-semibold text-foreground min-w-[28px] text-center">{seancesEffectuees}</div>
+                <button
+                  onClick={() => patchSelectedClient({ seancesEffectuees: seancesEffectuees + 1 })}
+                  className="w-7 h-7 rounded-lg input-field text-[12px] font-bold"
+                >
+                  +1
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="stat-card rounded-xl p-3">
+              <div className="text-[10px] text-muted-foreground">Début de période</div>
+              <input
+                type="date"
+                value={periodeDebut}
+                onChange={e => patchSelectedClient({ periodeDebut: e.target.value || undefined })}
+                className="mt-1 w-full rounded-lg px-2 py-1.5 text-[12px] input-field"
+              />
+            </div>
+            <div className="stat-card rounded-xl p-3">
+              <div className="text-[10px] text-muted-foreground">Fin de période</div>
+              <input
+                type="date"
+                value={periodeFin}
+                onChange={e => patchSelectedClient({ periodeFin: e.target.value || undefined })}
+                className="mt-1 w-full rounded-lg px-2 py-1.5 text-[12px] input-field"
+              />
+            </div>
+          </div>
+
+          <div className="text-[12px] text-foreground">
+            <span className="font-semibold">{seancesEffectuees}</span> séances effectuées ·{" "}
+            <span className="font-semibold">{seancesRestantes}</span> restantes
+          </div>
+          {(periodeDebut || periodeFin) && (
+            <div className="text-[11px] text-muted-foreground mt-1">
+              période du {periodeDebut || "—"} au {periodeFin || "—"}
+            </div>
+          )}
+          {depassement && (
+            <div className="text-[10px] mt-2" style={{ color: "hsl(38 92% 55%)" }}>
+              Séances effectuées au-delà du prévu
+            </div>
+          )}
         </div>
 
         {entries.length > 0 && (
@@ -747,9 +883,6 @@ export default function ClientsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[14px] font-semibold text-foreground">{c.name}</span>
-                      {c.id?.startsWith("bcrm_") && (
-                        <span className="badge-pill text-[8px] py-0.5 px-1.5" style={{ background: "hsl(200 70% 40% / 0.2)", color: "hsl(200 70% 60%)" }}>CRM</span>
-                      )}
                       {c.groupType && (
                         <span className="badge-pill text-[8px] py-0.5 px-1.5" style={{ background: "hsl(270 50% 40% / 0.2)", color: "hsl(270 50% 65%)" }}>
                           {GROUP_LABELS[c.groupType]}{c.isGroupLeader ? " 👑" : ""}
