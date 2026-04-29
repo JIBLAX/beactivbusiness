@@ -238,6 +238,10 @@ export interface Offre {
   portageEligible?: boolean;
   maxInstallments?: number;
   isDraft?: boolean;
+  /** Si true, le CRM affiche le suivi des séances pour cette offre (parcours actif). */
+  sessionTrackingEnabled?: boolean;
+  /** Objectif minimum de séances à valider sur la période (affiche / référence suivi). */
+  minSessionsToValidate?: number;
 }
 
 export const INITIAL_OFFRES: Offre[] = [

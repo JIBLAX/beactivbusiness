@@ -136,6 +136,8 @@ function offreToRow(o: Offre, userId: string) {
     max_installments: o.maxInstallments ?? null,
     is_draft: o.isDraft ?? false,
     offer_type: o.offerType ?? null,
+    session_tracking_enabled: o.sessionTrackingEnabled ?? false,
+    min_sessions_to_validate: o.minSessionsToValidate ?? null,
   };
 }
 
@@ -154,6 +156,8 @@ function rowToOffre(r: any): Offre {
     maxInstallments: r.max_installments ?? undefined,
     isDraft: r.is_draft ?? false,
     offerType: r.offer_type ?? null,
+    sessionTrackingEnabled: r.session_tracking_enabled ?? false,
+    minSessionsToValidate: r.min_sessions_to_validate ?? undefined,
   };
 }
 
@@ -174,6 +178,8 @@ function offreToProRow(o: Offre, userId: string) {
     portage_eligible: o.portageEligible ?? false,
     max_installments: o.maxInstallments ?? null,
     offer_type: o.offerType ?? null,
+    session_tracking_enabled: o.sessionTrackingEnabled ?? false,
+    min_sessions_to_validate: o.minSessionsToValidate ?? null,
   };
 }
 
@@ -195,6 +201,8 @@ function rowToOffrePro(r: any): Offre {
     maxInstallments: r.max_installments ?? undefined,
     isDraft: r.is_draft ?? false,
     offerType: r.offer_type ?? null,
+    sessionTrackingEnabled: r.session_tracking_enabled ?? false,
+    minSessionsToValidate: r.min_sessions_to_validate != null ? Number(r.min_sessions_to_validate) : undefined,
   };
 }
 

@@ -37,6 +37,8 @@ export default function OffresPage() {
   const [editTva, setEditTva] = useState(false);
   const [editPortage, setEditPortage] = useState(false);
   const [editMaxInstallments, setEditMaxInstallments] = useState<number | undefined>();
+  const [editSessionTracking, setEditSessionTracking] = useState(false);
+  const [editMinSessionsValidate, setEditMinSessionsValidate] = useState<number | undefined>();
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState(0);
@@ -48,6 +50,8 @@ export default function OffresPage() {
   const [newTva, setNewTva] = useState(false);
   const [newPortage, setNewPortage] = useState(false);
   const [newMaxInstallments, setNewMaxInstallments] = useState<number | undefined>();
+  const [newSessionTracking, setNewSessionTracking] = useState(false);
+  const [newMinSessionsValidate, setNewMinSessionsValidate] = useState<number | undefined>();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const startEdit = (o: Offre) => {
@@ -56,6 +60,8 @@ export default function OffresPage() {
     setEditUnitPrice(o.unitPrice); setEditMinQty(o.minQuantity);
     setEditTheme(o.theme || "TRANSFORMATION"); setEditTva(o.tvaEnabled || false);
     setEditPortage(o.portageEligible || false); setEditMaxInstallments(o.maxInstallments);
+    setEditSessionTracking(o.sessionTrackingEnabled ?? false);
+    setEditMinSessionsValidate(o.minSessionsToValidate);
   };
 
   const saveEdit = () => {
@@ -80,6 +86,8 @@ export default function OffresPage() {
         isAlaCarte: editIsAlaCarte, unitPrice: editUnitPrice, minQuantity: editMinQty,
         theme: editTheme, tvaEnabled: editTva, portageEligible: editPortage,
         maxInstallments: editMaxInstallments,
+        sessionTrackingEnabled: editSessionTracking,
+        minSessionsToValidate: editMinSessionsValidate,
         priceHistory: priceChanged ? [...o.priceHistory, { price: editPrice, date: today }] : o.priceHistory,
       };
     }));
@@ -109,12 +117,15 @@ export default function OffresPage() {
       theme: newTheme, tvaEnabled: newTva, portageEligible: newPortage,
       maxInstallments: newMaxInstallments,
       isDraft: asDraft,
+      sessionTrackingEnabled: newSessionTracking,
+      minSessionsToValidate: newMinSessionsValidate,
     };
     setOffres([...offres, offre]);
     setShowAdd(false);
     setNewName(""); setNewPrice(0); setNewDuration({ value: 1, unit: "mois" });
     setNewIsAlaCarte(false); setNewUnitPrice(undefined); setNewMinQty(undefined);
     setNewTheme("TRANSFORMATION"); setNewTva(false); setNewPortage(false); setNewMaxInstallments(undefined);
+    setNewSessionTracking(false); setNewMinSessionsValidate(undefined);
   };
 
   const activeCount = offres.filter(o => o.active).length;
@@ -192,6 +203,17 @@ export default function OffresPage() {
                 min={2} max={12} className="w-full rounded-xl px-3 py-2 text-sm input-field" />
             </div>
           )}
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-[12px] text-muted-foreground">Suivi des séances (CRM)</span>
+            <ToggleSwitch checked={editSessionTracking} onChange={() => setEditSessionTracking(!editSessionTracking)} />
+          </div>
+          {editSessionTracking && (
+            <div>
+              <label className="section-label mb-1 block">Séances min. à valider (objectif)</label>
+              <input type="number" min={1} value={editMinSessionsValidate ?? ""} onChange={e => setEditMinSessionsValidate(e.target.value ? Number(e.target.value) : undefined)}
+                placeholder="ex : 4" className="w-full rounded-xl px-3 py-2 text-sm input-field" />
+            </div>
+          )}
           <div className="flex gap-2 pt-1">
             <button onClick={saveEdit} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white btn-primary">✓ Sauvegarder</button>
             <button onClick={() => setEditingId(null)} className="px-4 py-2.5 rounded-xl text-sm text-muted-foreground input-field">✕</button>
@@ -220,6 +242,11 @@ export default function OffresPage() {
                 {o.tvaEnabled && <span className="badge-pill text-[9px]" style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>TVA</span>}
                 {o.portageEligible && <span className="badge-pill text-[9px]" style={{ background: "hsl(217 70% 60% / 0.1)", color: "hsl(217 70% 60%)" }}>PORTAGE</span>}
                 {o.maxInstallments && o.maxInstallments > 1 && <span className="badge-pill text-[9px]" style={{ background: "hsl(280 60% 55% / 0.1)", color: "hsl(280 60% 55%)" }}>Jusqu'à {o.maxInstallments}×</span>}
+                {o.sessionTrackingEnabled && (
+                  <span className="badge-pill text-[9px]" style={{ background: "hsl(152 55% 42% / 0.12)", color: "hsl(152 55% 50%)" }}>
+                    Suivi séances{o.minSessionsToValidate != null ? ` · min ${o.minSessionsToValidate}` : ""}
+                  </span>
+                )}
               </div>
             </div>
             <div className="value-lg text-[18px]" style={{ color: "hsl(348 63% 45%)" }}>{o.price}€</div>
@@ -376,6 +403,17 @@ export default function OffresPage() {
                   <label className="section-label mb-2 block">Nombre de fois max</label>
                   <input type="number" value={newMaxInstallments} onChange={e => setNewMaxInstallments(Number(e.target.value) || undefined)}
                     min={2} max={12} className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
+                </div>
+              )}
+              <div className="flex items-center justify-between py-1">
+                <span className="text-[12px] text-muted-foreground">Suivi des séances (CRM)</span>
+                <ToggleSwitch checked={newSessionTracking} onChange={() => setNewSessionTracking(!newSessionTracking)} />
+              </div>
+              {newSessionTracking && (
+                <div>
+                  <label className="section-label mb-2 block">Séances min. à valider</label>
+                  <input type="number" min={1} value={newMinSessionsValidate ?? ""} onChange={e => setNewMinSessionsValidate(e.target.value ? Number(e.target.value) : undefined)}
+                    placeholder="ex : 4" className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
                 </div>
               )}
               <div className="flex gap-2 mt-2">
