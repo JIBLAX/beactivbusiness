@@ -356,7 +356,7 @@ export default function ActivitesPage() {
         >
           <div className="value-lg text-[20px] text-destructive">-{totalExpenses.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
           <div className="text-[11px] font-bold text-foreground tracking-wider mt-1">DÉPENSES</div>
-          <div className="text-[9px] text-muted-foreground mt-0.5">{monthExpenses.length} dépense{monthExpenses.length !== 1 ? "s" : ""}</div>
+          <div className="text-[9px] text-muted-foreground mt-0.5">{monthExpenses.length + fjmChargeOps.length} dépense{(monthExpenses.length + fjmChargeOps.length) !== 1 ? "s" : ""}</div>
         </button>
       </div>
 
