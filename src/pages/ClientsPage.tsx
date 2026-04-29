@@ -12,6 +12,12 @@ function formatDurationFromOffre(offre: string, offres: any[]): string {
   return `${found.duration.value} ${u}`;
 }
 
+function isSessionOffer(offreName: string | undefined, offres: any[]): boolean {
+  if (!offreName) return false;
+  const o = offres.find((of: any) => of.name === offreName);
+  return o ? (o.theme === "ACTION" || o.isAlaCarte === true || o.unitPrice != null) : false;
+}
+
 function getOffreType(offreName: string, offres: any[]): "programme" | "seance" {
   const found = offres.find((o: any) => o.name === offreName);
   if (!found) return "seance";
@@ -90,8 +96,8 @@ export default function ClientsPage() {
   const archivedClients = useMemo(() => allClients.filter(c => c.statut === "ARCHIVÉ"), [allClients]);
   const getClientEntries = (name: string) => financeEntries.filter(e => e.clientName === name);
   const getClientTotal = (name: string) => getClientEntries(name).reduce((s, e) => s + e.amount, 0);
-  const getClientSapHours = (name: string) => getClientEntries(name).reduce((s, e) => s + (e.sapHours || 0), 0);
-  const getClientSapTotal = (name: string) => getClientEntries(name).filter(e => e.sapHours && e.sapHours > 0).reduce((s, e) => s + e.amount, 0);
+  const getClientSapHours = (name: string) => getClientEntries(name).filter(e => e.sapHours && e.sapHours > 0 && isSessionOffer(e.offre, offres)).reduce((s, e) => s + (e.sapHours || 0), 0);
+  const getClientSapTotal = (name: string) => getClientEntries(name).filter(e => e.sapHours && e.sapHours > 0 && isSessionOffer(e.offre, offres)).reduce((s, e) => s + e.amount, 0);
   const getMetrics = (client: Prospect) => getClientMetrics(getClientEntries(client.name), client.offre, offres);
 
   const getGroupMembers = (client: Prospect) => {
@@ -205,12 +211,53 @@ export default function ClientsPage() {
   /* ── CLIENT DETAIL VIEW ── */
   if (selectedClient) {
     const entries = getClientEntries(selectedClient.name);
-    const totalPaid = getClientTotal(selectedClient.name);
     const sapHours = getClientSapHours(selectedClient.name);
     const sapTotal = getClientSapTotal(selectedClient.name);
     const duration = formatDurationFromOffre(selectedClient.offre, offres);
-    const metrics = getMetrics(selectedClient);
     const members = getGroupMembers(selectedClient);
+
+    // Unified financial data
+    const baSalesConfirmedTotal = clientPayments
+      .filter((r: any) => !r.is_installment || r.financesjm_tx_id)
+      .reduce((s: number, r: any) => s + Number(r.amount), 0);
+    const totalPaid = entries.reduce((s, e) => s + e.amount, 0) + baSalesConfirmedTotal;
+
+    // Session count (session-type offers only)
+    const sessionEntries = entries.filter(e => isSessionOffer(e.offre, offres));
+    const sessionCount = sessionEntries.reduce((s, e) => {
+      const o = offres.find((of: any) => of.name === e.offre);
+      return o?.unitPrice ? s + Math.round(e.amount / o.unitPrice) : s + 1;
+    }, 0);
+    const hasSessionOffers = sessionEntries.length > 0;
+
+    // Unified payment history (merged, sorted by date desc)
+    type UnifiedItem = {
+      id: string; label: string; amount: number; sortDate: string; displayDate: string;
+      isPending?: boolean; paymentMode?: string; channel?: string;
+      catalogPrice?: number; sessionsInEntry?: number | null; sapHours?: number;
+    };
+    const unifiedHistory: UnifiedItem[] = [
+      ...entries.map(e => {
+        const odef = offres.find((o: any) => o.name === e.offre);
+        const sessions = odef?.unitPrice ? Math.round(e.amount / odef.unitPrice) : null;
+        return {
+          id: e.id, label: e.label, amount: e.amount,
+          sortDate: e.month + "-15", displayDate: e.month,
+          paymentMode: e.paymentMode, sessionsInEntry: sessions, sapHours: e.sapHours,
+        };
+      }),
+      ...clientPayments.map((row: any) => ({
+        id: "ba_" + row.id,
+        label: row.installment_label ?? (row.offer_name ?? "Paiement"),
+        amount: Number(row.amount),
+        sortDate: row.date || "",
+        displayDate: row.date ? row.date.slice(0, 7) : "",
+        isPending: row.is_installment && !row.financesjm_tx_id,
+        paymentMode: row.payment_mode,
+        channel: row.channel,
+        catalogPrice: row.catalog_price != null && Number(row.catalog_price) !== Number(row.amount) ? Number(row.catalog_price) : undefined,
+      })),
+    ].sort((a, b) => b.sortDate.localeCompare(a.sortDate));
 
     return (
       <div className="px-4 pt-4 pb-24">
@@ -385,40 +432,49 @@ export default function ClientsPage() {
         </div>
 
         {/* Financial summary */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className={`grid gap-2 mb-4 ${hasSessionOffers ? "grid-cols-2" : "grid-cols-1"}`}>
           <div className="stat-card rounded-2xl p-4 text-center">
-            <div className="section-label mb-1">Total payé</div>
+            <div className="section-label mb-1">Total encaissé</div>
             <div className="value-lg text-[22px] text-success">{totalPaid.toLocaleString("fr-FR", { maximumFractionDigits: 0 })}€</div>
           </div>
-          <div className="stat-card rounded-2xl p-4 text-center">
-            <div className="section-label mb-1">Programmes</div>
-            <div className="value-lg text-[22px] text-foreground">{metrics.programmesLabel}</div>
-          </div>
-          <div className="stat-card rounded-2xl p-4 text-center">
-            <div className="section-label mb-1">Séances</div>
-            <div className="value-lg text-[22px] text-foreground">{metrics.seancesLabel}</div>
-          </div>
+          {hasSessionOffers && (
+            <div className="stat-card rounded-2xl p-4 text-center">
+              <div className="section-label mb-1">Séances</div>
+              <div className="value-lg text-[22px] text-foreground">{sessionCount > 0 ? `${sessionCount} séance${sessionCount > 1 ? "s" : ""}` : "—"}</div>
+            </div>
+          )}
         </div>
 
-        {entries.length > 0 && (
+        {/* Unified payment history */}
+        {unifiedHistory.length > 0 && (
           <div className="card-elevated rounded-2xl overflow-hidden mb-4">
             <div className="p-4 pb-2"><div className="section-label">Historique des paiements</div></div>
             <div className="divide-y" style={{ borderColor: "hsl(0 0% 100% / 0.04)" }}>
-              {entries.map(e => {
-                const entryOffre = offres.find(o => o.name === e.offre);
-                const sessionsInEntry = entryOffre?.unitPrice && entryOffre.unitPrice > 0 ? Math.round(e.amount / entryOffre.unitPrice) : null;
-                return (
-                  <div key={e.id} className="px-4 py-3 flex items-center justify-between">
-                    <div>
-                      <div className="text-[13px] font-medium text-foreground">{e.label}</div>
-                      <div className="text-[10px] text-muted-foreground">
-                        {e.month}{e.paymentMode ? ` · ${e.paymentMode}` : ""}{sessionsInEntry ? ` · ${sessionsInEntry} séance${sessionsInEntry > 1 ? "s" : ""}` : ""}{e.sapHours ? ` · ${e.sapHours}h SAP` : ""}
-                      </div>
+              {unifiedHistory.map(item => (
+                <div key={item.id} className="px-4 py-3 flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-medium text-foreground truncate">{item.label}</div>
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                      <span>{item.displayDate}</span>
+                      {item.paymentMode && <span>· {MOYEN_PAIEMENT_LABEL[item.paymentMode as keyof typeof MOYEN_PAIEMENT_LABEL] ?? item.paymentMode}</span>}
+                      {item.sessionsInEntry && <span>· {item.sessionsInEntry} séance{item.sessionsInEntry > 1 ? "s" : ""}</span>}
+                      {item.sapHours && <span>· {item.sapHours}h SAP</span>}
+                      {item.isPending && (
+                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{ background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 55%)" }}>en attente</span>
+                      )}
                     </div>
-                    <div className="value-lg text-[14px] text-success">+{e.amount}€</div>
                   </div>
-                );
-              })}
+                  <div className="text-right flex-shrink-0 ml-3">
+                    <div className="value-lg text-[14px]" style={{ color: item.isPending ? "hsl(38 92% 60%)" : "hsl(152 55% 55%)" }}>
+                      +{item.amount.toLocaleString("fr-FR")}€
+                    </div>
+                    {item.catalogPrice && (
+                      <div className="text-[9px] text-muted-foreground">cat. {item.catalogPrice}€</div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -430,10 +486,8 @@ export default function ClientsPage() {
           </div>
         )}
 
-        {/* Closing CRM block — visible only when CRM has pushed data */}
         {selectedClient.actualAmount != null && (
-          <div className="card-elevated rounded-2xl p-4 mb-4" style={{ borderLeft: "3px solid hsl(200 70% 50% / 0.5)" }}>
-            <div className="text-[9px] font-semibold uppercase tracking-[3px] text-muted-foreground mb-3">Closing Bilan CRM</div>
+          <div className="card-elevated rounded-2xl p-4 mb-4">
             <div className="space-y-2.5">
               {selectedClient.offerType && (
                 <div className="flex items-center justify-between">
@@ -489,64 +543,6 @@ export default function ClientsPage() {
                   </span>
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* Paiements Finance JM */}
-        {clientPayments.length > 0 && (
-          <div className="card-elevated rounded-2xl p-4 mb-4" style={{ borderLeft: "3px solid hsl(152 55% 42% / 0.5)" }}>
-            <div className="text-[9px] font-semibold uppercase tracking-[3px] text-muted-foreground mb-3">Paiements Finance JM</div>
-            <div className="space-y-2">
-              {clientPayments.map((row: any, i: number) => {
-                const isPaid = !row.is_installment || row.financesjm_tx_id;
-                return (
-                  <div key={row.id ?? i} className="flex items-center justify-between py-1.5"
-                    style={{ borderBottom: i < clientPayments.length - 1 ? "1px solid hsl(0 0% 100% / 0.04)" : undefined }}>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[12px] font-medium text-foreground">
-                          {row.installment_label ?? (row.is_installment ? "Versement" : "Paiement")}
-                        </span>
-                        {row.is_installment && (
-                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
-                            style={isPaid
-                              ? { background: "hsl(152 55% 42% / 0.15)", color: "hsl(152 55% 55%)" }
-                              : { background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 55%)" }}>
-                            {isPaid ? "encaissé" : "en attente"}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                        <span>{row.date}</span>
-                        {row.payment_mode && <span>· {MOYEN_PAIEMENT_LABEL[row.payment_mode] ?? row.payment_mode}</span>}
-                        {row.channel && (
-                          <span style={{ color: CANAL_FINANCE_COLOR[row.channel] ?? "inherit" }}>
-                            · {CANAL_FINANCE_LABEL[row.channel] ?? row.channel}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[13px] font-bold" style={{ color: isPaid ? "hsl(152 55% 55%)" : "hsl(38 92% 60%)" }}>
-                        +{Number(row.amount).toLocaleString("fr-FR")}€
-                      </div>
-                      {row.catalog_price != null && Number(row.catalog_price) !== Number(row.amount) && (
-                        <div className="text-[9px] text-muted-foreground">cat. {Number(row.catalog_price)}€</div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid hsl(0 0% 100% / 0.06)" }}>
-              <span className="text-[11px] text-muted-foreground">Total encaissé</span>
-              <span className="text-[14px] font-bold text-success">
-                {clientPayments
-                  .filter((r: any) => !r.is_installment || r.financesjm_tx_id)
-                  .reduce((s: number, r: any) => s + Number(r.amount), 0)
-                  .toLocaleString("fr-FR")}€
-              </span>
             </div>
           </div>
         )}

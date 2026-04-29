@@ -497,7 +497,6 @@ export default function ActivitesPage() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className="text-[13px] font-semibold text-foreground">{s.client_name || "—"}</span>
-                                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(217 70% 60% / 0.15)", color: "hsl(217 70% 60%)" }}>FJM</span>
                                   {s.sale_type && s.sale_type !== "individual" && (
                                     <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
                                       style={{ background: "hsl(280 60% 55% / 0.15)", color: "hsl(280 60% 65%)" }}>
@@ -540,7 +539,6 @@ export default function ActivitesPage() {
                             <div className="text-[13px] font-medium text-foreground truncate">{o.label}</div>
                             <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
                               {fmtDate(o.date) && <span>{fmtDate(o.date)}</span>}
-                              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "hsl(38 92% 55% / 0.15)", color: "hsl(38 92% 55%)" }}>FJM</span>
                             </div>
                           </div>
                           <span className="value-lg text-[14px] flex-shrink-0 text-success">+{o.actual}€</span>
