@@ -18,9 +18,10 @@ export interface BaSaleRow {
   discount_percent: number | null
   is_installment: boolean | null
   financesjm_tx_id: string | null
+  service_date: string | null
 }
 
-const BA_SALES_SELECT = "id, client_name, offer_name, amount, payment_mode, sale_type, participant_count, is_sap, sap_hours, date, catalog_price, discount_amount, discount_percent, is_installment, financesjm_tx_id"
+const BA_SALES_SELECT = "id, client_name, offer_name, amount, payment_mode, sale_type, participant_count, is_sap, sap_hours, date, catalog_price, discount_amount, discount_percent, is_installment, financesjm_tx_id, service_date"
 const STALE_MS = 5_000
 
 function monthBounds(monthKey: string): [string, string] {
