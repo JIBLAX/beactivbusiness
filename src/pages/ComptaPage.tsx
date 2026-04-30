@@ -122,7 +122,7 @@ export default function ComptaPage() {
     doc.text(`Bilan Comptable — ${month}`, 14, 20);
     doc.setFontSize(9);
     doc.setTextColor(120);
-    doc.text("BE ACTIV BUSINESS × FINANCES JM", 14, 27);
+    doc.text("BE ACTIV — Synthèse comptable", 14, 27);
 
     autoTable(doc, {
       startY: 34,
