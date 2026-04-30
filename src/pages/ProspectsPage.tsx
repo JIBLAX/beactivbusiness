@@ -117,7 +117,7 @@ export default function ProspectsPage() {
       {/* CA Widget */}
       <div className="rounded-2xl p-4 mb-3.5"
         style={{ background: "linear-gradient(135deg, hsl(348 63% 30% / 0.18), hsl(348 63% 30% / 0.08))", border: "1px solid hsl(348 63% 30% / 0.3)" }}>
-        <div className="text-[10px] uppercase tracking-[2px] text-bordeaux-2 mb-1">CHIFFRE D'AFFAIRES</div>
+        <div className="section-kicker text-bordeaux-2 mb-1">Chiffre d'affaires</div>
         <div className="font-display text-4xl font-extrabold text-foreground leading-none">{caTotal}€</div>
         <div className="text-[11px] text-muted-foreground mt-0.5">Total encaissé</div>
         <div className="grid grid-cols-3 gap-2 mt-3">
@@ -164,8 +164,7 @@ export default function ProspectsPage() {
       <div className="relative mb-2.5">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none">🔍</span>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un prospect..."
-          className="w-full rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none transition-colors"
-          style={{ background: "hsl(var(--glass))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))", backdropFilter: "blur(10px)" }} />
+          className="surface-input py-2.5 pl-9 pr-3" />
       </div>
 
       {/* List */}
@@ -249,7 +248,7 @@ export default function ProspectsPage() {
                   <div>
                     <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Sexe</label>
                     <select value={editData.sex || "F"} onChange={e => setEditData(p => ({ ...p, sex: e.target.value as "F" | "H" }))}
-                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      className="surface-input">
                       <option value="F">Femme</option>
                       <option value="H">Homme</option>
                     </select>
@@ -257,7 +256,7 @@ export default function ProspectsPage() {
                   <div>
                     <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Source</label>
                     <select value={editData.source} onChange={e => setEditData(p => ({ ...p, source: e.target.value }))}
-                      className="w-full rounded-xl p-2.5 text-sm outline-none" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }}>
+                      className="surface-input">
                       {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
@@ -414,7 +413,7 @@ export default function ProspectsPage() {
                 <div>
                   <label className="text-[9px] uppercase tracking-[1.5px] text-muted-foreground mb-1 block">Notes</label>
                   <textarea value={editData.notes || ""} onChange={e => setEditData(p => ({ ...p, notes: e.target.value }))}
-                    className="w-full rounded-xl p-2.5 text-sm outline-none resize-none min-h-[80px]" style={{ background: "hsl(var(--surface3))", border: "1px solid hsl(var(--glass-border))", color: "hsl(var(--foreground))" }} />
+                    className="surface-input resize-none min-h-[80px]" />
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => {

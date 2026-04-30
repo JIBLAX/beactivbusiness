@@ -748,7 +748,7 @@ export default function ClientsPage() {
       <div className="mb-4">
         <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
           placeholder="🔍 Rechercher un client ou une offre..."
-          className="w-full rounded-xl px-4 py-2.5 text-[13px] input-field" />
+          className="surface-input px-4 py-2.5 text-[13px]" />
       </div>
 
       {/* ── GROUP SETUP MODAL ── */}
