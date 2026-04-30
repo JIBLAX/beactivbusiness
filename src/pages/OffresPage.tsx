@@ -282,8 +282,8 @@ export default function OffresPage() {
   );
 
   return (
-    <div className="px-4 pt-4 pb-24">
-      <div className="flex items-center justify-between mb-5">
+    <div className="app-shell px-4 pt-4 pb-24">
+      <div className="page-hero flex items-center justify-between mb-5">
         <div>
           <h1 className="font-display text-[22px] font-bold text-foreground">Offres</h1>
           <p className="text-[12px] text-muted-foreground mt-0.5">Catalogue & tarifs</p>
@@ -297,7 +297,7 @@ export default function OffresPage() {
       <div className="mb-4">
         <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
           placeholder="🔍 Rechercher une offre..."
-          className="w-full rounded-xl px-4 py-2.5 text-[13px] input-field" />
+          className="surface-input px-4 py-2.5 text-[13px]" />
       </div>
 
       {OFFRE_THEMES.map(theme => {
@@ -307,11 +307,11 @@ export default function OffresPage() {
         if (themeOffers.length === 0) return null;
         return (
           <div key={theme} className="mb-6">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="section-card flex items-center gap-3 mb-3 px-3 py-2">
               <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
                 <img src={THEME_LOGOS[theme]} alt={theme} className="w-full h-full object-cover" />
               </div>
-              <div className="section-label flex-1" style={{ borderBottom: "1px solid hsl(0 0% 100% / 0.05)", paddingBottom: "6px" }}>{theme}</div>
+              <div className="section-label flex-1">{theme}</div>
             </div>
             <div className="space-y-2">
               {themeOffers.map(renderOffreCard)}
@@ -329,10 +329,8 @@ export default function OffresPage() {
 
       {/* Add Sheet */}
       {showAdd && (
-        <div className="fixed inset-0 z-[200] flex items-end" onClick={() => setShowAdd(false)}
-          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
-          <div className="w-full max-h-[85dvh] rounded-t-3xl overflow-y-auto pb-8 animate-fade-up" onClick={e => e.stopPropagation()}
-            style={{ background: "hsl(0 0% 6%)", borderTop: "1px solid hsl(0 0% 100% / 0.08)" }}>
+        <div className="modal-backdrop fixed inset-0 z-[200] flex items-end" onClick={() => setShowAdd(false)}>
+          <div className="modal-surface w-full max-h-[85dvh] rounded-t-3xl overflow-y-auto pb-8 animate-fade-up" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1" style={{ background: "hsl(0 0% 20%)" }} />
             <div className="flex items-center justify-between px-5 pt-3 pb-3">
               <h2 className="font-display text-[17px] font-bold text-foreground">Nouvelle offre</h2>

@@ -713,8 +713,8 @@ export default function ClientsPage() {
 
   /* ── MAIN LIST VIEW ── */
   return (
-    <div className="px-4 pt-4 pb-24">
-      <div className="flex items-center justify-between mb-4">
+    <div className="app-shell px-4 pt-4 pb-24">
+      <div className="page-hero flex items-center justify-between mb-4">
         <h1 className="font-display text-[22px] font-bold text-foreground">Clients</h1>
         <div className="flex gap-2">
           {tab === "particuliers" && (
@@ -735,10 +735,10 @@ export default function ClientsPage() {
       </div>
 
       {/* Tab switch */}
-      <div className="flex gap-1 p-1 rounded-xl mb-5" style={{ background: "hsl(240 4% 13%)" }}>
+      <div className="section-card flex gap-1 p-1.5 rounded-xl mb-5">
         {(["particuliers", "structures"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-lg text-[12px] font-semibold transition-all capitalize ${tab === t ? "btn-primary text-white" : "text-muted-foreground"}`}>
+            className={`chip-toggle flex-1 py-2 text-[12px] capitalize ${tab === t ? "is-active" : ""}`}>
             {t === "particuliers" ? `Particuliers (${clients.length})` : `Structures (${structures.length})`}
           </button>
         ))}
@@ -753,7 +753,7 @@ export default function ClientsPage() {
 
       {/* ── GROUP SETUP MODAL ── */}
       {showGroupSetup && (
-        <div className="card-elevated rounded-2xl p-4 mb-4 animate-fade-up">
+        <div className="modal-surface rounded-2xl p-4 mb-4 animate-fade-up">
           <div className="flex items-center justify-between mb-3">
             <div className="text-[14px] font-semibold text-foreground">Créer un groupe</div>
             <button onClick={() => setShowGroupSetup(false)} className="text-muted-foreground text-lg">×</button>
@@ -799,7 +799,7 @@ export default function ClientsPage() {
 
       {/* ── ADD CLIENT MODAL ── */}
       {showAddClient && tab === "particuliers" && (
-        <div className="card-elevated rounded-2xl p-4 mb-4 animate-fade-up">
+        <div className="modal-surface rounded-2xl p-4 mb-4 animate-fade-up">
           <div className="flex items-center justify-between mb-3">
             <div className="text-[14px] font-semibold text-foreground">Nouveau client</div>
             <button onClick={() => setShowAddClient(false)} className="text-muted-foreground text-lg">×</button>
@@ -836,7 +836,7 @@ export default function ClientsPage() {
 
       {/* ── ADD STRUCTURE MODAL ── */}
       {showAddStructure && tab === "structures" && (
-        <div className="card-elevated rounded-2xl p-4 mb-4 animate-fade-up">
+        <div className="modal-surface rounded-2xl p-4 mb-4 animate-fade-up">
           <div className="flex items-center justify-between mb-3">
             <div className="text-[14px] font-semibold text-foreground">Nouvelle structure</div>
             <button onClick={() => setShowAddStructure(false)} className="text-muted-foreground text-lg">×</button>

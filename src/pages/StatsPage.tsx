@@ -197,8 +197,8 @@ export default function StatsPage() {
   const periodLabel = selectedMonth !== null ? MONTHS[selectedMonth] : String(currentYear);
 
   return (
-    <div className="px-4 pt-4 pb-24">
-      <div className="flex items-center justify-between mb-1">
+    <div className="app-shell px-4 pt-4 pb-24">
+      <div className="page-hero flex items-center justify-between mb-1">
         <h1 className="font-display text-[22px] font-bold text-foreground">Statistiques</h1>
         <button onClick={() => setShowWrapped(true)}
           className="badge-pill text-[10px] font-semibold cursor-pointer px-3 py-1.5"
@@ -209,15 +209,15 @@ export default function StatsPage() {
       <p className="text-[12px] text-muted-foreground mb-3">Santé financière — {periodLabel}</p>
 
       {/* Month filter */}
-      <div className="flex gap-1 overflow-x-auto pb-3 mb-3 -mx-4 px-4" style={{ scrollbarWidth: "none" }}>
+      <div className="section-card flex gap-1 overflow-x-auto p-2 mb-3 -mx-1" style={{ scrollbarWidth: "none" }}>
         <button onClick={() => setSelectedMonth(null)}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${selectedMonth === null ? "btn-primary text-white" : "text-muted-foreground"}`}
+          className={`chip-toggle flex-shrink-0 px-3 py-1.5 text-[11px] ${selectedMonth === null ? "is-active" : ""}`}
           style={selectedMonth !== null ? { background: "hsl(0 0% 100% / 0.04)" } : {}}>
           Année
         </button>
         {Array.from({ length: currentMonth + 1 }, (_, i) => (
           <button key={i} onClick={() => setSelectedMonth(i)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${selectedMonth === i ? "btn-primary text-white" : "text-muted-foreground"}`}
+            className={`chip-toggle flex-shrink-0 px-3 py-1.5 text-[11px] ${selectedMonth === i ? "is-active" : ""}`}
             style={selectedMonth !== i ? { background: "hsl(0 0% 100% / 0.04)" } : {}}>
             {MONTHS[i].slice(0, 3)}
           </button>
