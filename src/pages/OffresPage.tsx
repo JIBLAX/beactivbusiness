@@ -23,6 +23,23 @@ const THEME_LOGOS: Record<string, string> = {
   "TRANSFORMATION": logoBeActiv,
 };
 
+/** Formule métier — mappe vers offerType + isAlaCarte (cf. INITIAL_OFFRES). */
+type OffreFormule = "ala_carte" | "abonnement_seances" | "programme_acces" | "abonnement_acces";
+
+function formuleFromOffre(o: Offre): OffreFormule {
+  if (o.isAlaCarte) return "ala_carte";
+  if (o.offerType === "programme" && !o.duration) return "abonnement_acces";
+  if (o.offerType === "programme") return "programme_acces";
+  return "abonnement_seances";
+}
+
+const FORMULE_OPTIONS: { key: OffreFormule; label: string; hint: string }[] = [
+  { key: "ala_carte", label: "À la carte", hint: "Une séance à la fois, prix unitaire" },
+  { key: "abonnement_seances", label: "Abonnement / pass séances", hint: "Forfait sur une durée (ex. JM Pass, pack séances)" },
+  { key: "programme_acces", label: "Programme (accès)", hint: "Accès programme sur une période (ex. Activ Reset)" },
+  { key: "abonnement_acces", label: "Abonnement accès continu", hint: "Renouvelable, durée indéterminée (accès en continu)" },
+];
+
 export default function OffresPage() {
   const { offres, setOffres, prospects, setProspects, activResetClients, setActivResetClients, financeEntries, setFinanceEntries } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,7 +47,6 @@ export default function OffresPage() {
   const [editPrice, setEditPrice] = useState(0);
   const [editName, setEditName] = useState("");
   const [editDuration, setEditDuration] = useState<OffreDuration | undefined>();
-  const [editIsAlaCarte, setEditIsAlaCarte] = useState(false);
   const [editUnitPrice, setEditUnitPrice] = useState<number | undefined>();
   const [editMinQty, setEditMinQty] = useState<number | undefined>();
   const [editTheme, setEditTheme] = useState<OffreTheme>("TRANSFORMATION");
@@ -39,11 +55,11 @@ export default function OffresPage() {
   const [editMaxInstallments, setEditMaxInstallments] = useState<number | undefined>();
   const [editSessionTracking, setEditSessionTracking] = useState(false);
   const [editMinSessionsValidate, setEditMinSessionsValidate] = useState<number | undefined>();
+  const [editFormule, setEditFormule] = useState<OffreFormule>("abonnement_seances");
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState(0);
   const [newDuration, setNewDuration] = useState<OffreDuration>({ value: 1, unit: "mois" });
-  const [newIsAlaCarte, setNewIsAlaCarte] = useState(false);
   const [newUnitPrice, setNewUnitPrice] = useState<number | undefined>();
   const [newMinQty, setNewMinQty] = useState<number | undefined>();
   const [newTheme, setNewTheme] = useState<OffreTheme>("TRANSFORMATION");
@@ -52,16 +68,17 @@ export default function OffresPage() {
   const [newMaxInstallments, setNewMaxInstallments] = useState<number | undefined>();
   const [newSessionTracking, setNewSessionTracking] = useState(false);
   const [newMinSessionsValidate, setNewMinSessionsValidate] = useState<number | undefined>();
+  const [newFormule, setNewFormule] = useState<OffreFormule>("abonnement_seances");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const startEdit = (o: Offre) => {
     setEditingId(o.id); setEditPrice(o.price); setEditName(o.name);
-    setEditDuration(o.duration); setEditIsAlaCarte(o.isAlaCarte || false);
-    setEditUnitPrice(o.unitPrice); setEditMinQty(o.minQuantity);
+    setEditDuration(o.duration); setEditUnitPrice(o.unitPrice); setEditMinQty(o.minQuantity);
     setEditTheme(o.theme || "TRANSFORMATION"); setEditTva(o.tvaEnabled || false);
     setEditPortage(o.portageEligible || false); setEditMaxInstallments(o.maxInstallments);
     setEditSessionTracking(o.sessionTrackingEnabled ?? false);
     setEditMinSessionsValidate(o.minSessionsToValidate);
+    setEditFormule(formuleFromOffre(o));
   };
 
   const saveEdit = () => {
@@ -79,11 +96,17 @@ export default function OffresPage() {
       const updatedAliases = nameChanged && !o.aliases.includes(oldName)
         ? [...o.aliases, oldName]
         : o.aliases;
+      const ot = (editFormule === "programme_acces" || editFormule === "abonnement_acces") ? "programme" : "session";
+      const ala = editFormule === "ala_carte";
+      const unitOk = editFormule === "abonnement_seances" ? editUnitPrice : undefined;
+      const minOk = editFormule === "abonnement_seances" ? editMinQty : undefined;
+      const durationOk = (ala || editFormule === "abonnement_acces") ? undefined : editDuration;
       return {
         ...o, name: newOffreName, price: editPrice,
         aliases: updatedAliases,
-        duration: editIsAlaCarte ? undefined : editDuration,
-        isAlaCarte: editIsAlaCarte, unitPrice: editUnitPrice, minQuantity: editMinQty,
+        offerType: ot,
+        duration: durationOk,
+        isAlaCarte: ala, unitPrice: unitOk, minQuantity: minOk,
         theme: editTheme, tvaEnabled: editTva, portageEligible: editPortage,
         maxInstallments: editMaxInstallments,
         sessionTrackingEnabled: editSessionTracking,
@@ -108,12 +131,18 @@ export default function OffresPage() {
   const addOffre = (asDraft = false) => {
     if (!newName) return;
     const today = new Date().toISOString().split("T")[0];
+    const ala = newFormule === "ala_carte";
+    const ot = (newFormule === "programme_acces" || newFormule === "abonnement_acces") ? "programme" : "session";
+    const unitOk = newFormule === "abonnement_seances" ? newUnitPrice : undefined;
+    const minOk = newFormule === "abonnement_seances" ? newMinQty : undefined;
+    const durationOk = (ala || newFormule === "abonnement_acces") ? undefined : newDuration;
     const offre: Offre = {
       id: "o" + Date.now(), name: newName.toUpperCase(), price: newPrice, active: !asDraft,
       priceHistory: [{ price: newPrice, date: today }],
       aliases: [],
-      duration: newIsAlaCarte ? undefined : newDuration,
-      isAlaCarte: newIsAlaCarte, unitPrice: newUnitPrice, minQuantity: newMinQty,
+      offerType: ot,
+      duration: durationOk,
+      isAlaCarte: ala, unitPrice: unitOk, minQuantity: minOk,
       theme: newTheme, tvaEnabled: newTva, portageEligible: newPortage,
       maxInstallments: newMaxInstallments,
       isDraft: asDraft,
@@ -123,7 +152,7 @@ export default function OffresPage() {
     setOffres([...offres, offre]);
     setShowAdd(false);
     setNewName(""); setNewPrice(0); setNewDuration({ value: 1, unit: "mois" });
-    setNewIsAlaCarte(false); setNewUnitPrice(undefined); setNewMinQty(undefined);
+    setNewFormule("abonnement_seances"); setNewUnitPrice(undefined); setNewMinQty(undefined);
     setNewTheme("TRANSFORMATION"); setNewTva(false); setNewPortage(false); setNewMaxInstallments(undefined);
     setNewSessionTracking(false); setNewMinSessionsValidate(undefined);
   };
@@ -139,7 +168,9 @@ export default function OffresPage() {
     </button>
   );
 
-  const renderOffreCard = (o: Offre) => (
+  const renderOffreCard = (o: Offre) => {
+    const formule = formuleFromOffre(o);
+    return (
     <div key={o.id} className={`card-elevated rounded-2xl p-4 transition-all ${!o.active ? "opacity-35" : ""} ${o.isDraft ? "border-l-4" : ""}`}
       style={o.isDraft ? { borderLeftColor: "hsl(38 92% 55%)" } : {}}>
       {editingId === o.id ? (
@@ -158,11 +189,30 @@ export default function OffresPage() {
               {OFFRE_THEMES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[12px] text-muted-foreground">À la carte</span>
-            <ToggleSwitch checked={editIsAlaCarte} onChange={() => setEditIsAlaCarte(!editIsAlaCarte)} />
+          <div>
+            <label className="section-label mb-2 block">Formule</label>
+            <div className="flex flex-col gap-2">
+              {FORMULE_OPTIONS.map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => {
+                    setEditFormule(opt.key);
+                    if (opt.key === "programme_acces" || opt.key === "abonnement_acces") { setEditUnitPrice(undefined); setEditMinQty(undefined); }
+                  }}
+                  className={`rounded-xl px-3 py-2.5 text-left text-sm transition-colors border ${
+                    editFormule === opt.key
+                      ? "border-[hsl(348_63%_45%)] bg-[hsl(348_63%_45%/0.12)] text-foreground"
+                      : "border-[hsl(0_0%_100%/0.08)] bg-[hsl(0_0%_100%/0.03)] text-muted-foreground hover:border-[hsl(0_0%_100%/0.14)]"
+                  }`}
+                >
+                  <span className="font-semibold text-foreground">{opt.label}</span>
+                  <span className="block text-[11px] text-muted-foreground mt-0.5">{opt.hint}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          {!editIsAlaCarte && (
+          {editFormule !== "ala_carte" && editFormule !== "abonnement_acces" && (
             <div className="flex gap-2">
               <input type="number" value={editDuration?.value || ""} onChange={e => setEditDuration({ value: Number(e.target.value), unit: editDuration?.unit || "mois" })}
                 placeholder="Durée" className="flex-1 rounded-xl px-3 py-2.5 text-sm input-field" />
@@ -172,18 +222,20 @@ export default function OffresPage() {
               </select>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="section-label mb-1 block">Prix unitaire €</label>
-              <input type="number" value={editUnitPrice || ""} onChange={e => setEditUnitPrice(e.target.value ? Number(e.target.value) : undefined)}
-                placeholder="—" className="w-full rounded-xl px-3 py-2 text-sm input-field" />
+          {editFormule === "abonnement_seances" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="section-label mb-1 block">Prix unitaire €</label>
+                <input type="number" value={editUnitPrice || ""} onChange={e => setEditUnitPrice(e.target.value ? Number(e.target.value) : undefined)}
+                  placeholder="—" className="w-full rounded-xl px-3 py-2 text-sm input-field" />
+              </div>
+              <div>
+                <label className="section-label mb-1 block">Min. séances</label>
+                <input type="number" value={editMinQty || ""} onChange={e => setEditMinQty(e.target.value ? Number(e.target.value) : undefined)}
+                  placeholder="—" className="w-full rounded-xl px-3 py-2 text-sm input-field" />
+              </div>
             </div>
-            <div>
-              <label className="section-label mb-1 block">Min. séances</label>
-              <input type="number" value={editMinQty || ""} onChange={e => setEditMinQty(e.target.value ? Number(e.target.value) : undefined)}
-                placeholder="—" className="w-full rounded-xl px-3 py-2 text-sm input-field" />
-            </div>
-          </div>
+          )}
           <div className="flex items-center justify-between">
             <span className="text-[12px] text-muted-foreground">TVA 20%</span>
             <ToggleSwitch checked={editTva} onChange={() => setEditTva(!editTva)} />
@@ -230,15 +282,33 @@ export default function OffresPage() {
                 <div className="text-[14px] font-semibold text-foreground leading-tight">{o.name}</div>
               </div>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className="badge-pill text-[10px]" style={{ background: "hsl(217 70% 50% / 0.12)", color: "hsl(217 70% 62%)" }}>
+                  {formule === "ala_carte"
+                    ? "⚡ À la carte"
+                    : formule === "programme_acces"
+                      ? "📘 Programme"
+                      : formule === "abonnement_acces"
+                        ? "♾️ Abonnement accès continu"
+                        : "🎫 Pass / abonnement séances"}
+                </span>
                 {o.duration ? (
                   <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 70%)" }}>
                     📅 {formatDuration(o.duration)}
                   </span>
-                ) : o.isAlaCarte ? (
-                  <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 50%)" }}>⚡ À la carte</span>
+                ) : formule === "ala_carte" ? (
+                  <span className="badge-pill text-[10px]" style={{ background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 50%)" }}>Séance unitaire</span>
                 ) : null}
-                {o.unitPrice && <span className="text-[10px] text-muted-foreground">{o.unitPrice}€/séance</span>}
-                {o.minQuantity && <span className="text-[10px] text-muted-foreground">min. {o.minQuantity}</span>}
+                {o.unitPrice != null && formule === "abonnement_seances" && (
+                  <span className="text-[10px] text-muted-foreground">{o.unitPrice}€/séance</span>
+                )}
+                {o.minQuantity != null && formule === "abonnement_seances" && (
+                  <span className="text-[10px] text-muted-foreground">min. {o.minQuantity}</span>
+                )}
+                {formule === "abonnement_acces" && (
+                  <span className="badge-pill text-[9px]" style={{ background: "hsl(152 55% 45% / 0.12)", color: "hsl(152 55% 55%)" }}>
+                    Renouvelable · durée indéterminée
+                  </span>
+                )}
                 {o.tvaEnabled && <span className="badge-pill text-[9px]" style={{ background: "hsl(38 92% 55% / 0.1)", color: "hsl(38 92% 55%)" }}>TVA</span>}
                 {o.portageEligible && <span className="badge-pill text-[9px]" style={{ background: "hsl(217 70% 60% / 0.1)", color: "hsl(217 70% 60%)" }}>PORTAGE</span>}
                 {o.maxInstallments && o.maxInstallments > 1 && <span className="badge-pill text-[9px]" style={{ background: "hsl(280 60% 55% / 0.1)", color: "hsl(280 60% 55%)" }}>Jusqu'à {o.maxInstallments}×</span>}
@@ -279,7 +349,8 @@ export default function OffresPage() {
         </>
       )}
     </div>
-  );
+    );
+  };
 
   return (
     <div className="app-shell px-4 pt-4 pb-24">
@@ -355,11 +426,30 @@ export default function OffresPage() {
                   {OFFRE_THEMES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
-              <div className="flex items-center justify-between py-1">
-                <span className="text-[12px] text-muted-foreground">À la carte</span>
-                <ToggleSwitch checked={newIsAlaCarte} onChange={() => setNewIsAlaCarte(!newIsAlaCarte)} />
+              <div>
+                <label className="section-label mb-2 block">Formule</label>
+                <div className="flex flex-col gap-2">
+                  {FORMULE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => {
+                        setNewFormule(opt.key);
+                        if (opt.key === "programme_acces" || opt.key === "abonnement_acces") { setNewUnitPrice(undefined); setNewMinQty(undefined); }
+                      }}
+                      className={`rounded-xl px-3 py-2.5 text-left text-sm transition-colors border ${
+                        newFormule === opt.key
+                          ? "border-[hsl(348_63%_45%)] bg-[hsl(348_63%_45%/0.12)] text-foreground"
+                          : "border-[hsl(0_0%_100%/0.08)] bg-[hsl(0_0%_100%/0.03)] text-muted-foreground hover:border-[hsl(0_0%_100%/0.14)]"
+                      }`}
+                    >
+                      <span className="font-semibold text-foreground">{opt.label}</span>
+                      <span className="block text-[11px] text-muted-foreground mt-0.5">{opt.hint}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              {!newIsAlaCarte && (
+              {newFormule !== "ala_carte" && newFormule !== "abonnement_acces" && (
                 <div>
                   <label className="section-label mb-2 block">Durée</label>
                   <div className="flex gap-2">
@@ -372,18 +462,20 @@ export default function OffresPage() {
                   </div>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="section-label mb-2 block">Prix unitaire €</label>
-                  <input type="number" value={newUnitPrice || ""} onChange={e => setNewUnitPrice(e.target.value ? Number(e.target.value) : undefined)}
-                    placeholder="—" className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
+              {newFormule === "abonnement_seances" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="section-label mb-2 block">Prix unitaire €</label>
+                    <input type="number" value={newUnitPrice || ""} onChange={e => setNewUnitPrice(e.target.value ? Number(e.target.value) : undefined)}
+                      placeholder="—" className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
+                  </div>
+                  <div>
+                    <label className="section-label mb-2 block">Min. séances</label>
+                    <input type="number" value={newMinQty || ""} onChange={e => setNewMinQty(e.target.value ? Number(e.target.value) : undefined)}
+                      placeholder="—" className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
+                  </div>
                 </div>
-                <div>
-                  <label className="section-label mb-2 block">Min. séances</label>
-                  <input type="number" value={newMinQty || ""} onChange={e => setNewMinQty(e.target.value ? Number(e.target.value) : undefined)}
-                    placeholder="—" className="w-full rounded-xl px-3 py-2.5 text-sm input-field" />
-                </div>
-              </div>
+              )}
               <div className="flex items-center justify-between py-1">
                 <span className="text-[12px] text-muted-foreground">TVA 20%</span>
                 <ToggleSwitch checked={newTva} onChange={() => setNewTva(!newTva)} />
