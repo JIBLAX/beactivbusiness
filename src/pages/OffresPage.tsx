@@ -70,6 +70,7 @@ export default function OffresPage() {
   const [newMinSessionsValidate, setNewMinSessionsValidate] = useState<number | undefined>();
   const [newFormule, setNewFormule] = useState<OffreFormule>("abonnement_seances");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [openThemes, setOpenThemes] = useState<Set<OffreTheme>>(() => new Set(["ACTION", "TRANSFORMATION", "COLLECTIF"]));
 
   const startEdit = (o: Offre) => {
     setEditingId(o.id); setEditPrice(o.price); setEditName(o.name);
@@ -376,17 +377,29 @@ export default function OffresPage() {
         const sq = searchQuery.toLowerCase();
         const themeOffers = sq ? allThemeOffers.filter(o => o.name.toLowerCase().includes(sq)) : allThemeOffers;
         if (themeOffers.length === 0) return null;
+        const isOpen = openThemes.has(theme);
         return (
           <div key={theme} className="mb-6">
-            <div className="section-card flex items-center gap-3 mb-3 px-3 py-2">
+            <button
+              type="button"
+              onClick={() => setOpenThemes(prev => {
+                const n = new Set(prev);
+                if (n.has(theme)) n.delete(theme); else n.add(theme);
+                return n;
+              })}
+              className="section-card w-full flex items-center gap-3 mb-3 px-3 py-2 text-left"
+            >
               <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
                 <img src={THEME_LOGOS[theme]} alt={theme} className="w-full h-full object-cover" />
               </div>
-              <div className="section-label flex-1">{theme}</div>
-            </div>
-            <div className="space-y-2">
-              {themeOffers.map(renderOffreCard)}
-            </div>
+              <div className="section-label flex-1">{theme} ({themeOffers.length})</div>
+              <span className="text-xs text-muted-foreground">{isOpen ? "▾" : "▸"}</span>
+            </button>
+            {isOpen && (
+              <div className="space-y-2">
+                {themeOffers.map(renderOffreCard)}
+              </div>
+            )}
           </div>
         );
       })}
