@@ -187,17 +187,18 @@ export interface MonthlyFinance {
   versementReel: number | null;
 }
 
+/** Libellés catalogue alignés avec INITIAL_OFFRES (dropdowns / compat). */
 export const OFFRES = [
+  "ACTIV PROGRAM ESSENTIEL",
   "ACTIV RESET ONLINE",
   "ACTIV RESET HYBRIDE",
-  "ACTIV PROGRAM",
+  "ACTIV CONTINUE",
   "JM PASS",
-  "JM PASS COACHING",
-  "JM PASS COACHING +",
+  "JM PASS (SAP)",
+  "COACHING À LA CARTE",
+  "VISIO COACHING",
   "CARDIO MOUV PASS 4",
   "CARDIO MOUV PACK 10",
-  "COACHING À LA CARTE",
-  "CARDIO MOUV ONE SHOT",
   "ACTIV TRAINING",
 ];
 
@@ -244,17 +245,17 @@ export interface Offre {
   minSessionsToValidate?: number;
 }
 
+/** Catalogue unique COACH JM — miroir Bilan / Finances JM (pas de JM PASS COACHING +). */
 export const INITIAL_OFFRES: Offre[] = [
-  { id: "o1", name: "ACTIV RESET ONLINE",    price: 525,  active: true, priceHistory: [{ price: 525,  date: "2026-01-01" }], aliases: [], duration: { value: 12, unit: "semaines" }, theme: "TRANSFORMATION", offerType: "programme", maxInstallments: 3 },
-  { id: "o2", name: "ACTIV RESET HYBRIDE",   price: 1350, active: true, priceHistory: [{ price: 1350, date: "2026-01-01" }], aliases: [], duration: { value: 12, unit: "semaines" }, theme: "TRANSFORMATION", offerType: "programme", maxInstallments: 3 },
   { id: "o3", name: "ACTIV PROGRAM ESSENTIEL", price: 160, active: true, priceHistory: [{ price: 160, date: "2026-01-01" }], aliases: [], duration: { value: 8, unit: "semaines" }, theme: "TRANSFORMATION", offerType: "programme" },
-  { id: "o4", name: "JM PASS",              price: 240, active: true, priceHistory: [{ price: 240, date: "2026-01-01" }], aliases: [], duration: { value: 1, unit: "mois" }, unitPrice: 60,   minQuantity: 4, theme: "ACTION",    offerType: "session" },
-  { id: "o5", name: "JM PASS COACHING",     price: 250, active: true, priceHistory: [{ price: 250, date: "2026-01-01" }], aliases: [], duration: { value: 1, unit: "mois" }, unitPrice: 62.5, minQuantity: 4, theme: "ACTION",    offerType: "session" },
-  { id: "o6", name: "JM PASS COACHING +",   price: 240, active: true, priceHistory: [{ price: 240, date: "2026-01-01" }], aliases: [], duration: { value: 3, unit: "mois" }, unitPrice: 60,   minQuantity: 4, theme: "ACTION",    offerType: "session" },
-  { id: "o7", name: "COACHING À LA CARTE",  price: 65,  active: true, priceHistory: [{ price: 65,  date: "2026-01-01" }], aliases: [], isAlaCarte: true, theme: "ACTION",    offerType: "session" },
-  { id: "o8", name: "CARDIO MOUV STRUCTURE", price: 115, active: true, priceHistory: [{ price: 115, date: "2026-01-01" }], aliases: [], duration: { value: 1, unit: "mois" }, theme: "COLLECTIF", offerType: "session" },
-  { id: "o9", name: "CARDIO MOUV ONE SHOT",  price: 15,  active: true, priceHistory: [{ price: 15,  date: "2026-01-01" }], aliases: [], isAlaCarte: true, theme: "COLLECTIF", offerType: "session" },
-  { id: "o10", name: "CARDIO MOUV PASS 4",  price: 45,  active: true, priceHistory: [{ price: 45,  date: "2026-01-01" }], aliases: [], duration: { value: 4, unit: "semaines" }, theme: "COLLECTIF", offerType: "session" },
-  { id: "o11", name: "CARDIO MOUV PACK 10", price: 130, active: true, priceHistory: [{ price: 130, date: "2026-01-01" }], aliases: [], duration: { value: 5, unit: "mois" }, theme: "COLLECTIF", offerType: "session" },
-  { id: "o12", name: "ACTIV TRAINING ONE SHOT", price: 10, active: true, priceHistory: [{ price: 10, date: "2026-01-01" }], aliases: [], isAlaCarte: true, theme: "COLLECTIF", offerType: "session" },
+  { id: "o1", name: "ACTIV RESET ONLINE", price: 525, active: true, priceHistory: [{ price: 525, date: "2026-01-01" }], aliases: [], duration: { value: 12, unit: "semaines" }, theme: "TRANSFORMATION", offerType: "programme", maxInstallments: 3 },
+  { id: "o2", name: "ACTIV RESET HYBRIDE", price: 1350, active: true, priceHistory: [{ price: 1350, date: "2026-01-01" }], aliases: [], duration: { value: 12, unit: "semaines" }, theme: "TRANSFORMATION", offerType: "programme", maxInstallments: 3, sessionTrackingEnabled: true, minSessionsToValidate: 12 },
+  { id: "o_ac", name: "ACTIV CONTINUE", price: 150, active: true, priceHistory: [{ price: 150, date: "2026-01-01" }], aliases: [], duration: { value: 1, unit: "mois" }, theme: "TRANSFORMATION", offerType: "programme", sessionTrackingEnabled: true },
+  { id: "o4", name: "JM PASS", price: 240, active: true, priceHistory: [{ price: 240, date: "2026-01-01" }], aliases: [], duration: { value: 1, unit: "mois" }, unitPrice: 60, minQuantity: 4, theme: "ACTION", offerType: "session", sessionTrackingEnabled: true, minSessionsToValidate: 4 },
+  { id: "o_sap", name: "JM PASS (SAP)", price: 240, active: true, priceHistory: [{ price: 240, date: "2026-01-01" }], aliases: [], duration: { value: 1, unit: "mois" }, unitPrice: 60, minQuantity: 4, theme: "ACTION", offerType: "session", sessionTrackingEnabled: true, minSessionsToValidate: 4 },
+  { id: "o9", name: "COACHING À LA CARTE", price: 65, active: true, priceHistory: [{ price: 65, date: "2026-01-01" }], aliases: [], isAlaCarte: true, theme: "ACTION", offerType: "session", sessionTrackingEnabled: true, minSessionsToValidate: 1 },
+  { id: "o_vis", name: "VISIO COACHING", price: 25, active: true, priceHistory: [{ price: 25, date: "2026-01-01" }], aliases: [], theme: "ACTION", offerType: "session", sessionTrackingEnabled: true, minSessionsToValidate: 1 },
+  { id: "o7", name: "CARDIO MOUV PASS 4", price: 45, active: true, priceHistory: [{ price: 45, date: "2026-01-01" }], aliases: [], duration: { value: 4, unit: "semaines" }, theme: "COLLECTIF", offerType: "session", sessionTrackingEnabled: true, minSessionsToValidate: 4 },
+  { id: "o8", name: "CARDIO MOUV PACK 10", price: 130, active: true, priceHistory: [{ price: 130, date: "2026-01-01" }], aliases: [], duration: { value: 5, unit: "mois" }, theme: "COLLECTIF", offerType: "session", sessionTrackingEnabled: true, minSessionsToValidate: 10 },
+  { id: "o11", name: "ACTIV TRAINING", price: 10, active: true, priceHistory: [{ price: 10, date: "2026-01-01" }], aliases: [], isAlaCarte: true, theme: "COLLECTIF", offerType: "session", sessionTrackingEnabled: true, minSessionsToValidate: 1 },
 ];
