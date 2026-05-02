@@ -232,12 +232,14 @@ async function syncToSupabase<T>(table: string, items: T[], toRow: (item: T, use
   }
 }
 
+/** Catalogue unifié : écrit dans offres_pro ET dans offres (Finances JM + Bilan CRM lisent encore `offres` via REST/anon). */
 async function syncOffresPro(items: Offre[], userId: string) {
   const client = supabase as any;
   await client.from("offres_pro").delete().eq("user_id", userId);
   if (items.length > 0) {
     await client.from("offres_pro").insert(items.map(o => offreToProRow(o, userId)));
   }
+  await syncToSupabase("offres", items, offreToRow, userId);
 }
 
 // ─── Local cache ─────────────────────────────────────────────────────────────
