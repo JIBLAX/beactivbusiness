@@ -96,7 +96,13 @@ export default function AppLayout() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
         style={{ WebkitOverflowScrolling: "touch" }}>
-        <Suspense fallback={null}>
+        <Suspense
+          fallback={
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              Chargement…
+            </div>
+          }
+        >
           {currentPage === "finances"   && <FinancesPage />}
           {currentPage === "activites"  && <ActivitesPage />}
           {currentPage === "offres"     && <OffresPage />}

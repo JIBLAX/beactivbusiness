@@ -18,9 +18,11 @@ function formatDuration(d?: OffreDuration): string {
 }
 
 const THEME_LOGOS: Record<string, string> = {
-  "COLLECTIF": logoCardioMouv,
-  "ACTION": logoJM,
-  "TRANSFORMATION": logoBeActiv,
+  COLLECTIF: logoCardioMouv,
+  ACTION: logoJM,
+  TRANSFORMATION: logoBeActiv,
+  FISCALE: logoBeActiv,
+  REMBOURSEMENTS: logoBeActiv,
 };
 
 /** Formule métier — mappe vers offerType + isAlaCarte (cf. INITIAL_OFFRES). */
@@ -42,6 +44,7 @@ const FORMULE_OPTIONS: { key: OffreFormule; label: string; hint: string }[] = [
 
 export default function OffresPage() {
   const { offres, setOffres, prospects, setProspects, activResetClients, setActivResetClients, financeEntries, setFinanceEntries } = useApp();
+  const offresList = Array.isArray(offres) ? offres : [];
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState(0);
@@ -85,18 +88,19 @@ export default function OffresPage() {
   const saveEdit = () => {
     if (!editingId) return;
     const today = new Date().toISOString().split("T")[0];
-    const oldOffre = offres.find(o => o.id === editingId);
+    const oldOffre = offresList.find(o => o.id === editingId);
     if (!oldOffre) return;
     const oldName = oldOffre.name;
     const newOffreName = editName || oldOffre.name;
     const nameChanged = oldName !== newOffreName;
 
-    setOffres(offres.map(o => {
+    setOffres(offresList.map(o => {
       if (o.id !== editingId) return o;
       const priceChanged = o.price !== editPrice;
-      const updatedAliases = nameChanged && !o.aliases.includes(oldName)
-        ? [...o.aliases, oldName]
-        : o.aliases;
+      const aliases = o.aliases ?? [];
+      const updatedAliases = nameChanged && !aliases.includes(oldName)
+        ? [...aliases, oldName]
+        : aliases;
       const ot = (editFormule === "programme_acces" || editFormule === "abonnement_acces") ? "programme" : "session";
       const ala = editFormule === "ala_carte";
       const unitOk = editFormule === "abonnement_seances" ? editUnitPrice : undefined;
@@ -126,8 +130,8 @@ export default function OffresPage() {
     setEditingId(null);
   };
 
-  const toggleActive = (id: string) => setOffres(offres.map(o => o.id === id ? { ...o, active: !o.active } : o));
-  const deleteOffre = (id: string) => { setOffres(offres.filter(o => o.id !== id)); setConfirmDeleteId(null); };
+  const toggleActive = (id: string) => setOffres(offresList.map(o => o.id === id ? { ...o, active: !o.active } : o));
+  const deleteOffre = (id: string) => { setOffres(offresList.filter(o => o.id !== id)); setConfirmDeleteId(null); };
 
   const addOffre = (asDraft = false) => {
     if (!newName) return;
@@ -150,7 +154,7 @@ export default function OffresPage() {
       sessionTrackingEnabled: newSessionTracking,
       minSessionsToValidate: newMinSessionsValidate,
     };
-    setOffres([...offres, offre]);
+    setOffres([...offresList, offre]);
     setShowAdd(false);
     setNewName(""); setNewPrice(0); setNewDuration({ value: 1, unit: "mois" });
     setNewFormule("abonnement_seances"); setNewUnitPrice(undefined); setNewMinQty(undefined);
@@ -158,7 +162,7 @@ export default function OffresPage() {
     setNewSessionTracking(false); setNewMinSessionsValidate(undefined);
   };
 
-  const activeCount = offres.filter(o => o.active).length;
+  const activeCount = offresList.filter(o => o.active).length;
 
   const ToggleSwitch = ({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) => (
     <button onClick={onChange} disabled={disabled}
@@ -331,7 +335,7 @@ export default function OffresPage() {
             </div>
             <div className="flex items-center gap-3">
               {o.isDraft && (
-                <button onClick={() => setOffres(offres.map(x => x.id === o.id ? { ...x, isDraft: false, active: true } : x))}
+                <button onClick={() => setOffres(offresList.map(x => x.id === o.id ? { ...x, isDraft: false, active: true } : x))}
                   className="badge-pill text-[10px] cursor-pointer" style={{ background: "hsl(152 55% 45% / 0.15)", color: "hsl(152 55% 55%)" }}>
                   ✓ Valider
                 </button>
@@ -361,7 +365,7 @@ export default function OffresPage() {
           <p className="text-[12px] text-muted-foreground mt-0.5">Catalogue & tarifs</p>
         </div>
         <div className="stat-card rounded-xl px-3 py-2 text-center">
-          <div className="value-lg text-[18px] text-foreground">{activeCount}<span className="text-sm text-muted-foreground font-normal">/{offres.length}</span></div>
+          <div className="value-lg text-[18px] text-foreground">{activeCount}<span className="text-sm text-muted-foreground font-normal">/{offresList.length}</span></div>
           <div className="text-[8px] text-muted-foreground uppercase tracking-wider">actives</div>
         </div>
       </div>
@@ -373,11 +377,14 @@ export default function OffresPage() {
       </div>
 
       {OFFRE_THEMES.map(theme => {
-        const allThemeOffers = offres.filter(o => (o.theme || "TRANSFORMATION") === theme);
+        const allThemeOffers = offresList.filter(o => (o.theme || "TRANSFORMATION") === theme);
         const sq = searchQuery.toLowerCase();
-        const themeOffers = sq ? allThemeOffers.filter(o => o.name.toLowerCase().includes(sq)) : allThemeOffers;
+        const themeOffers = sq
+          ? allThemeOffers.filter(o => (o.name != null && String(o.name).toLowerCase().includes(sq)))
+          : allThemeOffers;
         if (themeOffers.length === 0) return null;
         const isOpen = openThemes.has(theme);
+        const themeLogo = THEME_LOGOS[theme];
         return (
           <div key={theme} className="mb-6">
             <button
@@ -390,7 +397,7 @@ export default function OffresPage() {
               className="section-card w-full flex items-center gap-3 mb-3 px-3 py-2 text-left"
             >
               <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "hsl(0 0% 100% / 0.04)" }}>
-                <img src={THEME_LOGOS[theme]} alt={theme} className="w-full h-full object-cover" />
+                <img src={themeLogo ?? THEME_LOGOS["TRANSFORMATION"]} alt={theme} className="w-full h-full object-cover" />
               </div>
               <div className="section-label flex-1">{theme} ({themeOffers.length})</div>
               <span className="text-xs text-muted-foreground">{isOpen ? "▾" : "▸"}</span>
