@@ -7,6 +7,7 @@ import { useBaSalesMonth, useBaSalesYear } from "@/hooks/useBaSalesMonth";
 import { useFjmProOps } from "@/hooks/useFjmProOps";
 import { filterFjmProOtherRevenues } from "@/lib/fjmProRevenue";
 import AnnualWrapped from "@/components/stats/AnnualWrapped";
+import InfoHint from "@/components/ui/InfoHint";
 
 const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -187,7 +188,7 @@ export default function BilanPage() {
             <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg" style={{ background: "hsl(348 63% 30% / 0.15)" }}>🎁</div>
             <div>
               <div className="text-[13px] font-semibold text-foreground">Annual Wrapped</div>
-              <div className="text-[10px] text-muted-foreground">Résumé visuel de l'année</div>
+              <InfoHint className="mt-1" text="Résumé visuel de l'année" />
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -223,11 +224,14 @@ export default function BilanPage() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[13px] font-semibold text-foreground">Bilan Annuel PDF</div>
-          <div className="text-[10px] text-muted-foreground">
-            {annualYearComplete
-              ? `Exercice ${wrappedYear} complet — prêt à exporter`
-              : `Disponible après clôture de l'exercice ${wrappedYear}`}
-          </div>
+          <InfoHint
+            className="mt-1"
+            text={
+              annualYearComplete
+                ? `Exercice ${wrappedYear} complet — prêt à exporter`
+                : `Disponible après clôture de l'exercice ${wrappedYear}`
+            }
+          />
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <select value={wrappedYear} onChange={e => setWrappedYear(Number(e.target.value))}
