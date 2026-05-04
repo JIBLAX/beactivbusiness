@@ -247,28 +247,80 @@ const CACHE_KEY = "ba_app_data";
 const CACHE_VER = 2;
 
 function crmRowToProspect(r: any): Prospect {
+  const name =
+    (typeof r.name === "string" && r.name.trim()) ||
+    `${r.prenom ?? ""} ${r.nom ?? ""}`.trim() ||
+    "";
+  const offreRaw = r.offre != null ? String(r.offre).trim() : "";
+  const sr = (r.statut != null ? String(r.statut) : "").trim();
+  const offre =
+    offreRaw && offreRaw !== "-"
+      ? offreRaw
+      : r.is_client === true || sr === "Closé" || sr === "Ancien Client"
+        ? "CRM BILAN"
+        : "-";
+  let statut = "CLIENT";
+  if (sr === "Ancien Client") statut = "ARCHIVÉ";
+  else if (sr && sr !== "Closé" && sr !== "Ancien Client") statut = sr;
+  const isDeal =
+    r.is_client === true ||
+    sr === "Closé" ||
+    sr === "Ancien Client" ||
+    !!(offreRaw && offreRaw !== "-");
   return {
     id: `bcrm_${r.id}`,
     sex: (r.sex as "F" | "H") ?? "F",
-    name: r.name ?? "",
-    contact: r.phone ?? r.contact ?? "",
-    source: "CRM",
-    statut: "CLIENT",
-    date: r.created_at ? r.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+    name,
+    contact: typeof r.phone === "string" && r.phone ? r.phone : typeof r.contact === "string" ? r.contact : "",
+    source: typeof r.source === "string" && r.source ? r.source : "BILAN CRM",
+    statut,
+    date: r.date_rdv
+      ? String(r.date_rdv).split("T")[0]
+      : r.created_at
+        ? String(r.created_at).split("T")[0]
+        : new Date().toISOString().split("T")[0],
     type: "",
     presence: "",
     heure: "",
-    objectif: r.objectif ?? "",
+    objectif: "",
     objection: "",
-    closing: "OUI",
-    offre: r.offre ?? "-",
-    notes: r.notes ?? "",
-    profile: "",
+    closing: isDeal ? "OUI" : "NON",
+    offre,
+    notes: "",
+    profile: typeof r.profil_label === "string" ? r.profil_label : typeof r.profil_code === "string" ? r.profil_code : "",
     sapEnabled: r.sap_enabled ?? false,
     groupType: r.group_type ?? null,
     groupId: r.group_id ?? null,
     isGroupLeader: r.is_group_leader ?? false,
+    montant: r.montant != null ? Number(r.montant) : null,
   };
+}
+
+/** Structures « Nouveau Pro » — lues depuis report_json (BILAN CRM). */
+function crmRowToStructure(r: any): Structure | null {
+  try {
+    const rep = JSON.parse(r.report_json || "{}");
+    if (!rep.is_pro) return null;
+    const name = String(rep.structure_name || r.name || "").trim();
+    if (!name) return null;
+    return {
+      id: `bcrm_st_${r.id}`,
+      name,
+      contactName: "",
+      phone: "",
+      email: "",
+      city: "",
+      structureType: "entreprise",
+      peopleCount: 1,
+      offre: typeof r.offre === "string" ? r.offre : "",
+      amount: Number(r.montant) || 0,
+      frequency: "ponctuel",
+      notes: "",
+      active: true,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function proClientRowToProspect(r: any): Prospect {
@@ -415,11 +467,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setFinanceEntriesState(financeData);
       if (!fRes.data?.length) syncToSupabase("finance_entries", seedFinanceEntries, financeToRow, userId).catch(() => {});
 
-      // Expenses + structures
+      // Expenses + structures (+ structures « pro » depuis BILAN CRM / be_activ_clients)
       const expensesData = (eRes.data ?? []).map(rowToExpense);
       const structuresData = (stRes.data ?? []).map(rowToStructure);
+      const structureNamesLower = new Set(structuresData.map((s: Structure) => s.name.toLowerCase()));
+      const fromCrmStructures = (crmRes.data ?? [])
+        .map(crmRowToStructure)
+        .filter((s): s is Structure => s != null)
+        .filter(s => !structureNamesLower.has(s.name.toLowerCase()));
       setExpensesState(expensesData);
-      setStructuresState(structuresData);
+      setStructuresState([...structuresData, ...fromCrmStructures]);
 
       // App settings
       let portageMonthsData: Record<string, boolean> = {};
@@ -445,7 +502,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       persistToCache(userId, {
         prospects: mergedProspects, activResetClients: arData,
         financeEntries: financeData, expenses: expensesData,
-        offres: offresData, structures: structuresData,
+        offres: offresData, structures: [...structuresData, ...fromCrmStructures],
         portageMonths: portageMonthsData, versementsPerso: versementsPersoData,
         urssafMode: urssafModeData, quarterEdits: quarterEditsData,
       });
@@ -496,7 +553,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setStructures = useCallback((s: Structure[]) => {
     setStructuresState(s);
-    if (user) syncToSupabase("structures", s, structureToRow, user.id);
+    if (user) {
+      const localOnly = s.filter(st => !String(st.id).startsWith("bcrm_st_"));
+      syncToSupabase("structures", localOnly, structureToRow, user.id);
+    }
   }, [user]);
 
   const setUrssafMode = useCallback((m: "mois" | "trimestre") => {
